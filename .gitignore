@@ -23,3 +23,5 @@ publish/
 
 # EF migrations bundle
 efbundle.exe
+
+.sonarqube/

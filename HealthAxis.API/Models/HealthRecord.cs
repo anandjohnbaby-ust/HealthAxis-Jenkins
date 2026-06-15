@@ -13,12 +13,6 @@ namespace HealthAxis.API.Models
         [Required(ErrorMessage = ValidationMessages.AppointmentRequired)]
         public int AppointmentId { get; set; }
 
-        [Required(ErrorMessage = ValidationMessages.PatientRequired)]
-        public int PatientId { get; set; }
-
-        [Required(ErrorMessage = ValidationMessages.DoctorRequired)]
-        public int DoctorId { get; set; }
-
         [Required(ErrorMessage = ValidationMessages.VisitDateRequired)]
         [DataType(DataType.Date)]
         public DateTime VisitDate { get; set; }
@@ -38,10 +32,5 @@ namespace HealthAxis.API.Models
         [ForeignKey(nameof(AppointmentId))]
         public virtual Appointment Appointment { get; set; } = null!;
 
-        [ForeignKey(nameof(PatientId))]
-        public virtual Patient Patient { get; set; } = null!;
-
-        [ForeignKey(nameof(DoctorId))]
-        public virtual Doctor Doctor { get; set; } = null!;
     }
 }

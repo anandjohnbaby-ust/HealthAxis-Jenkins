@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HealthAxis.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260614182448_InitialCreate")]
+    [Migration("20260615082043_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -46,10 +46,8 @@ namespace HealthAxis.API.Migrations
                     b.Property<DateTime>("ScheduledDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<string>("TimeSlot")
                         .IsRequired()
@@ -74,8 +72,7 @@ namespace HealthAxis.API.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DoctorId"));
 
                     b.Property<decimal>("ConsultationFee")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -85,10 +82,8 @@ namespace HealthAxis.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Specialisation")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("Specialisation")
+                        .HasColumnType("int");
 
                     b.Property<int>("YearsOfExperience")
                         .HasColumnType("int");
@@ -104,7 +99,7 @@ namespace HealthAxis.API.Migrations
                             ConsultationFee = 850m,
                             FullName = "Dr Arjun Narayanan",
                             IsActive = true,
-                            Specialisation = "Cardiology",
+                            Specialisation = 1,
                             YearsOfExperience = 12
                         },
                         new
@@ -113,7 +108,7 @@ namespace HealthAxis.API.Migrations
                             ConsultationFee = 700m,
                             FullName = "Dr Kavya Srinivasan",
                             IsActive = true,
-                            Specialisation = "Dermatology",
+                            Specialisation = 3,
                             YearsOfExperience = 8
                         },
                         new
@@ -122,7 +117,7 @@ namespace HealthAxis.API.Migrations
                             ConsultationFee = 1200m,
                             FullName = "Dr Rohit Menon",
                             IsActive = true,
-                            Specialisation = "Neurology",
+                            Specialisation = 2,
                             YearsOfExperience = 15
                         },
                         new
@@ -131,7 +126,7 @@ namespace HealthAxis.API.Migrations
                             ConsultationFee = 650m,
                             FullName = "Dr Priya Ramachandran",
                             IsActive = true,
-                            Specialisation = "Pediatrics",
+                            Specialisation = 5,
                             YearsOfExperience = 6
                         },
                         new
@@ -140,7 +135,7 @@ namespace HealthAxis.API.Migrations
                             ConsultationFee = 900m,
                             FullName = "Dr Siddharth Iyer",
                             IsActive = true,
-                            Specialisation = "Orthopedics",
+                            Specialisation = 4,
                             YearsOfExperience = 10
                         });
                 });
@@ -161,7 +156,7 @@ namespace HealthAxis.API.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<int>("DoctorId")
+                    b.Property<int?>("DoctorId")
                         .HasColumnType("int");
 
                     b.Property<string>("Notes")
@@ -169,7 +164,7 @@ namespace HealthAxis.API.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
-                    b.Property<int>("PatientId")
+                    b.Property<int?>("PatientId")
                         .HasColumnType("int");
 
                     b.Property<string>("Prescription")
@@ -216,10 +211,8 @@ namespace HealthAxis.API.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("Gender")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                    b.Property<int>("Gender")
+                        .HasColumnType("int");
 
                     b.Property<string>("InsuranceId")
                         .HasColumnType("nvarchar(max)");
@@ -231,9 +224,6 @@ namespace HealthAxis.API.Migrations
 
                     b.HasKey("PatientId");
 
-                    b.HasIndex("Email")
-                        .IsUnique();
-
                     b.ToTable("Patients");
 
                     b.HasData(
@@ -244,7 +234,7 @@ namespace HealthAxis.API.Migrations
                             DateOfBirth = new DateTime(1998, 5, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "ananya@example.com",
                             FullName = "Ananya Krishnan",
-                            Gender = "Female",
+                            Gender = 2,
                             InsuranceId = "INS1001",
                             PhoneNumber = "9876543210"
                         },
@@ -255,7 +245,7 @@ namespace HealthAxis.API.Migrations
                             DateOfBirth = new DateTime(1992, 9, 25, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "rahul@example.com",
                             FullName = "Rahul Nair",
-                            Gender = "Male",
+                            Gender = 1,
                             InsuranceId = "INS1002",
                             PhoneNumber = "9876543211"
                         });
@@ -266,13 +256,13 @@ namespace HealthAxis.API.Migrations
                     b.HasOne("HealthAxis.API.Models.Doctor", "Doctor")
                         .WithMany("Appointments")
                         .HasForeignKey("DoctorId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("HealthAxis.API.Models.Patient", "Patient")
                         .WithMany("Appointments")
                         .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Doctor");
@@ -288,23 +278,15 @@ namespace HealthAxis.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HealthAxis.API.Models.Doctor", "Doctor")
+                    b.HasOne("HealthAxis.API.Models.Doctor", null)
                         .WithMany("HealthRecords")
-                        .HasForeignKey("DoctorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("DoctorId");
 
-                    b.HasOne("HealthAxis.API.Models.Patient", "Patient")
+                    b.HasOne("HealthAxis.API.Models.Patient", null)
                         .WithMany("HealthRecords")
-                        .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("PatientId");
 
                     b.Navigation("Appointment");
-
-                    b.Navigation("Doctor");
-
-                    b.Navigation("Patient");
                 });
 
             modelBuilder.Entity("HealthAxis.API.Models.Appointment", b =>
