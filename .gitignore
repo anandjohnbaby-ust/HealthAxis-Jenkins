@@ -25,3 +25,7 @@ publish/
 efbundle.exe
 
 .sonarqube/
+
+
+.gitignore
+HealthAxis.API/Controllers/

@@ -1,0 +1,32 @@
+﻿using HealthAxis.API.Enums;
+using HealthAxis.API.Utilities;
+using System.ComponentModel.DataAnnotations;
+
+namespace HealthAxis.API.DTOs.DoctorDtos
+{
+    public class CreateDoctorDto
+    {
+        [Required(ErrorMessage = ValidationMessages.FullNameRequired)]
+        [StringLength(ValidationLimits.FullNameLength)]
+        [RegularExpression(
+            RegexPatterns.FullName,
+            ErrorMessage = ValidationMessages.InvalidFullNameFormat)]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = ValidationMessages.SpecialisationRequired)]
+        public Specialisation Specialisation { get; set; }
+
+        [Range(
+            ValidationLimits.MinExperience,
+            ValidationLimits.MaxExperience,
+            ErrorMessage = ValidationMessages.InvalidExperienceRange)]
+        public int YearsOfExperience { get; set; }
+
+        [Range(
+            typeof(decimal),
+            ValidationLimits.MinConsultationFee,
+            ValidationLimits.MaxConsultationFee,
+            ErrorMessage = ValidationMessages.InvalidConsultationFee)]
+        public decimal ConsultationFee { get; set; }
+    }
+}
