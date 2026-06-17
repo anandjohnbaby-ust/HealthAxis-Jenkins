@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HealthAxis.API.DTOs.PatientDtos
 {
-    public class UpdatePatientDto
+    public class CreatePatientDto
     {
         [Required(ErrorMessage = ValidationMessages.FullNameRequired)]
         [StringLength(ValidationLimits.FullNameLength)]
@@ -33,6 +33,5 @@ namespace HealthAxis.API.DTOs.PatientDtos
         [StringLength(ValidationLimits.EmailLength)]
         public string Email { get; set; } = string.Empty;
 
-        public string? InsuranceId { get; set; }
     }
 }

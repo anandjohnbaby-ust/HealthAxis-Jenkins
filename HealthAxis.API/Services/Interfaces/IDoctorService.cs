@@ -11,7 +11,8 @@ namespace HealthAxis.API.Services.Interfaces
             int id,
             CancellationToken ct = default);
 
-        Task<IEnumerable<DoctorDto>>
-            GetAvailableDoctorsAsync();
+        Task<DoctorDto> GetAvailableDoctorByIdAsync(
+            int doctorId,
+            CancellationToken ct = default);
     }
 }

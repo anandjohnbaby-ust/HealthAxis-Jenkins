@@ -39,8 +39,6 @@ namespace HealthAxis.API.Models
 
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
-        public string? InsuranceId { get; set; }
-
         // Navigation Properties
         public virtual ICollection<Appointment> Appointments { get; set; }
             = new List<Appointment>();

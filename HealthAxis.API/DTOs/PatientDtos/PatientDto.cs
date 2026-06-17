@@ -20,6 +20,5 @@ namespace HealthAxis.API.DTOs.PatientDtos
 
         public DateTime CreatedDate { get; set; }
 
-        public string? InsuranceId { get; set; }
     }
 }

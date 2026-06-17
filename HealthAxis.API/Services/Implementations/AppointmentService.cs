@@ -1,12 +1,10 @@
 ﻿using AutoMapper;
-using HealthAxis.API.DTOs.AppointmentDtos;
 using HealthAxis.API.Enums;
 using HealthAxis.API.Models;
-using HealthAxis.API.Repositories.Implementations;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
 using HealthAxis.API.Exceptions;
-
+using HealthAxis.API.DTOs.AppointmentDtos;
 
 namespace HealthAxis.API.Services.Implementations
 {
@@ -14,13 +12,13 @@ namespace HealthAxis.API.Services.Implementations
     {
         private readonly IRepository<Appointment> _appointmentRepository;
         private readonly IRepository<Doctor> _doctorRepository;
-        private readonly IRepository<Patient> _patientRepository;
+        private readonly IPatientRepository _patientRepository;
         private readonly IMapper _mapper;
 
         public AppointmentService(
             IRepository<Appointment> appointmentRepository,
             IRepository<Doctor> doctorRepository,
-            IRepository<Patient> patientRepository,
+            IPatientRepository patientRepository,
             IMapper mapper)
         {
             _appointmentRepository = appointmentRepository;
@@ -57,16 +55,8 @@ namespace HealthAxis.API.Services.Implementations
                     "Appointments can only be booked up to 6 months in advance.");
             }
 
-            if (string.IsNullOrWhiteSpace(dto.TimeSlot))
-            {
-                throw new ValidationException(
-                    "Time slot is required.");
-            }
-
             var patient =
-                await _patientRepository.GetByIdAsync(
-                    dto.PatientId,
-                    ct);
+                await _patientRepository.GetByIdAsync(dto.PatientId, ct);
 
             if (patient is null)
             {
@@ -90,8 +80,11 @@ namespace HealthAxis.API.Services.Implementations
                 throw new ValidationException(
                     "Appointments cannot be booked with inactive doctors.");
             }
-            // Do Validation for TimeSlot conflict also
 
+            /////////////////////////////////////////////
+            // Do Validation for TimeSlot conflict also//
+            /////////////////////////////////////////////
+            
             var appointment =
                 _mapper.Map<Appointment>(dto);
 
@@ -99,9 +92,7 @@ namespace HealthAxis.API.Services.Implementations
                 AppointmentStatus.Pending;
 
             var savedAppointment =
-                await _appointmentRepository.AddAsync(
-                    appointment,
-                    ct);
+                await _appointmentRepository.AddAsync(appointment, ct);
 
             return _mapper.Map<AppointmentDto>(
                 savedAppointment);
@@ -114,9 +105,7 @@ namespace HealthAxis.API.Services.Implementations
             CancellationToken ct = default)
         {
             var appointment =
-                await _appointmentRepository.GetByIdAsync(
-                    id,
-                    ct);
+                await _appointmentRepository.GetByIdAsync(id, ct);
 
             if (appointment is null)
             {
@@ -181,10 +170,7 @@ namespace HealthAxis.API.Services.Implementations
             }
 
             var updatedAppointment =
-                await _appointmentRepository.UpdateAsync(
-                    id,
-                    appointment,
-                    ct);
+                await _appointmentRepository.UpdateAsync(id, appointment, ct);
 
             return _mapper.Map<AppointmentDto>(
                 updatedAppointment);
@@ -197,9 +183,7 @@ namespace HealthAxis.API.Services.Implementations
             CancellationToken ct = default)
         {
             var appointment =
-                await _appointmentRepository.GetByIdAsync(
-                    id,
-                    ct);
+                await _appointmentRepository.GetByIdAsync(id, ct);
 
             if (appointment is null)
             {
@@ -224,9 +208,7 @@ namespace HealthAxis.API.Services.Implementations
             }
 
             var deletedAppointment =
-                await _appointmentRepository.DeleteAsync(
-                    id,
-                    ct);
+                await _appointmentRepository.DeleteAsync(id, ct);
 
             return _mapper.Map<AppointmentDto>(
                 deletedAppointment);

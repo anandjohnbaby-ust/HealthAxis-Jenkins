@@ -1,17 +1,16 @@
 ﻿using AutoMapper;
+using HealthAxis.API.DTOs.HealthRecordDtos;
 using HealthAxis.API.DTOs.PatientDtos;
 using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
-using HealthAxis.API.Repositories.Implementations;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace HealthAxis.API.Services.Implementations
 {
     public class PatientService : IPatientService
     {
-        private readonly IRepository<Patient>
+        private readonly IPatientRepository
             _patientRepository;
 
         private readonly IRepository<Appointment>
@@ -23,7 +22,7 @@ namespace HealthAxis.API.Services.Implementations
         private readonly IMapper _mapper;
 
         public PatientService(
-            IRepository<Patient> patientRepository,
+            IPatientRepository patientRepository,
             IRepository<Appointment> appointmentRepository,
             IRepository<HealthRecord> healthRecordRepository,
             IMapper mapper)
@@ -75,55 +74,25 @@ namespace HealthAxis.API.Services.Implementations
             _mapper.Map(dto, existingPatient);
 
             var updatedPatient =
-                await _patientRepository.UpdateAsync(
-                    id,
-                    existingPatient,
-                    ct);
+                await _patientRepository.UpdateAsync(id, existingPatient, ct);
 
             return _mapper.Map<PatientDto>(updatedPatient);
         }
 
-        public async Task<IEnumerable<HealthRecordDto>>
-            GetHealthRecordsAsync(
-                int patientId,
-                CancellationToken ct = default)
+        public async Task<IEnumerable<HealthRecordDto>> GetHealthRecordsByPatientId(int patientId, CancellationToken ct = default)
         {
             var patient =
                 await _patientRepository
-                    .GetByIdAsync(
-                        patientId,
-                        ct);
+                    .GetHealthRecordsByPatientId(patientId);
 
             if (patient is null)
             {
-                throw new NotFoundException("Patient not found.");
+                throw new NotFoundException(
+                    $"Patient with ID {patientId} not found");
             }
 
-            var appointments =
-                await _appointmentRepository
-                    .GetAllAsync(ct);
-
-            var appointmentIds =
-                appointments
-                    .Where(a =>
-                        a.PatientId == patientId)
-                    .Select(a =>
-                        a.AppointmentId)
-                    .ToHashSet();
-
-            var healthRecords =
-                await _healthRecordRepository
-                    .GetAllAsync(ct);
-
-            var patientHealthRecords =
-                healthRecords
-                    .Where(hr =>
-                        appointmentIds.Contains(
-                            hr.AppointmentId));
-
-            return _mapper.Map<
-                IEnumerable<HealthRecordDto>>(
-                    patientHealthRecords);
+            return _mapper.Map<IEnumerable<HealthRecordDto>>
+                (patient.HealthRecords);
         }
     }
 }

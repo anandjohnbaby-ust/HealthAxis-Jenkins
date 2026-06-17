@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
-    using HealthAxis.API.Enums;
+using HealthAxis.API.DTOs.HealthRecordDtos;
+using HealthAxis.API.Enums;
 using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
@@ -10,21 +11,21 @@ namespace HealthAxis.API.Services.Implementations
     public class HealthRecordService :
         IHealthRecordService
     {
-        private readonly IRepository<HealthRecord>
+        private readonly IHealthRecordRepository
             _healthRecordRepository;
 
-        private readonly IRepository<Appointment>
+        private readonly IAppointmentRepository
             _appointmentRepository;
 
-        private readonly IRepository<Patient>
+        private readonly IPatientRepository
             _patientRepository;
 
         private readonly IMapper _mapper;
 
         public HealthRecordService(
-            IRepository<HealthRecord> healthRecordRepository,
-            IRepository<Appointment> appointmentRepository,
-            IRepository<Patient> patientRepository,
+            IHealthRecordRepository healthRecordRepository,
+            IAppointmentRepository appointmentRepository,
+            IPatientRepository patientRepository,
             IMapper mapper)
         {
             _healthRecordRepository =
@@ -39,49 +40,8 @@ namespace HealthAxis.API.Services.Implementations
             _mapper = mapper;
         }
 
-        public async Task<IEnumerable<HealthRecordDto>>
-            GetByPatientIdAsync(
-                int patientId,
-                CancellationToken ct = default)
-        {
-            var patient =
-                await _patientRepository.GetByIdAsync(
-                    patientId,
-                    ct);
-
-            if (patient is null)
-            {
-                throw new NotFoundException(
-                    "Patient not found.");
-            }
-
-            var appointments =
-                await _appointmentRepository.GetAllAsync(ct);
-
-            var patientAppointmentIds =
-                appointments
-                    .Where(a =>
-                        a.PatientId == patientId)
-                    .Select(a =>
-                        a.AppointmentId)
-                    .ToHashSet();
-
-            var healthRecords =
-                await _healthRecordRepository.GetAllAsync(ct);
-
-            var records =
-                healthRecords
-                    .Where(hr =>
-                        patientAppointmentIds.Contains(
-                            hr.AppointmentId));
-
-            return _mapper.Map<
-                IEnumerable<HealthRecordDto>>(
-                    records);
-        }
-
         public async Task<HealthRecordDto>
-            GetByIdAsync(
+            GetByRecordIdAsync(
                 int id,
                 CancellationToken ct = default)
         {
@@ -159,6 +119,25 @@ namespace HealthAxis.API.Services.Implementations
 
             return _mapper.Map<HealthRecordDto>(
                 savedRecord);
+        }
+
+        public async Task<IEnumerable<HealthRecordDto>> GetByPatientIdAsync(
+            int patientId,
+            CancellationToken ct = default)
+        {
+            var records =
+                await _healthRecordRepository.GetByPatientIdAsync(
+                    patientId,
+                    ct);
+
+            if (!records.Any())
+            {
+                throw new NotFoundException(
+                    $"No health records found for patient with ID {patientId}.");
+            }
+
+            return _mapper.Map<IEnumerable<HealthRecordDto>>(
+                records);
         }
     }
 }

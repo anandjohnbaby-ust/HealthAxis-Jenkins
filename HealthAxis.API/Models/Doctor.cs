@@ -1,6 +1,7 @@
-﻿    using HealthAxis.API.Enums;
-    using HealthAxis.API.Utilities;
-    using System.ComponentModel.DataAnnotations;
+﻿using HealthAxis.API.Enums;
+using HealthAxis.API.Utilities;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
     namespace HealthAxis.API.Models
     {
@@ -30,6 +31,7 @@
                 ValidationLimits.MinConsultationFee,
                 ValidationLimits.MaxConsultationFee,
                 ErrorMessage = ValidationMessages.InvalidConsultationFee)]
+            [Precision(18, 2)]
             public decimal ConsultationFee { get; set; }
 
             public bool IsActive { get; set; } = true;

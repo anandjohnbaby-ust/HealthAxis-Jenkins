@@ -44,21 +44,25 @@ namespace HealthAxis.API.Services.Implementations
             return _mapper.Map<DoctorDto>(doctor);
         }
 
-        public async Task<IEnumerable<DoctorDto>> GetAvailableDoctorsAsync()
+        public async Task<DoctorDto>
+            GetAvailableDoctorByIdAsync(
+                int doctorId,
+                CancellationToken ct = default)
         {
-            IEnumerable<Doctor> doctors =
-                await _doctorRepository.GetAvailableDoctorsAsync();
+            var doctor =
+                await _doctorRepository
+                    .GetAvailableDoctorByIdAsync(
+                        doctorId,
+                        ct);
 
-            return doctors
-                .Select(d => new DoctorDto
-                {
-                    DoctorId = d.DoctorId,
-                    FullName = d.FullName,
-                    Specialisation = d.Specialisation,
-                    YearsOfExperience = d.YearsOfExperience,
-                    ConsultationFee = d.ConsultationFee,
-                    IsActive = d.IsActive
-                }).ToList();
+            if (doctor is null)
+            {
+                throw new NotFoundException(
+                    "Doctor not found or is not available.");
+            }
+
+            return _mapper.Map<DoctorDto>(
+                doctor);
         }
 
     }

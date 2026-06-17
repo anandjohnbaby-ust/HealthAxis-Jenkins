@@ -1,4 +1,5 @@
-﻿using HealthAxis.API.DTOs.PatientDtos;
+﻿using HealthAxis.API.DTOs.HealthRecordDtos;
+using HealthAxis.API.DTOs.PatientDtos;
 
 namespace HealthAxis.API.Services.Interfaces
 {
@@ -17,7 +18,7 @@ namespace HealthAxis.API.Services.Interfaces
             CancellationToken ct = default);
 
         Task<IEnumerable<HealthRecordDto>>
-            GetHealthRecordsAsync(
+            GetHealthRecordsByPatientId(
                 int patientId,
                 CancellationToken ct = default);
     }

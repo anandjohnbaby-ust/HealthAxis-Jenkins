@@ -1,10 +1,12 @@
 ﻿using HealthAxis.API.Enums;
 using HealthAxis.API.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthAxis.API.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     {
         public ApplicationDbContext(
             DbContextOptions<ApplicationDbContext> options)
@@ -21,6 +23,14 @@ namespace HealthAxis.API.Data
         protected override void OnModelCreating(
             ModelBuilder modelBuilder)
         {
+
+            foreach (var relationship in modelBuilder.Model
+                         .GetEntityTypes()
+                         .SelectMany(e => e.GetForeignKeys()))
+            {
+                relationship.DeleteBehavior = DeleteBehavior.Restrict;
+            }
+
             base.OnModelCreating(modelBuilder);
 
             SeedData(modelBuilder);
@@ -45,9 +55,9 @@ namespace HealthAxis.API.Data
                 modelBuilder.Entity<Patient>()
                 .HasData(
 
-                    new Patient {PatientId = 1, FullName = "Ananya Krishnan", DateOfBirth = new DateTime(1998, 5, 12), Gender = Gender.Female, PhoneNumber = "9876543210", Email = "ananya@example.com", InsuranceId = "INS1001", CreatedDate = new DateTime(2026, 1, 1)},
+                    new Patient {PatientId = 1, FullName = "Ananya Krishnan", DateOfBirth = new DateTime(1998, 5, 12), Gender = Gender.Female, PhoneNumber = "9876543210", Email = "ananya@example.com", CreatedDate = new DateTime(2026, 1, 1)},
 
-                    new Patient {PatientId = 2, FullName = "Rahul Nair", DateOfBirth = new DateTime(1992, 9, 25), Gender = Gender.Male, PhoneNumber = "9876543211", Email = "rahul@example.com", InsuranceId = "INS1002", CreatedDate = new DateTime(2026, 1, 1)}
+                    new Patient {PatientId = 2, FullName = "Rahul Nair", DateOfBirth = new DateTime(1992, 9, 25), Gender = Gender.Male, PhoneNumber = "9876543211", Email = "rahul@example.com", CreatedDate = new DateTime(2026, 1, 1)}
                 );
         }
     }

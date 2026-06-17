@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using HealthAxis.API.DTOs.AppointmentDtos;
 using HealthAxis.API.DTOs.DoctorDtos;
+using HealthAxis.API.DTOs.HealthRecordDtos;
 using HealthAxis.API.DTOs.PatientDtos;
 using HealthAxis.API.Models;
 

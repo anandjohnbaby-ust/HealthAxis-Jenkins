@@ -8,11 +8,15 @@ namespace HealthAxis.API.Repositories.Implementations
     {
         public DoctorRepository(ApplicationDbContext context) : base(context) {}
 
-        public async Task<IEnumerable<Doctor>> GetAvailableDoctorsAsync()
+        public async Task<Doctor?> GetAvailableDoctorByIdAsync(
+            int doctorId,
+            CancellationToken ct = default)
         {
             return await _context.Doctors
-                .Where(d => d.IsActive)
-                .ToListAsync();
+                .FirstOrDefaultAsync(
+                    d => d.DoctorId == doctorId &&
+                         d.IsActive,
+                    ct);
         }
     }
 }
