@@ -1,10 +1,11 @@
 ﻿using HealthAxis.API.DTOs.HealthRecordDtos;
 using HealthAxis.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-[Route("api/health-records")]
-[ApiController]
-public class HealthRecordsController :
+    [Route("api/health-records")]
+    [ApiController]
+    public class HealthRecordsController :
     ControllerBase
 {
     private readonly IHealthRecordService

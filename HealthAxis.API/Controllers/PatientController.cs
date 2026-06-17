@@ -1,6 +1,7 @@
 ﻿using HealthAxis.API.DTOs.HealthRecordDtos;
 using HealthAxis.API.DTOs.PatientDtos;
 using HealthAxis.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthAxis.API.Controllers
