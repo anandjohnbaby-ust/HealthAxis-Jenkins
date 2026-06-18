@@ -7,6 +7,7 @@ namespace HealthAxis.API.Controllers
 {
     [Route("api/doctors")]
     [ApiController]
+    [Authorize]
     public class DoctorsController : ControllerBase
     {
         private readonly IDoctorService _doctorService;
@@ -18,6 +19,7 @@ namespace HealthAxis.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<DoctorDto>>>
             GetAllDoctors(
                 CancellationToken ct)
@@ -29,6 +31,7 @@ namespace HealthAxis.API.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [Authorize(Roles = "Doctor,Admin")]
         public async Task<ActionResult<DoctorDto>>
             GetDoctorById(
                 int id,
@@ -41,6 +44,7 @@ namespace HealthAxis.API.Controllers
         }
 
         [HttpGet("{id:int}/availability")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult>
             GetDoctorAvailability(
                 int id,

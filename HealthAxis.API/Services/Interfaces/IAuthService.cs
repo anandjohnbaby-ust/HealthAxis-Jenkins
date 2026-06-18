@@ -1,6 +1,6 @@
 ﻿using HealthAxis.API.DTOs.AuthDtos;
 
-namespace HealthAxis.API.Services
+namespace HealthAxis.API.Services.Interfaces
 {
     public interface IAuthService
     {
@@ -10,3 +10,4 @@ namespace HealthAxis.API.Services
 
     }
 }
+

@@ -1,11 +1,12 @@
 ﻿using HealthAxis.API.DTOs.AuthDtos;
+using HealthAxis.API.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace HealthAxis.API.Services
+namespace HealthAxis.API.Services.Implementation
 {
     public class AuthService(UserManager<IdentityUser> userManager, IConfiguration config) : IAuthService
     {
@@ -16,13 +17,11 @@ namespace HealthAxis.API.Services
             {
                 return (false, "Invalid credentials", string.Empty, 0);
             }
-
             var isPasswordValid = await userManager.CheckPasswordAsync(user, request.Password);
             if (!isPasswordValid)
             {
                 return (false, "Invalid credentials", string.Empty, 0);
             }
-
             var token = await GenerateToken(user);
             var expiry = int.Parse(config.GetSection("Jwt")["AccessTokenExpirationMinutes"]!);
             return (true, "User Logged in Successfully", token, expiry);
@@ -32,64 +31,29 @@ namespace HealthAxis.API.Services
         {
             if (request.Password != request.ConfirmPassword)
             {
-                return (false, "Passwords do not match", string.Empty);
+                return (false, "Password Do not Match", string.Empty);
             }
-
-            // Allowed roles
-            var validRoles = new[] { "Admin", "Patient", "Doctor" };
-
-            // Validate role (case-insensitive)
-            if (!validRoles.Any(r =>
-                r.Equals(request.Role, StringComparison.OrdinalIgnoreCase)))
+            if (request.Role != "Admin" && request.Role != "Patient" && request.Role != "Doctor")
             {
-                return (false, "Invalid Role. Allowed roles are Admin, Patient, Doctor.", string.Empty);
-            }
-
-            // Normalize role value
-            request.Role = validRoles.First(r =>
-                r.Equals(request.Role, StringComparison.OrdinalIgnoreCase));
-
-            // Check if email already exists
-            var existingUser = await userManager.FindByEmailAsync(request.Email);
-
-            if (existingUser != null)
-            {
-                return (false, "User with this email already exists.", string.Empty);
+                return (false, "Invalid Role", string.Empty);
             }
 
             var user = new IdentityUser
             {
                 UserName = request.Email,
-                Email = request.Email
+                Email = request.Email,
             };
 
             var result = await userManager.CreateAsync(user, request.Password);
 
             if (!result.Succeeded)
             {
-                var errors = string.Join(", ",
-                    result.Errors.Select(e => e.Description));
-
+                var errors = string.Join(",", result.Errors.Select(e => e.Description));
                 return (false, errors, string.Empty);
             }
 
-            // Assign role to user
-            var roleResult = await userManager.AddToRoleAsync(user, request.Role);
-
-            if (!roleResult.Succeeded)
-            {
-                var errors = string.Join(", ",
-                    roleResult.Errors.Select(e => e.Description));
-
-                // Optional: delete the created user if role assignment fails
-                await userManager.DeleteAsync(user);
-
-                return (false, errors, string.Empty);
-            }
-
-            return (true,
-                $"{request.Role} registered successfully.",
-                user.Id);
+            await userManager.AddToRoleAsync(user, request.Role);
+            return (true, "User Registered Successfully", user.Id);
         }
 
         private async Task<string> GenerateToken(IdentityUser user)
@@ -102,15 +66,15 @@ namespace HealthAxis.API.Services
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub,user.Id),
-                new Claim(JwtRegisteredClaimNames.Email,user.Email!),
+                new Claim(JwtRegisteredClaimNames.Email,user.Email),
                 new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.NameIdentifier,user.Id)
 
             };
 
-            foreach (var role in roles)
+            foreach (var r in roles)
             {
-                claims.Add(new Claim(ClaimTypes.Role, role));
+                claims.Add(new Claim(ClaimTypes.Role, r));
             }
 
             var expirationMinutes = int.Parse(jwtSettings["AccessTokenExpirationMinutes"]!);
@@ -122,6 +86,7 @@ namespace HealthAxis.API.Services
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(expirationMinutes),
                 signingCredentials: credentials
+
 
                 );
 

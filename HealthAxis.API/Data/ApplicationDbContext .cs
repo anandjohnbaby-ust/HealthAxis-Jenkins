@@ -10,7 +10,7 @@ namespace HealthAxis.API.Data
     {
         public ApplicationDbContext(
             DbContextOptions<ApplicationDbContext> options)
-            : base(options) {}
+            : base(options) { }
 
         public DbSet<Patient> Patients { get; set; }
 
@@ -20,8 +20,7 @@ namespace HealthAxis.API.Data
 
         public DbSet<HealthRecord> HealthRecords { get; set; }
 
-        protected override void OnModelCreating(
-            ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
             foreach (var relationship in modelBuilder.Model
@@ -33,6 +32,7 @@ namespace HealthAxis.API.Data
 
             base.OnModelCreating(modelBuilder);
 
+
             SeedData(modelBuilder);
         }
 
@@ -41,24 +41,24 @@ namespace HealthAxis.API.Data
             modelBuilder.Entity<Doctor>()
                 .HasData(
 
-                    new Doctor {DoctorId = 1, FullName = "Dr Arjun Narayanan", Specialisation = Specialisation.Cardiology, YearsOfExperience = 12, ConsultationFee = 850m, IsActive = true},
+                    new Doctor { DoctorId = 1, FullName = "Dr Arjun Narayanan", Specialisation = Specialisation.Cardiology, YearsOfExperience = 12, ConsultationFee = 850m, IsActive = true },
 
-                    new Doctor {DoctorId = 2, FullName = "Dr Kavya Srinivasan", Specialisation = Specialisation.Dermatology, YearsOfExperience = 8, ConsultationFee = 700m, IsActive = true},
+                    new Doctor { DoctorId = 2, FullName = "Dr Kavya Srinivasan", Specialisation = Specialisation.Dermatology, YearsOfExperience = 8, ConsultationFee = 700m, IsActive = true },
 
-                    new Doctor {DoctorId = 3, FullName = "Dr Rohit Menon", Specialisation = Specialisation.Neurology, YearsOfExperience = 15, ConsultationFee = 1200m, IsActive = true},
+                    new Doctor { DoctorId = 3, FullName = "Dr Rohit Menon", Specialisation = Specialisation.Neurology, YearsOfExperience = 15, ConsultationFee = 1200m, IsActive = true },
 
-                    new Doctor {DoctorId = 4, FullName = "Dr Priya Ramachandran", Specialisation = Specialisation.Pediatrics, YearsOfExperience = 6, ConsultationFee = 650m, IsActive = true},
+                    new Doctor { DoctorId = 4, FullName = "Dr Priya Ramachandran", Specialisation = Specialisation.Pediatrics, YearsOfExperience = 6, ConsultationFee = 650m, IsActive = true },
 
-                    new Doctor {DoctorId = 5, FullName = "Dr Siddharth Iyer", Specialisation = Specialisation.Orthopedics, YearsOfExperience = 10, ConsultationFee = 900m, IsActive = true}
+                    new Doctor { DoctorId = 5, FullName = "Dr Siddharth Iyer", Specialisation = Specialisation.Orthopedics, YearsOfExperience = 10, ConsultationFee = 900m, IsActive = true }
                 );
 
-                modelBuilder.Entity<Patient>()
-                .HasData(
+            modelBuilder.Entity<Patient>()
+            .HasData(
 
-                    new Patient {PatientId = 1, FullName = "Ananya Krishnan", DateOfBirth = new DateTime(1998, 5, 12), Gender = Gender.Female, PhoneNumber = "9876543210", Email = "ananya@example.com", CreatedDate = new DateTime(2026, 1, 1)},
+                new Patient { PatientId = 1, FullName = "Ananya Krishnan", DateOfBirth = new DateTime(1998, 5, 12), Gender = Gender.Female, PhoneNumber = "9876543210", Email = "ananya@example.com", CreatedDate = new DateTime(2026, 1, 1) },
 
-                    new Patient {PatientId = 2, FullName = "Rahul Nair", DateOfBirth = new DateTime(1992, 9, 25), Gender = Gender.Male, PhoneNumber = "9876543211", Email = "rahul@example.com", CreatedDate = new DateTime(2026, 1, 1)}
-                );
+                new Patient { PatientId = 2, FullName = "Rahul Nair", DateOfBirth = new DateTime(1992, 9, 25), Gender = Gender.Male, PhoneNumber = "9876543211", Email = "rahul@example.com", CreatedDate = new DateTime(2026, 1, 1) }
+            );
         }
     }
 }

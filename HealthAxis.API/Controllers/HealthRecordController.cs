@@ -3,61 +3,55 @@ using HealthAxis.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+namespace HealthAxis.API.Controllers
+{
     [Route("api/health-records")]
     [ApiController]
-    public class HealthRecordsController :
-    ControllerBase
-{
-    private readonly IHealthRecordService
-        _healthRecordService;
-
-    public HealthRecordsController(
-        IHealthRecordService healthRecordService)
+    [Authorize]
+    public class HealthRecordsController : ControllerBase
     {
-        _healthRecordService =
-            healthRecordService;
-    }
+        private readonly IHealthRecordService _healthRecordService;
 
-    [HttpGet("{id:int}")]
-    public async Task<IActionResult>
-        GetByRecordIdAsync(
+        public HealthRecordsController(
+            IHealthRecordService healthRecordService)
+        {
+            _healthRecordService = healthRecordService;
+        }
+
+        [HttpGet("{id:int}")]
+        [Authorize(Roles = "Doctor,Admin")]
+        public async Task<IActionResult> GetByRecordIdAsync(
             int id,
             CancellationToken ct)
-    {
-        var record =
-            await _healthRecordService
-                .GetByRecordIdAsync(
-                    id,
-                    ct);
+        {
+            var record = await _healthRecordService
+                .GetByRecordIdAsync(id, ct);
 
-        return Ok(record);
-    }
+            return Ok(record);
+        }
 
-    [HttpPost]
-    public async Task<IActionResult>
-        Create(
+        [HttpPost]
+        [Authorize(Roles = "Doctor")]
+        public async Task<IActionResult> Create(
             CreateHealthRecordDto dto,
             CancellationToken ct)
-    {
-        var healthRecord =
-            await _healthRecordService
-                .AddAsync(
-                    dto,
-                    ct);
+        {
+            var healthRecord = await _healthRecordService
+                .AddAsync(dto, ct);
 
-        return Ok(healthRecord);
-    }
+            return Ok(healthRecord);
+        }
 
-    [HttpGet("patient/{patientId:int}")]
-    public async Task<ActionResult<IEnumerable<HealthRecordDto>>> GetByPatientId(
-        int patientId,
-        CancellationToken ct)
-    {
-        var records =
-            await _healthRecordService.GetByPatientIdAsync(
-                patientId,
-                ct);
+        [HttpGet("patient/{patientId:int}")]
+        [Authorize(Roles = "Patient,Doctor,Admin")]
+        public async Task<ActionResult<IEnumerable<HealthRecordDto>>> GetByPatientId(
+            int patientId,
+            CancellationToken ct)
+        {
+            var records = await _healthRecordService
+                .GetByPatientIdAsync(patientId, ct);
 
-        return Ok(records);
+            return Ok(records);
+        }
     }
 }

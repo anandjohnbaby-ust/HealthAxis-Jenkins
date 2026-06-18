@@ -13,7 +13,7 @@ namespace HealthAxis.API.Middlewares
             _logger = logger;
         }
 
-        public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, 
+        public async ValueTask<bool> TryHandleAsync(HttpContext httpContext,
             Exception exception, CancellationToken cancellationToken)
         {
             _logger.LogError(exception, "An Unexpected Error occurred : {Message}", exception.Message);

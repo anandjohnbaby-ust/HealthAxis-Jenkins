@@ -41,15 +41,9 @@ namespace HealthAxis.API.Profiles
             CreateMap<Appointment, AppointmentDto>();
 
             // Health Record Mappings
-            CreateMap<CreateHealthRecordDto,
-                HealthRecord>();
-
-            CreateMap<HealthRecord,
-                HealthRecordDto>();
+            CreateMap<CreateHealthRecordDto,HealthRecord>();
 
             CreateMap<HealthRecord, HealthRecordDto>();
-
-            CreateMap<CreateHealthRecordDto, HealthRecord>();
         }
     }
 }

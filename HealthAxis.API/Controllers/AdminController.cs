@@ -7,12 +7,12 @@ namespace HealthAxis.API.Controllers
 {
     [Route("api/admin")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
         private readonly IAdminService _adminService;
 
-        public AdminController(
-            IAdminService adminService)
+        public AdminController(IAdminService adminService)
         {
             _adminService = adminService;
         }
@@ -20,8 +20,7 @@ namespace HealthAxis.API.Controllers
         [HttpGet("doctors")]
         public async Task<IActionResult> GetDoctors()
         {
-            var doctors =
-                await _adminService.GetDoctors();
+            var doctors = await _adminService.GetDoctors();
 
             return Ok(doctors);
         }
@@ -30,29 +29,28 @@ namespace HealthAxis.API.Controllers
         public async Task<IActionResult> CreateDoctor(
             CreateDoctorDto dto)
         {
-            var doctor =
-                await _adminService.CreateDoctor(dto);
+            var doctor = await _adminService.CreateDoctor(dto);
 
-            return Ok(doctor);
+            return CreatedAtAction(
+                nameof(GetDoctors),
+                new { id = doctor.DoctorId },
+                doctor);
         }
 
-        [HttpPut("doctors/{id}")]
+        [HttpPut("doctors/{id:int}")]
         public async Task<IActionResult> UpdateDoctor(
             int id,
             UpdateDoctorDto dto)
         {
-            var doctor =
-                await _adminService.UpdateDoctor(id, dto);
+            var doctor = await _adminService.UpdateDoctor(id, dto);
 
             return Ok(doctor);
         }
 
         [HttpGet("reports/appointments")]
-        public async Task<IActionResult>
-            GetAppointmentReport()
+        public async Task<IActionResult> GetAppointmentReport()
         {
-            var report =
-                await _adminService.GetAppointmentReport();
+            var report = await _adminService.GetAppointmentReport();
 
             return Ok(report);
         }

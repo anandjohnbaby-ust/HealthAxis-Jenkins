@@ -7,6 +7,7 @@ namespace HealthAxis.API.Controllers
 {
     [Route("api/appointments")]
     [ApiController]
+    [Authorize]
     public class AppointmentsController : ControllerBase
     {
         private readonly IAppointmentService _appointmentService;
@@ -16,10 +17,11 @@ namespace HealthAxis.API.Controllers
         {
             _appointmentService = appointmentService;
         }
+
         [HttpGet]
+        [Authorize(Roles = "Doctor,Admin")]
         public async Task<ActionResult<IEnumerable<AppointmentDto>>>
-            GetAllAppointments(
-                CancellationToken ct)
+            GetAllAppointments(CancellationToken ct)
         {
             var appointments =
                 await _appointmentService.GetAllAsync(ct);
@@ -28,15 +30,14 @@ namespace HealthAxis.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Patient")]
         public async Task<ActionResult<AppointmentDto>>
             CreateAppointment(
                 CreateAppointmentDto dto,
                 CancellationToken ct)
         {
             var createdAppointment =
-                await _appointmentService.AddAsync(
-                    dto,
-                    ct);
+                await _appointmentService.AddAsync(dto, ct);
 
             return CreatedAtAction(
                 nameof(GetAllAppointments),
@@ -45,6 +46,7 @@ namespace HealthAxis.API.Controllers
         }
 
         [HttpPut("{id:int}/status")]
+        [Authorize(Roles = "Doctor")]
         public async Task<ActionResult<AppointmentDto>>
             UpdateAppointmentStatus(
                 int id,
@@ -52,26 +54,25 @@ namespace HealthAxis.API.Controllers
                 CancellationToken ct)
         {
             var updatedAppointment =
-                await _appointmentService
-                    .UpdateStatusAsync(
-                        id,
-                        dto,
-                        ct);
+                await _appointmentService.UpdateStatusAsync(
+                    id,
+                    dto,
+                    ct);
 
             return Ok(updatedAppointment);
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<AppointmentDto>>
             DeleteAppointment(
                 int id,
                 CancellationToken ct)
         {
             var deletedAppointment =
-                await _appointmentService
-                    .DeleteAsync(
-                        id,
-                        ct);
+                await _appointmentService.DeleteAsync(
+                    id,
+                    ct);
 
             return Ok(deletedAppointment);
         }

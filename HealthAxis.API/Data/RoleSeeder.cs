@@ -2,10 +2,9 @@
 
 namespace HealthAxis.API.Data
 {
-    public static class RoleSeeder
+    public class RoleSeeder
     {
-
-        public static async Task SeedRoleAsync(RoleManager<IdentityRole> roleManager)
+        public static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
         {
             string[] roles = { "Admin", "Patient", "Doctor" };
 
