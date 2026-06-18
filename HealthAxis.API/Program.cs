@@ -200,13 +200,25 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 
+//using (var scope = app.Services.CreateScope())
+//{
+//    var roleManager =
+//        scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+//    await RoleSeeder.SeedRolesAsync(roleManager);
+//}
+
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager =
-        scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var services = scope.ServiceProvider;
+
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
     await RoleSeeder.SeedRolesAsync(roleManager);
+    await RoleSeeder.SeedAdminAsync(userManager);
 }
+
 
 if (app.Environment.IsDevelopment())
 {

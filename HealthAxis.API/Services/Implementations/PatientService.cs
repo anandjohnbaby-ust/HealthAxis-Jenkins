@@ -13,12 +13,6 @@ namespace HealthAxis.API.Services.Implementations
         private readonly IPatientRepository
             _patientRepository;
 
-        private readonly IRepository<Appointment>
-            _appointmentRepository;
-
-        private readonly IRepository<HealthRecord>
-            _healthRecordRepository;
-
         private readonly IMapper _mapper;
 
         public PatientService(
@@ -29,12 +23,6 @@ namespace HealthAxis.API.Services.Implementations
         {
             _patientRepository =
                 patientRepository;
-
-            _appointmentRepository =
-                appointmentRepository;
-
-            _healthRecordRepository =
-                healthRecordRepository;
 
             _mapper = mapper;
         }

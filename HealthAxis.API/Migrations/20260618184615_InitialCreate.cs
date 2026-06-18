@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -33,6 +32,8 @@ namespace HealthAxis.API.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RefreshTokenExpiryTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -278,8 +279,8 @@ namespace HealthAxis.API.Migrations
                 columns: new[] { "PatientId", "CreatedDate", "DateOfBirth", "Email", "FullName", "Gender", "PhoneNumber" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new DateTime(1998, 5, 12, 0, 0, 0, 0, DateTimeKind.Unspecified), "ananya@example.com", "Ananya Krishnan", 2, "9876543210" },
-                    { 2, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new DateTime(1992, 9, 25, 0, 0, 0, 0, DateTimeKind.Unspecified), "rahul@example.com", "Rahul Nair", 1, "9876543211" }
+                    { 1, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), new DateTime(1998, 5, 12, 0, 0, 0, 0, DateTimeKind.Unspecified), "ananya@example.com", "Ananya Krishnan", 2, "9876543210" },
+                    { 2, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), new DateTime(1992, 9, 25, 0, 0, 0, 0, DateTimeKind.Unspecified), "rahul@example.com", "Rahul Nair", 1, "9876543211" }
                 });
 
             migrationBuilder.CreateIndex(

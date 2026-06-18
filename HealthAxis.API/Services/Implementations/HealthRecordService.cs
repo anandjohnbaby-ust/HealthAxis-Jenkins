@@ -17,15 +17,11 @@ namespace HealthAxis.API.Services.Implementations
         private readonly IAppointmentRepository
             _appointmentRepository;
 
-        private readonly IPatientRepository
-            _patientRepository;
-
         private readonly IMapper _mapper;
 
         public HealthRecordService(
             IHealthRecordRepository healthRecordRepository,
             IAppointmentRepository appointmentRepository,
-            IPatientRepository patientRepository,
             IMapper mapper)
         {
             _healthRecordRepository =
@@ -33,9 +29,6 @@ namespace HealthAxis.API.Services.Implementations
 
             _appointmentRepository =
                 appointmentRepository;
-
-            _patientRepository =
-                patientRepository;
 
             _mapper = mapper;
         }

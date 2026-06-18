@@ -20,25 +20,25 @@ namespace HealthAxis.API.Data
 
         public DbSet<HealthRecord> HealthRecords { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder builder)
         {
 
-            foreach (var relationship in modelBuilder.Model
+            foreach (var relationship in builder.Model
                          .GetEntityTypes()
                          .SelectMany(e => e.GetForeignKeys()))
             {
                 relationship.DeleteBehavior = DeleteBehavior.Restrict;
             }
 
-            base.OnModelCreating(modelBuilder);
+            base.OnModelCreating(builder);
 
 
-            SeedData(modelBuilder);
+            SeedData(builder);
         }
 
-        private static void SeedData(ModelBuilder modelBuilder)
+        private static void SeedData(ModelBuilder builder)
         {
-            modelBuilder.Entity<Doctor>()
+            builder.Entity<Doctor>()
                 .HasData(
 
                     new Doctor { DoctorId = 1, FullName = "Dr Arjun Narayanan", Specialisation = Specialisation.Cardiology, YearsOfExperience = 12, ConsultationFee = 850m, IsActive = true },
@@ -52,12 +52,12 @@ namespace HealthAxis.API.Data
                     new Doctor { DoctorId = 5, FullName = "Dr Siddharth Iyer", Specialisation = Specialisation.Orthopedics, YearsOfExperience = 10, ConsultationFee = 900m, IsActive = true }
                 );
 
-            modelBuilder.Entity<Patient>()
+            builder.Entity<Patient>()
             .HasData(
 
-                new Patient { PatientId = 1, FullName = "Ananya Krishnan", DateOfBirth = new DateTime(1998, 5, 12), Gender = Gender.Female, PhoneNumber = "9876543210", Email = "ananya@example.com", CreatedDate = new DateTime(2026, 1, 1) },
+                new Patient { PatientId = 1, FullName = "Ananya Krishnan", DateOfBirth = new DateTime(1998, 5, 12, 0, 0, 0, DateTimeKind.Unspecified), Gender = Gender.Female, PhoneNumber = "9876543210", Email = "ananya@example.com", CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
 
-                new Patient { PatientId = 2, FullName = "Rahul Nair", DateOfBirth = new DateTime(1992, 9, 25), Gender = Gender.Male, PhoneNumber = "9876543211", Email = "rahul@example.com", CreatedDate = new DateTime(2026, 1, 1) }
+                new Patient { PatientId = 2, FullName = "Rahul Nair", DateOfBirth = new DateTime(1992, 9, 25, 0, 0, 0, DateTimeKind.Unspecified), Gender = Gender.Male, PhoneNumber = "9876543211", Email = "rahul@example.com", CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
             );
         }
     }

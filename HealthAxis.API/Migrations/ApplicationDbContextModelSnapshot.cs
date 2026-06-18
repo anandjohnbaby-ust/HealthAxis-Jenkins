@@ -296,7 +296,7 @@ namespace HealthAxis.API.Migrations
                         new
                         {
                             PatientId = 1,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DateOfBirth = new DateTime(1998, 5, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "ananya@example.com",
                             FullName = "Ananya Krishnan",
@@ -306,7 +306,7 @@ namespace HealthAxis.API.Migrations
                         new
                         {
                             PatientId = 2,
-                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             DateOfBirth = new DateTime(1992, 9, 25, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "rahul@example.com",
                             FullName = "Rahul Nair",

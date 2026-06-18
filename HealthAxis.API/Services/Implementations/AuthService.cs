@@ -72,10 +72,10 @@ namespace HealthAxis.API.Services.Implementation
             {
                 return (false, "Password Do not Match", string.Empty);
             }
-            if (request.Role != "Admin" && request.Role != "Patient" && request.Role != "Doctor")
-            {
-                return (false, "Invalid Role", string.Empty);
-            }
+            //if (request.Role != "Admin" && request.Role != "Patient" && request.Role != "Doctor")
+            //{
+            //    return (false, "Invalid Role", string.Empty);
+            //}
 
             var user = new ApplicationUser
             {
@@ -91,7 +91,8 @@ namespace HealthAxis.API.Services.Implementation
                 return (false, errors, string.Empty);
             }
 
-            await userManager.AddToRoleAsync(user, request.Role);
+            //await userManager.AddToRoleAsync(user, request.Role);
+            await userManager.AddToRoleAsync(user, "Patient");
             return (true, "User Registered Successfully", user.Id);
         }
 

@@ -3,4 +3,5 @@
     <File Path=".gitignore" />
   </Folder>
   <Project Path="HealthAxis.API/HealthAxis.API.csproj" />
+  <Project Path="HealthAxisAPI.Tests/HealthAxisAPI.Tests.csproj" Id="f6e867ed-e1d5-4baf-9217-5f112b5dd02f" />
 </Solution>
