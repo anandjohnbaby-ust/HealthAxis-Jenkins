@@ -1,35 +1,75 @@
-﻿using HealthAxis.API.DTOs.AuthDtos;
+﻿//using HealthAxis.API.DTOs.AuthDtos;
+//using HealthAxis.API.Models;
+//using HealthAxis.API.Services.Interfaces;
+//using Microsoft.AspNetCore.Authorization;
+//using Microsoft.AspNetCore.Mvc;
+
+//namespace HealthAxis.API.Controllers
+//{
+//    [Route("api/auth")]
+//    [ApiController]
+//    public class AuthController : ControllerBase
+//    {
+//        private readonly IAuthService _authService;
+
+//        public AuthController(IAuthService authService)
+//        {
+//            _authService = authService;
+//        }
+
+//        [AllowAnonymous]
+//        [HttpPost("register")]
+//        public async Task<IActionResult> Register(RegisterDto request)
+//        {
+//            var (success, message, userId) =
+//                await _authService.Register(request);
+
+//            if (!success)
+//            {
+//                return BadRequest(new
+//                {
+//                    message
+//                });
+//            }
+
+//            return Ok(new
+//            {
+//                message,
+//                userId
+//            });
+//        }
+
+//        [AllowAnonymous]
+//        [HttpPost("login")]
+//        public async Task<ActionResult<AuthResponse>> Login(LoginDto request)
+//        {
+//            var response = await _authService.Login(request);
+
+//            return Ok(response);
+//        }
+//    }
+//}
+
+using HealthAxis.API.DTOs.AuthDtos;
 using HealthAxis.API.Models;
 using HealthAxis.API.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace HealthAxis.API.Controllers
+namespace HealthAxis.API.Controller
 {
-    [Route("api/auth")]
+    [Route("api/[controller]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController(IAuthService service) : ControllerBase
     {
-        private readonly IAuthService _authService;
-
-        public AuthController(IAuthService authService)
-        {
-            _authService = authService;
-        }
-
-        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto request)
         {
             var (success, message, userId) =
-                await _authService.Register(request);
+                await service.Register(request);
 
             if (!success)
             {
-                return BadRequest(new
-                {
-                    message
-                });
+                return BadRequest(new { message });
             }
 
             return Ok(new
@@ -39,13 +79,49 @@ namespace HealthAxis.API.Controllers
             });
         }
 
-        [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<ActionResult<AuthResponse>> Login(LoginDto request)
+        public async Task<IActionResult> Login(LoginDto request)
         {
-            var response = await _authService.Login(request);
+            var result = await service.Login(request);
 
-            return Ok(response);
+            if (!result.Success)
+            {
+                return Unauthorized(new
+                {
+                    result.Message
+                });
+            }
+
+            return Ok(new AuthResponse
+            {
+                Message = result.Message,
+                AccessToken = result.AccessToken,
+                RefreshToken = result.RefreshToken,
+                ExpiresIn = result.ExpiresIn
+            });
+        }
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken(
+            RefreshTokenDto request)
+        {
+            var result = await service.RefreshToken(request);
+
+            if (!result.Success)
+            {
+                return Unauthorized(new
+                {
+                    result.Message
+                });
+            }
+
+            return Ok(new AuthResponse
+            {
+                Message = result.Message,
+                AccessToken = result.AccessToken,
+                RefreshToken = result.RefreshToken,
+                ExpiresIn = result.ExpiresIn
+            });
         }
     }
 }

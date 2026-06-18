@@ -1,4 +1,5 @@
 ﻿using HealthAxis.API.DTOs.AuthDtos;
+using HealthAxis.API.Models;
 using HealthAxis.API.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -8,23 +9,61 @@ using System.Text;
 
 namespace HealthAxis.API.Services.Implementation
 {
-    public class AuthService(UserManager<IdentityUser> userManager, IConfiguration config) : IAuthService
+    public class AuthService(UserManager<ApplicationUser> userManager, IConfiguration config) : IAuthService
     {
-        public async Task<(bool Success, string Message, string token, int ExpiresIn)> Login(LoginDto request)
+        public async Task<(bool Success,
+                  string Message,
+                  string AccessToken,
+                  string RefreshToken,
+                  int ExpiresIn)>
+                    Login(LoginDto request)
         {
             var user = await userManager.FindByEmailAsync(request.Email);
-            if (user is null)
+
+            if (user == null)
             {
-                return (false, "Invalid credentials", string.Empty, 0);
+                return (false,
+                        "Invalid Credentials",
+                        string.Empty,
+                        string.Empty,
+                        0);
             }
-            var isPasswordValid = await userManager.CheckPasswordAsync(user, request.Password);
-            if (!isPasswordValid)
+
+            var validPassword =
+                await userManager.CheckPasswordAsync(user, request.Password);
+
+            if (!validPassword)
             {
-                return (false, "Invalid credentials", string.Empty, 0);
+                return (false,
+                        "Invalid Credentials",
+                        string.Empty,
+                        string.Empty,
+                        0);
             }
-            var token = await GenerateToken(user);
-            var expiry = int.Parse(config.GetSection("Jwt")["AccessTokenExpirationMinutes"]!);
-            return (true, "User Logged in Successfully", token, expiry);
+
+            var accessToken =
+                await GenerateToken(user);
+
+            var refreshToken =
+                GenerateRefreshToken();
+
+            user.RefreshToken = refreshToken;
+
+            user.RefreshTokenExpiryTime =
+                DateTime.UtcNow.AddDays(7);
+
+            await userManager.UpdateAsync(user);
+
+            int expiry =
+                int.Parse(config["Jwt:AccessTokenExpirationMinutes"]!);
+
+            return (
+                true,
+                "Login Successful",
+                accessToken,
+                refreshToken,
+                expiry
+            );
         }
 
         public async Task<(bool Success, string Message, string UserId)> Register(RegisterDto request)
@@ -38,7 +77,7 @@ namespace HealthAxis.API.Services.Implementation
                 return (false, "Invalid Role", string.Empty);
             }
 
-            var user = new IdentityUser
+            var user = new ApplicationUser
             {
                 UserName = request.Email,
                 Email = request.Email,
@@ -56,7 +95,7 @@ namespace HealthAxis.API.Services.Implementation
             return (true, "User Registered Successfully", user.Id);
         }
 
-        private async Task<string> GenerateToken(IdentityUser user)
+        private async Task<string> GenerateToken(ApplicationUser user)
         {
             var jwtSettings = config.GetSection("Jwt");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
@@ -65,11 +104,13 @@ namespace HealthAxis.API.Services.Implementation
 
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub,user.Id),
-                new Claim(JwtRegisteredClaimNames.Email,user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier,user.Id)
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
 
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+
+                new Claim(JwtRegisteredClaimNames.Email, user.Email!),
+
+                new Claim(ClaimTypes.Email, user.Email!)
             };
 
             foreach (var r in roles)
@@ -91,6 +132,71 @@ namespace HealthAxis.API.Services.Implementation
                 );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[64];
+
+            using var rng =
+                System.Security.Cryptography.RandomNumberGenerator.Create();
+
+            rng.GetBytes(randomNumber);
+
+            return Convert.ToBase64String(randomNumber);
+        }
+
+        public async Task<(bool Success,
+                  string Message,
+                  string AccessToken,
+                  string RefreshToken,
+                  int ExpiresIn)>
+                    RefreshToken(RefreshTokenDto request)
+        {
+            var user = userManager.Users
+                .FirstOrDefault(u => u.RefreshToken == request.RefreshToken);
+
+            if (user == null)
+            {
+                return (
+                    false,
+                    "Invalid Refresh Token",
+                    string.Empty,
+                    string.Empty,
+                    0);
+            }
+
+            if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            {
+                return (
+                    false,
+                    "Refresh Token Expired",
+                    string.Empty,
+                    string.Empty,
+                    0);
+            }
+
+            var newAccessToken =
+                await GenerateToken(user);
+
+            var newRefreshToken =
+                GenerateRefreshToken();
+
+            user.RefreshToken = newRefreshToken;
+
+            user.RefreshTokenExpiryTime =
+                DateTime.UtcNow.AddDays(7);
+
+            await userManager.UpdateAsync(user);
+
+            int expiry =
+                int.Parse(config["Jwt:AccessTokenExpirationMinutes"]!);
+
+            return (
+                true,
+                "Token Refreshed Successfully",
+                newAccessToken,
+                newRefreshToken,
+                expiry);
         }
     }
 }

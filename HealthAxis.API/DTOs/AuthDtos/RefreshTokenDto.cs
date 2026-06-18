@@ -1,6 +1,6 @@
 ﻿namespace HealthAxis.API.DTOs.AuthDtos
 {
-    public class RefreshTokenRequestDto
+    public class RefreshTokenDto
     {
         public string RefreshToken { get; set; } = string.Empty;
     }

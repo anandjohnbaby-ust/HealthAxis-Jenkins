@@ -1,4 +1,4 @@
-
+using HealthAxis.API.Models;
 using HealthAxis.API.Data;
 using HealthAxis.API.Middlewares;
 using HealthAxis.API.Repositories.Implementations;
@@ -76,7 +76,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Identity
 //----------------------------------------------------------
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.User.RequireUniqueEmail = true;
 
