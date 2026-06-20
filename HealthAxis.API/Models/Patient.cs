@@ -11,6 +11,10 @@ namespace HealthAxis.API.Models
         [Key]
         public int PatientId { get; set; }
 
+        // Foreign Key to AspNetUsers
+        [Required]
+        public string UserId { get; set; } = string.Empty;
+
         [Required(ErrorMessage = ValidationMessages.FullNameRequired)]
         [StringLength(ValidationLimits.FullNameLength)]
         [RegularExpression(RegexPatterns.FullName, ErrorMessage = ValidationMessages.InvalidFullNameFormat)]
@@ -40,6 +44,8 @@ namespace HealthAxis.API.Models
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
         // Navigation Properties
+
+        public virtual ApplicationUser User { get; set; } = null!;
         public virtual ICollection<Appointment> Appointments { get; set; }
             = new List<Appointment>();
 

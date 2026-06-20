@@ -10,6 +10,10 @@ using System.ComponentModel.DataAnnotations;
             [Key]
             public int DoctorId { get; set; }
 
+            // Foreign Key to AspNetUsers
+            [Required]
+            public string UserId { get; set; } = string.Empty;
+
             [Required(ErrorMessage = ValidationMessages.FullNameRequired)]
             [StringLength(ValidationLimits.FullNameLength)]
             [RegularExpression(
@@ -37,6 +41,8 @@ using System.ComponentModel.DataAnnotations;
             public bool IsActive { get; set; } = true;
 
             // Navigation Properties
+            public virtual ApplicationUser User { get; set; } = null!;
+
             public virtual ICollection<Appointment> Appointments { get; set; }
                 = new List<Appointment>();
 

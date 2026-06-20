@@ -56,6 +56,7 @@ builder.Services.AddSwaggerGen(options =>
                 document)] = []
         });
 });
+
 //----------------------------------------------------------
 // Global Exception Handler
 //----------------------------------------------------------
@@ -128,19 +129,29 @@ builder.Services
 
         options.Events = new JwtBearerEvents
         {
-            OnChallenge = context =>
+            OnMessageReceived = context =>
             {
-                context.HandleResponse();
-
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-
+                Console.WriteLine($"Authorization Header: {context.Request.Headers.Authorization}");
                 return Task.CompletedTask;
             },
 
-            OnForbidden = context =>
+            OnTokenValidated = context =>
             {
-                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                Console.WriteLine("✅ TOKEN VALIDATED");
+                return Task.CompletedTask;
+            },
 
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine("❌ AUTH FAILED");
+                Console.WriteLine(context.Exception.ToString());
+                return Task.CompletedTask;
+            },
+
+            OnChallenge = context =>
+            {
+                Console.WriteLine($"Challenge Error: {context.Error}");
+                Console.WriteLine($"Description: {context.ErrorDescription}");
                 return Task.CompletedTask;
             }
         };
@@ -200,23 +211,19 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 
-//using (var scope = app.Services.CreateScope())
-//{
-//    var roleManager =
-//        scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-//    await RoleSeeder.SeedRolesAsync(roleManager);
-//}
-
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
 
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager =
+        services.GetRequiredService<RoleManager<IdentityRole>>();
+
+    var userManager =
+        services.GetRequiredService<UserManager<ApplicationUser>>();
 
     await RoleSeeder.SeedRolesAsync(roleManager);
-    await RoleSeeder.SeedAdminAsync(userManager);
+
+    await AdminSeeder.SeedAdminAsync(userManager, roleManager);
 }
 
 

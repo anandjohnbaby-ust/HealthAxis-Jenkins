@@ -59,20 +59,5 @@ namespace HealthAxis.API.Controllers
             return Ok(doctor);
         }
 
-        [Authorize]
-        [HttpGet("whoami")]
-        public IActionResult WhoAmI()
-        {
-            return Ok(new
-            {
-                Name = User.Identity?.Name,
-                IsAuthenticated = User.Identity?.IsAuthenticated,
-                Claims = User.Claims.Select(c => new
-                {
-                    c.Type,
-                    c.Value
-                })
-            });
-        }
     }
 }

@@ -1,15 +1,19 @@
 ﻿using AutoMapper;
+using HealthAxis.API.Data;
 using HealthAxis.API.DTOs.AppointmentDtos;
 using HealthAxis.API.DTOs.DoctorDtos;
 using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 
 namespace HealthAxis.API.Services.Implementations
 {
     public class AdminService : IAdminService
     {
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ApplicationDbContext _context;
         private readonly IDoctorRepository _doctorRepository;
         private readonly IAppointmentRepository _appointmentRepository;
         private readonly IMapper _mapper;
@@ -17,11 +21,15 @@ namespace HealthAxis.API.Services.Implementations
         public AdminService(
             IDoctorRepository doctorRepository,
             IAppointmentRepository appointmentRepository,
-            IMapper mapper)
+            IMapper mapper,
+            UserManager<ApplicationUser> userManager,
+            ApplicationDbContext context)
         {
             _doctorRepository = doctorRepository;
             _appointmentRepository = appointmentRepository;
             _mapper = mapper;
+            _userManager = userManager;
+            _context = context;
         }
 
         public async Task<IEnumerable<DoctorDto>> GetDoctors()
@@ -32,15 +40,63 @@ namespace HealthAxis.API.Services.Implementations
             return _mapper.Map<IEnumerable<DoctorDto>>(doctors);
         }
 
-        public async Task<DoctorDto> CreateDoctor(
-            CreateDoctorDto dto)
+        public async Task<DoctorDto> CreateDoctor(CreateDoctorDto dto)
         {
-            var doctor =
-                _mapper.Map<Doctor>(dto);
+            var existingUser =
+                await _userManager.FindByEmailAsync(dto.Email);
 
-            await _doctorRepository.AddAsync(doctor);
+            if (existingUser != null)
+            {
+                throw new BusinessRuleException(
+                    "Email already exists.");
+            }
 
-            return _mapper.Map<DoctorDto>(doctor);
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var user = new ApplicationUser
+                {
+                    UserName = dto.Email,
+                    Email = dto.Email
+                };
+
+                var result =
+                    await _userManager.CreateAsync(user, dto.Password);
+
+                if (!result.Succeeded)
+                {
+                    throw new BusinessRuleException(
+                        string.Join(", ",
+                            result.Errors.Select(e => e.Description)));
+                }
+
+                await _userManager.AddToRoleAsync(user, "Doctor");
+
+                var doctor = new Doctor
+                {
+                    UserId = user.Id,
+                    FullName = dto.FullName,
+                    Specialisation = dto.Specialisation,
+                    YearsOfExperience = dto.YearsOfExperience,
+                    ConsultationFee = dto.ConsultationFee,
+                    IsActive = true
+                };
+
+                _context.Doctors.Add(doctor);
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                return _mapper.Map<DoctorDto>(doctor);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<DoctorDto> UpdateDoctor(

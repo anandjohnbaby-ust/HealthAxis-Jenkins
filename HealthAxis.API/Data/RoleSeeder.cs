@@ -18,7 +18,7 @@ namespace HealthAxis.API.Data
             }
         }
 
-        public static async Task SeedAdminAsync(UserManager<ApplicationUser> userManager)
+        public static async Task SeedAdminAsync(UserManager<IdentityUser> userManager)
         {
             const string email = "admin@healthaxis.com";
             const string password = "Admin@123";
@@ -30,7 +30,7 @@ namespace HealthAxis.API.Data
                 return;
             }
 
-            admin = new ApplicationUser
+            admin = new IdentityUser
             {
                 UserName = email,
                 Email = email,

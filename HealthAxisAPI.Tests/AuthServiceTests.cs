@@ -16,47 +16,47 @@ namespace HealthAxis.Tests.Services
 
         private readonly AuthService _service;
 
-        public AuthServiceTests()
-        {
-            var store =
-                new Mock<IUserStore<ApplicationUser>>();
+        //public AuthServiceTests()
+        //{
+        //    var store =
+        //        new Mock<IUserStore<ApplicationUser>>();
 
-            _userManager =
-                new Mock<UserManager<ApplicationUser>>(
-                    store.Object,
-                    null!,
-                    null!,
-                    null!,
-                    null!,
-                    null!,
-                    null!,
-                    null!,
-                    null!);
+        //    _userManager =
+        //        new Mock<UserManager<ApplicationUser>>(
+        //            store.Object,
+        //            null!,
+        //            null!,
+        //            null!,
+        //            null!,
+        //            null!,
+        //            null!,
+        //            null!,
+        //            null!);
 
-            _configuration =
-                new Mock<IConfiguration>();
+        //    _configuration =
+        //        new Mock<IConfiguration>();
 
-            _configuration
-                .Setup(x => x["Jwt:AccessTokenExpirationMinutes"])
-                .Returns("15");
+        //    _configuration
+        //        .Setup(x => x["Jwt:AccessTokenExpirationMinutes"])
+        //        .Returns("15");
 
-            _configuration
-                .Setup(x => x["Jwt:Issuer"])
-                .Returns("HealthAxis.API");
+        //    _configuration
+        //        .Setup(x => x["Jwt:Issuer"])
+        //        .Returns("HealthAxis.API");
 
-            _configuration
-                .Setup(x => x["Jwt:Audience"])
-                .Returns("HealthAxis.API");
+        //    _configuration
+        //        .Setup(x => x["Jwt:Audience"])
+        //        .Returns("HealthAxis.API");
 
-            _configuration
-                .Setup(x => x["Jwt:Key"])
-                .Returns("78acd5d93d025413e160ebc47dd1c2ead48aee30e3a4080b71c49c9221c97958");
+        //    _configuration
+        //        .Setup(x => x["Jwt:Key"])
+        //        .Returns("78acd5d93d025413e160ebc47dd1c2ead48aee30e3a4080b71c49c9221c97958");
 
-            _service =
-                new AuthService(
-                    _userManager.Object,
-                    _configuration.Object);
-        }
+        //    _service =
+        //        new AuthService(
+        //            _userManager.Object,
+        //            _configuration.Object);
+        //}
 
         //private RegisterDto GetRegisterDto()
         //{

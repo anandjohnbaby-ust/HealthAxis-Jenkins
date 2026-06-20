@@ -17,7 +17,10 @@ namespace HealthAxis.API.Controller
 
             if (!success)
             {
-                return BadRequest(new { message });
+                return BadRequest(new
+                {
+                    message
+                });
             }
 
             return Ok(new
