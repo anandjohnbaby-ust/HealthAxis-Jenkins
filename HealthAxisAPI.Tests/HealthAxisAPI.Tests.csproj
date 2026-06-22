@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HealthAxis.API\HealthAxis.API.csproj" />
+    <ProjectReference Include="..\HealthAxis.Shared\HealthAxis.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

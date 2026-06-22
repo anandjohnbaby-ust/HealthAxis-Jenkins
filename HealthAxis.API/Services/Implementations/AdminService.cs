@@ -1,12 +1,13 @@
 ﻿using AutoMapper;
 using HealthAxis.API.Data;
-using HealthAxis.API.DTOs.AppointmentDtos;
-using HealthAxis.API.DTOs.DoctorDtos;
+using HealthAxis.Shared.DTOs.AppointmentDtos;
+using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using HealthAxis.Shared.DTOs.AdminDtos;
 
 namespace HealthAxis.API.Services.Implementations
 {

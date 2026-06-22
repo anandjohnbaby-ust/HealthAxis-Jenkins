@@ -1,7 +1,9 @@
-﻿using HealthAxis.API.DTOs.DoctorDtos;
+﻿using HealthAxis.Shared.DTOs.AuthDtos;
 using HealthAxis.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using HealthAxis.Shared.DTOs.DoctorDtos;
+using HealthAxis.Shared.DTOs.AdminDtos;
 
 namespace HealthAxis.API.Controllers
 {
@@ -27,7 +29,7 @@ namespace HealthAxis.API.Controllers
 
         [HttpPost("doctors")]
         public async Task<IActionResult> CreateDoctor(
-            CreateDoctorDto dto)
+            Shared.DTOs.AdminDtos.CreateDoctorDto dto)
         {
             var doctor = await _adminService.CreateDoctor(dto);
 

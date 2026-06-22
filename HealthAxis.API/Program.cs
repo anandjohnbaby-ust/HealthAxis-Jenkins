@@ -203,6 +203,19 @@ builder.Services.AddAutoMapper(
     cfg => { },
     AppDomain.CurrentDomain.GetAssemblies());
 
+//----------------------------------------------------------
+// CORS
+//----------------------------------------------------------
+// Allow the Admin Blazor app (and local API origins) to call this API during development
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAdmin",
+        policy => policy
+            .WithOrigins("https://localhost:7197", "https://localhost:7207")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 var app = builder.Build();
 
 //----------------------------------------------------------
@@ -234,6 +247,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Apply CORS before authentication/authorization
+app.UseCors("AllowAdmin");
 
 app.UseAuthentication();
 

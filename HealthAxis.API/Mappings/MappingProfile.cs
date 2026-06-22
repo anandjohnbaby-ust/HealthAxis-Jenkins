@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
-using HealthAxis.API.DTOs.AppointmentDtos;
-using HealthAxis.API.DTOs.DoctorDtos;
-using HealthAxis.API.DTOs.HealthRecordDtos;
-using HealthAxis.API.DTOs.PatientDtos;
+using HealthAxis.Shared.DTOs.AppointmentDtos;
+using HealthAxis.Shared.DTOs.DoctorDtos;
+using HealthAxis.Shared.DTOs.HealthRecordDtos;
+using HealthAxis.Shared.DTOs.PatientDtos;
 using HealthAxis.API.Models;
+using HealthAxis.Shared.DTOs.AdminDtos;
 
 namespace HealthAxis.API.Profiles
 {

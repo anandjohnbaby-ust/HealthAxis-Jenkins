@@ -1,4 +1,4 @@
-﻿using HealthAxis.API.DTOs.AuthDtos;
+﻿using HealthAxis.Shared.DTOs.AuthDtos;
 
 namespace HealthAxis.API.Services.Interfaces
 {
@@ -6,16 +6,8 @@ namespace HealthAxis.API.Services.Interfaces
     {
         Task<(bool Success, string Message, string UserId)> Register(RegisterDto request);
 
-        Task<(bool Success,
-            string Message,
-            string AccessToken,
-            string RefreshToken,
-            int ExpiresIn)> Login(LoginDto request);
+        Task<(bool Success, string Message, string AccessToken, string RefreshToken, int ExpiresIn)> Login(LoginDto request);
 
-        Task<(bool Success,
-            string Message,
-            string AccessToken,
-            string RefreshToken,
-            int ExpiresIn)> RefreshToken(RefreshTokenDto request);
+        Task<(bool Success, string Message, string AccessToken, string RefreshToken, int ExpiresIn)> RefreshToken(RefreshTokenDto request);
     }
 }

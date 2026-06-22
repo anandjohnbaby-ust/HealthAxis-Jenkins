@@ -1,6 +1,7 @@
-﻿using HealthAxis.API.DTOs.AppointmentDtos;
-using HealthAxis.API.DTOs.DoctorDtos;
+﻿using HealthAxis.Shared.DTOs.AppointmentDtos;
+using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.API.Models;
+using HealthAxis.Shared.DTOs.AdminDtos;
 
 namespace HealthAxis.API.Services.Interfaces
 {

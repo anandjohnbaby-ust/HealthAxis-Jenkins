@@ -1,5 +1,5 @@
 ﻿using HealthAxis.API.Data;
-using HealthAxis.API.DTOs.AuthDtos;
+using HealthAxis.Shared.DTOs.AuthDtos;
 using HealthAxis.API.Models;
 using HealthAxis.API.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -11,65 +11,41 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HealthAxis.API.Services.Implementation
 {
-    public class AuthService(
-        UserManager<ApplicationUser> userManager,
-        ApplicationDbContext context,
-        IConfiguration config) : IAuthService
+    public class AuthService(UserManager<ApplicationUser> userManager, ApplicationDbContext context, IConfiguration config) : IAuthService
     {
-        public async Task<(bool Success,
-                  string Message,
-                  string AccessToken,
-                  string RefreshToken,
-                  int ExpiresIn)>
-                    Login(LoginDto request)
+        public async Task<(bool Success, string Message, string AccessToken, string RefreshToken, int ExpiresIn)> Login(LoginDto request)
         {
             var user = await userManager.FindByEmailAsync(request.Email);
 
             if (user == null)
             {
-                return (false,
-                        "Invalid Credentials",
-                        string.Empty,
-                        string.Empty,
-                        0);
+                return (false, "Invalid Credentials", string.Empty, string.Empty, 0);
             }
 
-            var validPassword =
-                await userManager.CheckPasswordAsync(user, request.Password);
+            var validPassword = await userManager.CheckPasswordAsync(user, request.Password);
 
             if (!validPassword)
             {
-                return (false,
-                        "Invalid Credentials",
-                        string.Empty,
-                        string.Empty,
-                        0);
+                return (false, "Invalid Credentials", string.Empty, string.Empty, 0);
             }
 
-            var accessToken =
-                await GenerateToken(user);
+            var accessToken = await GenerateToken(user);
 
-            var refreshToken =
-                GenerateRefreshToken();
+            var refreshToken = GenerateRefreshToken();
 
             user.RefreshToken = refreshToken;
 
-            user.RefreshTokenExpiryTime =
-                DateTime.UtcNow.AddDays(7);
+            int refreshTokenExpiryDays = int.Parse(config["Jwt:RefreshTokenExpirationDays"]!);
+
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(refreshTokenExpiryDays);
 
             await userManager.UpdateAsync(user);
 
-            int expiry =
-                int.Parse(config["Jwt:AccessTokenExpirationMinutes"]!);
+            int expiry = int.Parse(config["Jwt:AccessTokenExpirationMinutes"]!);
 
-            return (
-                true,
-                "Login Successful",
-                accessToken,
-                refreshToken,
-                expiry
-            );
+            return (true, "Login Successful", accessToken, refreshToken, expiry);
         }
+
         public async Task<(bool Success, string Message, string UserId)> Register(RegisterDto request)
         {
             if (request.Password != request.ConfirmPassword)
@@ -140,12 +116,9 @@ namespace HealthAxis.API.Services.Implementation
         {
             var jwtSettings = config.GetSection("Jwt");
 
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
 
-            var credentials = new SigningCredentials(
-                key,
-                SecurityAlgorithms.HmacSha256);
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var roles = await userManager.GetRolesAsync(user);
 

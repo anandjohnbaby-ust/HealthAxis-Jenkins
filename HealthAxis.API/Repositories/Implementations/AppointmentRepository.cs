@@ -1,5 +1,5 @@
 ﻿using HealthAxis.API.Data;
-using HealthAxis.API.Enums;
+using HealthAxis.Shared.Enums;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;

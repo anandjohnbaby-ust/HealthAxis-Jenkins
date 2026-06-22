@@ -1,8 +1,6 @@
-﻿using HealthAxis.API.Enums;
-using HealthAxis.API.Utilities;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
+﻿using HealthAxis.Shared.Enums;
+using HealthAxis.Shared.Utilities;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HealthAxis.API.Models
 {

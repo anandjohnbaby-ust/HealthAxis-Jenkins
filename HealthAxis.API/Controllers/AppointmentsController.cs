@@ -1,4 +1,4 @@
-﻿using HealthAxis.API.DTOs.AppointmentDtos;
+﻿using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

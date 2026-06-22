@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using HealthAxis.API.DTOs.HealthRecordDtos;
-using HealthAxis.API.DTOs.PatientDtos;
+using HealthAxis.Shared.DTOs.HealthRecordDtos;
+using HealthAxis.Shared.DTOs.PatientDtos;
 using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
