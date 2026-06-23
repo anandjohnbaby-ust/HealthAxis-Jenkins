@@ -1,6 +1,432 @@
 ﻿@page "/doctors"
 @attribute [Authorize]
 
-<h3>Doctors</h3>
+@using HealthAxis.Admin.Services
+@using HealthAxis.Shared.DTOs.DoctorDtos
+@using HealthAxis.Shared.DTOs.AdminDtos
 
-<p>Comming Soon......</p>
+@inject DoctorService DoctorService
+
+<h3 class="mb-3">Doctors</h3>
+
+<style>
+    /* Custom toggle switch that looks like a round knob sliding left/right */
+    .status-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        cursor: pointer;
+        user-select: none;
+        font-size: 0.9rem;
+    }
+
+    /* Smaller switch dimensions */
+    .switch-track {
+        width: 36px;
+        height: 20px;
+        border-radius: 10px;
+        background: #e9ecef;
+        position: relative;
+        transition: background .12s ease;
+        padding: 2px;
+        box-sizing: border-box;
+    }
+
+    .switch-track.on {
+        background: #198754; /* bootstrap success */
+    }
+
+    .switch-knob {
+        width: 16px;
+        height: 16px;
+        background: #fff;
+        border-radius: 50%;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        transition: left .12s ease, box-shadow .12s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,.2);
+    }
+
+    /* Knob moved to right when on */
+    .switch-track.on .switch-knob {
+        left: 18px;
+    }
+
+    .status-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+</style>
+
+<div class="mb-3 d-flex justify-content-end">
+    <button class="btn btn-success" @onclick="ShowAddForm">Add Doctor</button>
+</div>
+
+@if (showForm)
+{
+    <!-- Modal backdrop and dialog (Bootstrap-like) -->
+    <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isEditing ? "Edit Doctor" : "Add Doctor")</h5>
+                    <button type="button" class="btn-close" aria-label="Close" @onclick="Cancel"></button>
+                </div>
+                <div class="modal-body">
+
+                    @if (!string.IsNullOrEmpty(formError))
+                    {
+                        <div class="alert alert-danger">@formError</div>
+                    }
+
+                    @if (isEditing)
+                    {
+                        <EditForm Model="editDoctor" OnValidSubmit="HandleUpdate">
+                            <DataAnnotationsValidator />
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Full Name</label>
+                                    <InputText class="form-control" @bind-Value="editDoctor.FullName" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Specialisation</label>
+                                    <InputSelect class="form-select" @bind-Value="editDoctor.Specialisation">
+                                        @foreach (var spec in Enum.GetValues(typeof(HealthAxis.Shared.Enums.Specialisation)))
+                                        {
+                                            <option value="@spec">@spec</option>
+                                        }
+                                    </InputSelect>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Experience</label>
+                                    <InputNumber class="form-control" @bind-Value="editDoctor.YearsOfExperience" />
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Fee</label>
+                                    <InputNumber class="form-control" @bind-Value="editDoctor.ConsultationFee" />
+                                </div>
+                                <div class="col-md-4 mb-3 d-flex align-items-center">
+                                    <div class="form-check mt-3">
+                                        <InputCheckbox class="form-check-input" @bind-Value="editDoctor.IsActive" />
+                                        <label class="form-check-label">Active</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button class="btn btn-primary me-2">Save</button>
+                                <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                            </div>
+                        </EditForm>
+                    }
+                    else
+                    {
+                        <EditForm Model="newDoctor" OnValidSubmit="HandleCreate">
+                            <DataAnnotationsValidator />
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Full Name</label>
+                                    <InputText class="form-control" @bind-Value="newDoctor.FullName" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Specialisation</label>
+                                    <InputSelect class="form-select" @bind-Value="newDoctor.Specialisation">
+                                        @foreach (var spec in Enum.GetValues(typeof(HealthAxis.Shared.Enums.Specialisation)))
+                                        {
+                                            <option value="@spec">@spec</option>
+                                        }
+                                    </InputSelect>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Experience</label>
+                                    <InputNumber class="form-control" @bind-Value="newDoctor.YearsOfExperience" />
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Fee</label>
+                                    <InputNumber class="form-control" @bind-Value="newDoctor.ConsultationFee" />
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Email</label>
+                                    <InputText class="form-control" @bind-Value="newDoctor.Email" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Password</label>
+                                    <InputText type="password" class="form-control" @bind-Value="newDoctor.Password" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Confirm Password</label>
+                                    <InputText type="password" class="form-control" @bind-Value="newDoctor.ConfirmPassword" />
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button class="btn btn-primary me-2">Create</button>
+                                <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                            </div>
+                        </EditForm>
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (doctors == null)
+{
+    <p>Loading...</p>
+}
+else if (!doctors.Any())
+{
+    <div class="alert alert-info">
+        No doctors found.
+    </div>
+}
+else
+{
+    <table class="table table-striped table-hover">
+
+        <thead class="table-dark">
+
+            <tr>
+
+                <th>ID</th>
+                <th>Name</th>
+                <th>Specialisation</th>
+                <th>Experience</th>
+                <th>Fee</th>
+                <th>Status</th>
+                <th>Actions</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            @foreach (var doctor in doctors)
+            {
+                <tr>
+
+                    <td>@doctor.DoctorId</td>
+
+                    <td>@doctor.FullName</td>
+
+                    <td>@doctor.Specialisation</td>
+
+                    <td>@doctor.YearsOfExperience Years</td>
+
+                    <td>@($"Rs. {doctor.ConsultationFee:N2}")</td>
+
+                    <td>
+                        <div class="status-switch"
+                             role="switch"
+                             aria-checked="@(doctor.IsActive.ToString().ToLower())"
+                             tabindex="0"
+                             @onclick="() => ToggleActive(doctor)"
+                             @onkeydown='@(async (Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e) => { if (e.Key == "Enter" || e.Key == " ") await ToggleActive(doctor); })'
+                             title="Toggle active status">
+
+                            <div class="switch-track @(doctor.IsActive ? "on" : "")">
+                                <div class="switch-knob"></div>
+                            </div>
+
+                            <span class="status-label @(doctor.IsActive ? "text-success" : "text-danger")">@(doctor.IsActive ? "Active" : "Inactive")</span>
+
+                        </div>
+                    </td>
+
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => ShowEditForm(doctor)">Edit</button>
+                    </td>
+
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+}
+
+@code {
+
+    private List<DoctorDto>? doctors;
+    private bool showForm;
+    private bool isEditing;
+    private string? formError;
+
+    private CreateDoctorDto newDoctor = new();
+    private UpdateDoctorDto editDoctor = new();
+    private int editingDoctorId;
+
+    private void ShowAddForm()
+    {
+        formError = null;
+        isEditing = false;
+        newDoctor = new CreateDoctorDto();
+        showForm = true;
+    }
+
+    private void ShowEditForm(DoctorDto doctor)
+    {
+        formError = null;
+        isEditing = true;
+        editingDoctorId = doctor.DoctorId;
+        editDoctor = new UpdateDoctorDto
+        {
+            FullName = doctor.FullName,
+            Specialisation = doctor.Specialisation,
+            YearsOfExperience = doctor.YearsOfExperience,
+            ConsultationFee = doctor.ConsultationFee,
+            IsActive = doctor.IsActive
+        };
+        showForm = true;
+    }
+
+    private void Cancel()
+    {
+        showForm = false;
+        formError = null;
+    }
+
+    private async Task HandleCreate()
+    {
+        formError = null;
+        try
+        {
+            var created = await DoctorService.CreateDoctor(newDoctor);
+            if (created != null)
+            {
+                await RefreshDoctors();
+                showForm = false;
+            }
+            else
+            {
+                formError = "Failed to create doctor.";
+            }
+        }
+        catch (Exception ex)
+        {
+            formError = ex.Message;
+        }
+    }
+
+    private async Task HandleUpdate()
+    {
+        formError = null;
+        try
+        {
+            var updated = await DoctorService.UpdateDoctor(editingDoctorId, editDoctor);
+            if (updated != null)
+            {
+                await RefreshDoctors();
+                showForm = false;
+            }
+            else
+            {
+                formError = "Failed to update doctor.";
+            }
+        }
+        catch (Exception ex)
+        {
+            formError = ex.Message;
+        }
+    }
+
+    // Overload used by the button toggle (no event args)
+    private async Task ToggleActive(DoctorDto doctor)
+    {
+        var previous = doctor.IsActive;
+        doctor.IsActive = !doctor.IsActive;
+
+        var dto = new UpdateDoctorDto
+        {
+            FullName = doctor.FullName,
+            Specialisation = doctor.Specialisation,
+            YearsOfExperience = doctor.YearsOfExperience,
+            ConsultationFee = doctor.ConsultationFee,
+            IsActive = doctor.IsActive
+        };
+
+        try
+        {
+            var updated = await DoctorService.UpdateDoctor(doctor.DoctorId, dto);
+            if (updated == null)
+            {
+                doctor.IsActive = previous;
+            }
+        }
+        catch
+        {
+            doctor.IsActive = previous;
+        }
+    }
+
+    private async Task ToggleActive(DoctorDto doctor, ChangeEventArgs e)
+    {
+        // determine new value robustly (browser may send bool or string)
+        bool newValue;
+        if (e?.Value is bool b)
+        {
+            newValue = b;
+        }
+        else if (e?.Value != null)
+        {
+            try
+            {
+                newValue = Convert.ToBoolean(e.Value);
+            }
+            catch
+            {
+                // fallback: flip
+                newValue = !doctor.IsActive;
+            }
+        }
+        else
+        {
+            newValue = !doctor.IsActive;
+        }
+
+        // optimistic UI update
+        var previous = doctor.IsActive;
+        doctor.IsActive = newValue;
+
+        var dto = new UpdateDoctorDto
+        {
+            FullName = doctor.FullName,
+            Specialisation = doctor.Specialisation,
+            YearsOfExperience = doctor.YearsOfExperience,
+            ConsultationFee = doctor.ConsultationFee,
+            IsActive = doctor.IsActive
+        };
+
+        try
+        {
+            var updated = await DoctorService.UpdateDoctor(doctor.DoctorId, dto);
+            if (updated == null)
+            {
+                // revert on failure
+                doctor.IsActive = previous;
+            }
+        }
+        catch
+        {
+            // revert on exception
+            doctor.IsActive = previous;
+        }
+    }
+
+    private async Task RefreshDoctors()
+    {
+        doctors = await DoctorService.GetDoctors();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        doctors = await DoctorService.GetDoctors();
+    }
+
+}

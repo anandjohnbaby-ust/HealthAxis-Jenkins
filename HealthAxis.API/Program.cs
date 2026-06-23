@@ -3,7 +3,6 @@ using HealthAxis.API.Data;
 using HealthAxis.API.Middlewares;
 using HealthAxis.API.Repositories.Implementations;
 using HealthAxis.API.Repositories.Interfaces;
-using HealthAxis.API.Services;
 using HealthAxis.API.Services.Implementation;
 using HealthAxis.API.Services.Implementations;
 using HealthAxis.API.Services.Interfaces;
