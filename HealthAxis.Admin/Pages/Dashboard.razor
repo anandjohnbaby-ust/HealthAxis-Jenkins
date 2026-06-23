@@ -1,6 +1,108 @@
 ﻿@page "/dashboard"
 @attribute [Authorize]
 
-<h3>Dashboard</h3>
+@using HealthAxis.Admin.Services
+@using HealthAxis.Shared.DTOs.AdminDtos
 
-<p>Comming Soon......</p>
+@inject AdminService AdminService
+
+<PageTitle>Dashboard</PageTitle>
+
+<h3 class="mb-4 fw-bold">Dashboard</h3>
+
+@if (dashboard is null)
+{
+    <div class="d-flex justify-content-center mt-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+
+                    <div class="display-4 text-primary mb-3">
+                        👥
+                    </div>
+
+                    <h6 class="text-muted">Total Users</h6>
+
+                    <h2 class="fw-bold">
+                        @dashboard.TotalUsers
+                    </h2>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+
+                    <div class="display-4 text-success mb-3">
+                        👨‍⚕️
+                    </div>
+
+                    <h6 class="text-muted">Total Doctors</h6>
+
+                    <h2 class="fw-bold">
+                        @dashboard.TotalDoctors
+                    </h2>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+
+                    <div class="display-4 text-info mb-3">
+                        🧑
+                    </div>
+
+                    <h6 class="text-muted">Total Patients</h6>
+
+                    <h2 class="fw-bold">
+                        @dashboard.TotalPatients
+                    </h2>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+
+                    <div class="display-4 text-warning mb-3">
+                        📅
+                    </div>
+
+                    <h6 class="text-muted">Appointments</h6>
+
+                    <h2 class="fw-bold">
+                        @dashboard.TotalAppointments
+                    </h2>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+}
+
+@code
+{
+    private DashboardDto? dashboard;
+
+    protected override async Task OnInitializedAsync()
+    {
+        dashboard = await AdminService.GetDashboardAsync();
+    }
+}

@@ -194,6 +194,10 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+builder.Services.AddScoped<IAdminRepository, AdminRepository>();
+
 //----------------------------------------------------------
 // AutoMapper
 //----------------------------------------------------------

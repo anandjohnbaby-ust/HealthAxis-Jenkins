@@ -1,6 +1,112 @@
 ﻿@page "/reports"
 @attribute [Authorize]
 
-<h3>Reports</h3>
+@using HealthAxis.Admin.Services
+@using HealthAxis.Shared.DTOs.AdminDtos
 
-<p>Comming Soon......</p>
+@inject AdminService AdminService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Appointment Reports</PageTitle>
+
+<h3 class="mb-4">Appointment Report</h3>
+
+@if (reports is null)
+{
+    <div class="text-center mt-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-2">Loading report...</p>
+    </div>
+}
+else if (!reports.Any())
+{
+    <div class="alert alert-info">
+        No appointment data available.
+    </div>
+}
+else
+{
+    <table class="table table-striped table-hover shadow-sm">
+
+        <thead class="table-dark">
+
+            <tr>
+                <th>Date</th>
+                <th>Pending</th>
+                <th>Confirmed</th>
+                <th>Cancelled</th>
+                <th>Completed</th>
+                <th>Total</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            @foreach (var report in reports)
+            {
+                <tr>
+
+                    <td>@report.Date</td>
+
+                    <td>
+                        <span class="badge bg-warning text-dark">
+                            @report.PendingCount
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="badge bg-primary">
+                            @report.ConfirmedCount
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="badge bg-danger">
+                            @report.CancelledCount
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="badge bg-success">
+                            @report.CompletedCount
+                        </span>
+                    </td>
+
+                    <td>
+                        <strong>@report.TotalAppointments</strong>
+                    </td>
+
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+}
+
+@code {
+
+    private List<AppointmentReportDto>? reports;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            reports = await AdminService.GetAppointmentReportAsync();
+        }
+        catch (System.Net.Http.HttpRequestException ex)
+        {
+            // If unauthorized, redirect to login. Otherwise show no data.
+            if (ex.Message != null && (ex.Message.Contains("401") || ex.Message.Contains("Unauthorized")))
+            {
+                NavigationManager.NavigateTo("/login", true);
+                return;
+            }
+
+            // swallow error and leave reports null to show generic message
+            reports = new List<AppointmentReportDto>();
+        }
+    }
+
+}

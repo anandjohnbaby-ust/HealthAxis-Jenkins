@@ -12,8 +12,13 @@ namespace HealthAxis.API.Services.Interfaces
         Task<DoctorDto> CreateDoctor(CreateDoctorDto dto);
 
         Task<DoctorDto> UpdateDoctor(int doctorId, UpdateDoctorDto dto);
-        
-        Task<IEnumerable<AppointmentDto>> GetAppointmentReport();
+
+        Task<IEnumerable<AppointmentReportDto>> GetAppointmentReport();
+
+        Task<IEnumerable<UserManagementDto>> GetUsers(string? role);
+
+        Task<DashboardDto> GetDashboardAsync();
+
     }
 
 }

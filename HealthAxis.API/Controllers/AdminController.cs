@@ -56,5 +56,21 @@ namespace HealthAxis.API.Controllers
 
             return Ok(report);
         }
+
+        [HttpGet("users")]
+        public async Task<IActionResult> GetUsers([FromQuery] string? role)
+        {
+            var users = await _adminService.GetUsers(role);
+
+            return Ok(users);
+        }
+
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboard()
+        {
+            var dashboard = await _adminService.GetDashboardAsync();
+
+            return Ok(dashboard);
+        }
     }
 }

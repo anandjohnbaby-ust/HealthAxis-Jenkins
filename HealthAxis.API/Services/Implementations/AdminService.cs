@@ -1,13 +1,15 @@
 ﻿using AutoMapper;
 using HealthAxis.API.Data;
-using HealthAxis.Shared.DTOs.AppointmentDtos;
-using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
+using HealthAxis.API.Repositories.Implementations;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
-using Microsoft.AspNetCore.Identity;
 using HealthAxis.Shared.DTOs.AdminDtos;
+using HealthAxis.Shared.DTOs.AppointmentDtos;
+using HealthAxis.Shared.DTOs.DoctorDtos;
+using HealthAxis.Shared.Enums;
+using Microsoft.AspNetCore.Identity;
 
 namespace HealthAxis.API.Services.Implementations
 {
@@ -18,17 +20,23 @@ namespace HealthAxis.API.Services.Implementations
         private readonly IDoctorRepository _doctorRepository;
         private readonly IAppointmentRepository _appointmentRepository;
         private readonly IMapper _mapper;
+        private readonly IUserRepository _userRepository;
+        private readonly IAdminRepository _adminRepository;
 
         public AdminService(
             IDoctorRepository doctorRepository,
             IAppointmentRepository appointmentRepository,
+            IUserRepository userRepository,
             IMapper mapper,
+            IAdminRepository adminRepository,
             UserManager<ApplicationUser> userManager,
             ApplicationDbContext context)
         {
             _doctorRepository = doctorRepository;
             _appointmentRepository = appointmentRepository;
             _mapper = mapper;
+            _adminRepository = adminRepository;
+            _userRepository = userRepository;
             _userManager = userManager;
             _context = context;
         }
@@ -122,15 +130,19 @@ namespace HealthAxis.API.Services.Implementations
             return _mapper.Map<DoctorDto>(doctor);
         }
 
-        public async Task<IEnumerable<AppointmentDto>>
-            GetAppointmentReport()
+        public async Task<IEnumerable<AppointmentReportDto>> GetAppointmentReport()
         {
-            var appointments =
-                await _appointmentRepository.GetAllAsync();
+            return await _appointmentRepository.GetAppointmentReportAsync();
+        }
 
-            return _mapper.Map<IEnumerable<AppointmentDto>>(
-                appointments);
+        public async Task<IEnumerable<UserManagementDto>> GetUsers(string? role)
+        {
+            return await _userRepository.GetUsersAsync(role);
+        }
+
+        public async Task<DashboardDto> GetDashboardAsync()
+        {
+            return await _adminRepository.GetDashboardAsync();
         }
     }
-
 }
