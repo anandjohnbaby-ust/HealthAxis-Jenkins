@@ -1,4 +1,5 @@
-﻿using HealthAxis.Shared.DTOs.DoctorDtos;
+﻿using HealthAxis.Shared.Common;
+using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.Enums;
 
 namespace HealthAxis.API.Services.Interfaces
@@ -24,7 +25,8 @@ namespace HealthAxis.API.Services.Interfaces
             string searchTerm,
             CancellationToken ct = default);
 
-        Task<IEnumerable<DoctorDto>> GetDoctorsAsync(
+        Task<PagedResult<DoctorDto>> GetDoctorsAsync(
+            PaginationRequest request,
             Specialisation? specialisation,
             string? search,
             CancellationToken ct = default);

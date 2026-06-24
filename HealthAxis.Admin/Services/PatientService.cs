@@ -1,7 +1,8 @@
-﻿using System.Net.Http.Headers;
-using System.Net.Http.Json;
+﻿using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.PatientDtos;
 using Microsoft.JSInterop;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 
 namespace HealthAxis.Admin.Services
 {
@@ -29,19 +30,29 @@ namespace HealthAxis.Admin.Services
             }
         }
 
-        public async Task<List<PatientDto>?> GetPatients(
+        public async Task<PagedResult<PatientDto>?> GetPatients(
+            int pageNumber = 1,
+            int pageSize = 10,
             string? search = null)
         {
             await SetAuthorizationHeader();
 
             var url = "api/patients";
 
+            var query = new List<string>
+            {
+                $"pageNumber={pageNumber}",
+                $"pageSize={pageSize}"
+            };
+
             if (!string.IsNullOrWhiteSpace(search))
             {
-                url += $"?search={Uri.EscapeDataString(search)}";
+                query.Add($"search={Uri.EscapeDataString(search)}");
             }
 
-            return await _http.GetFromJsonAsync<List<PatientDto>>(url);
+            url += "?" + string.Join("&", query);
+
+            return await _http.GetFromJsonAsync<PagedResult<PatientDto>>(url);
         }
 
         public async Task<PatientDto?> GetPatientById(int id)

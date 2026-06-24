@@ -131,9 +131,10 @@ namespace HealthAxis.API.Services.Implementations
             return _mapper.Map<DoctorDto>(doctor);
         }
 
-        public async Task<IEnumerable<AppointmentReportDto>> GetAppointmentReport()
+        public async Task<PagedResult<AppointmentReportDto>> GetAppointmentReport(
+            PaginationRequest request)
         {
-            return await _appointmentRepository.GetAppointmentReportAsync();
+            return await _appointmentRepository.GetAppointmentReportAsync(request);
         }
 
         public async Task<PagedResult<UserManagementDto>> GetUsers(

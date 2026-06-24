@@ -2,6 +2,7 @@
 @attribute [Authorize]
 
 @using HealthAxis.Admin.Services
+@using HealthAxis.Shared.Common
 @using HealthAxis.Shared.DTOs.DoctorDtos
 @using HealthAxis.Shared.DTOs.AdminDtos
 @using HealthAxis.Shared.Enums
@@ -147,6 +148,46 @@
                 </tbody>
             </table>
         </div>
+        <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top">
+
+    <div class="text-muted small">
+        Showing
+        <strong>@(doctors.Count == 0 ? 0 : ((currentPage - 1) * pageSize) + 1)</strong>
+        -
+        <strong>@(((currentPage - 1) * pageSize) + doctors.Count)</strong>
+        of
+        <strong>@(pagedDoctors?.TotalCount ?? 0)</strong>
+        doctors
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+
+        <button class="btn btn-outline-secondary btn-sm"
+                disabled="@(pagedDoctors?.HasPrevious != true)"
+                @onclick="PreviousPage">
+            Previous
+        </button>
+
+        @if (pagedDoctors != null)
+        {
+            @for (int i = 1; i <= pagedDoctors.TotalPages; i++)
+            {
+                <button class="btn @(i == currentPage ? "btn-primary" : "btn-outline-primary") btn-sm"
+                        @onclick="() => GoToPage(i)">
+                    @i
+                </button>
+            }
+        }
+
+        <button class="btn btn-outline-secondary btn-sm"
+                disabled="@(pagedDoctors?.HasNext != true)"
+                @onclick="NextPage">
+            Next
+        </button>
+
+    </div>
+
+</div>
     }
 
 </div>
@@ -498,7 +539,11 @@
 
     private Specialisation? selectedSpecialisation;
     private string searchText = string.Empty;
-    private List<DoctorDto>? doctors;
+    private PagedResult<DoctorDto>? pagedDoctors;
+    private List<DoctorDto> doctors = [];
+
+    private int currentPage = 1;
+    private int pageSize = 5;
     private bool showForm;
     private bool isEditing;
     private string? formError;
@@ -616,17 +661,54 @@
 
     private async Task RefreshDoctors()
     {
-        doctors = await DoctorService.GetDoctors(selectedSpecialisation, searchText);
+        pagedDoctors = await DoctorService.GetDoctors(
+            currentPage,
+            pageSize,
+            selectedSpecialisation,
+            searchText);
+
+        doctors = pagedDoctors?.Items.ToList() ?? [];
     }
 
     private async Task FilterDoctors()
     {
+        currentPage = 1;
         await RefreshDoctors();
     }
 
     private async Task SearchDoctors(ChangeEventArgs e)
     {
         searchText = e.Value?.ToString() ?? "";
+
+        currentPage = 1;
+
+        await RefreshDoctors();
+    }
+
+    private async Task PreviousPage()
+    {
+        if (pagedDoctors?.HasPrevious == true)
+        {
+            currentPage--;
+            await RefreshDoctors();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (pagedDoctors?.HasNext == true)
+        {
+            currentPage++;
+            await RefreshDoctors();
+        }
+    }
+
+    private async Task GoToPage(int page)
+    {
+        if (page < 1 || page > (pagedDoctors?.TotalPages ?? 1))
+            return;
+
+        currentPage = page;
         await RefreshDoctors();
     }
 

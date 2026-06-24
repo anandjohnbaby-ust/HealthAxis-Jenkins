@@ -1,4 +1,5 @@
 ﻿using HealthAxis.API.Models;
+using HealthAxis.Shared.Common;
 
 namespace HealthAxis.API.Repositories.Interfaces
 {
@@ -8,7 +9,8 @@ namespace HealthAxis.API.Repositories.Interfaces
         Task<Patient?> GetHealthRecordsByPatientId(int patientId,
         CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<Patient>> GetPatientsAsync(
+        Task<PagedResult<Patient>> GetPatientsAsync(
+            PaginationRequest request,
             string? search,
             CancellationToken ct = default);
     }

@@ -1,10 +1,11 @@
 ﻿using AutoMapper;
-using HealthAxis.Shared.DTOs.HealthRecordDtos;
-using HealthAxis.Shared.DTOs.PatientDtos;
 using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
+using HealthAxis.Shared.Common;
+using HealthAxis.Shared.DTOs.HealthRecordDtos;
+using HealthAxis.Shared.DTOs.PatientDtos;
 
 namespace HealthAxis.API.Services.Implementations
 {
@@ -83,16 +84,23 @@ namespace HealthAxis.API.Services.Implementations
                 (patient.HealthRecords);
         }
 
-        public async Task<IEnumerable<PatientDto>> GetPatientsAsync(
+        public async Task<PagedResult<PatientDto>> GetPatientsAsync(
+            PaginationRequest request,
             string? search,
             CancellationToken ct = default)
         {
-            var patients =
-                await _patientRepository.GetPatientsAsync(
-                    search,
-                    ct);
+            var pagedPatients = await _patientRepository.GetPatientsAsync(
+                request,
+                search,
+                ct);
 
-            return _mapper.Map<IEnumerable<PatientDto>>(patients);
+            return new PagedResult<PatientDto>
+            {
+                Items = _mapper.Map<IEnumerable<PatientDto>>(pagedPatients.Items),
+                TotalCount = pagedPatients.TotalCount,
+                PageNumber = pagedPatients.PageNumber,
+                PageSize = pagedPatients.PageSize
+            };
         }
 
     }

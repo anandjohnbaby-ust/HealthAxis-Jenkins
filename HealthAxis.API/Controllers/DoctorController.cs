@@ -1,4 +1,5 @@
 ﻿using HealthAxis.API.Services.Interfaces;
+using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -50,16 +51,17 @@ namespace HealthAxis.API.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IEnumerable<DoctorDto>>> GetDoctors(
-                [FromQuery] Specialisation? specialisation,
-                [FromQuery] string? search,
-                CancellationToken ct)
+        public async Task<ActionResult<PagedResult<DoctorDto>>> GetDoctors(
+            [FromQuery] PaginationRequest request,
+            [FromQuery] Specialisation? specialisation,
+            [FromQuery] string? search,
+            CancellationToken ct)
         {
-            var doctors =
-                await _doctorService.GetDoctorsAsync(
-                    specialisation,
-                    search,
-                    ct);
+            var doctors = await _doctorService.GetDoctorsAsync(
+                request,
+                specialisation,
+                search,
+                ct);
 
             return Ok(doctors);
         }

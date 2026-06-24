@@ -1,4 +1,5 @@
-﻿using HealthAxis.Shared.DTOs.AdminDtos;
+﻿using HealthAxis.Shared.Common;
+using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.Enums;
 using Microsoft.JSInterop;
@@ -88,7 +89,9 @@ namespace HealthAxis.Admin.Services
                 $"api/doctors/search?search={Uri.EscapeDataString(searchTerm)}");
         }
 
-        public async Task<List<DoctorDto>?> GetDoctors(
+        public async Task<PagedResult<DoctorDto>?> GetDoctors(
+            int pageNumber = 1,
+            int pageSize = 10,
             Specialisation? specialisation = null,
             string? search = null)
         {
@@ -96,7 +99,11 @@ namespace HealthAxis.Admin.Services
 
             var url = "api/doctors";
 
-            var query = new List<string>();
+            var query = new List<string>
+            {
+                $"pageNumber={pageNumber}",
+                $"pageSize={pageSize}"
+            };
 
             if (specialisation.HasValue)
                 query.Add($"specialisation={specialisation.Value}");
@@ -104,10 +111,9 @@ namespace HealthAxis.Admin.Services
             if (!string.IsNullOrWhiteSpace(search))
                 query.Add($"search={Uri.EscapeDataString(search)}");
 
-            if (query.Any())
-                url += "?" + string.Join("&", query);
+            url += "?" + string.Join("&", query);
 
-            return await _http.GetFromJsonAsync<List<DoctorDto>>(url);
+            return await _http.GetFromJsonAsync<PagedResult<DoctorDto>>(url);
         }
     }
 }

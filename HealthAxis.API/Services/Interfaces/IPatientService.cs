@@ -1,11 +1,13 @@
-﻿using HealthAxis.Shared.DTOs.HealthRecordDtos;
+﻿using HealthAxis.Shared.Common;
+using HealthAxis.Shared.DTOs.HealthRecordDtos;
 using HealthAxis.Shared.DTOs.PatientDtos;
 
 namespace HealthAxis.API.Services.Interfaces
 {
     public interface IPatientService
     {
-        Task<IEnumerable<PatientDto>> GetPatientsAsync(
+        Task<PagedResult<PatientDto>> GetPatientsAsync(
+            PaginationRequest request,
             string? search,
             CancellationToken ct = default);
 

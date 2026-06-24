@@ -2,6 +2,7 @@
 @attribute [Authorize]
 
 @using HealthAxis.Admin.Services
+@using HealthAxis.Shared.Common
 @using HealthAxis.Shared.DTOs.AdminDtos
 
 @inject AdminService AdminService
@@ -97,6 +98,46 @@
 
             </table>
         </div>
+        <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top">
+
+    <div class="text-muted small">
+        Showing
+        <strong>@(reports.Count == 0 ? 0 : ((currentPage - 1) * pageSize) + 1)</strong>
+        -
+        <strong>@(((currentPage - 1) * pageSize) + reports.Count)</strong>
+        of
+        <strong>@(pagedReports?.TotalCount ?? 0)</strong>
+        report entries
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+
+        <button class="btn btn-outline-secondary btn-sm"
+                disabled="@(pagedReports?.HasPrevious != true)"
+                @onclick="PreviousPage">
+            Previous
+        </button>
+
+        @if (pagedReports != null)
+        {
+            @for (int i = 1; i <= pagedReports.TotalPages; i++)
+            {
+                <button class="btn @(i == currentPage ? "btn-primary" : "btn-outline-primary") btn-sm"
+                        @onclick="() => GoToPage(i)">
+                    @i
+                </button>
+            }
+        }
+
+        <button class="btn btn-outline-secondary btn-sm"
+                disabled="@(pagedReports?.HasNext != true)"
+                @onclick="NextPage">
+            Next
+        </button>
+
+    </div>
+
+</div>
     }
 
 </div>
@@ -180,26 +221,65 @@
 
 @code {
 
-    private List<AppointmentReportDto>? reports;
+    private PagedResult<AppointmentReportDto>? pagedReports;
+    private List<AppointmentReportDto> reports = [];
+
+    private int currentPage = 1;
+    private int pageSize = 10;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadReports();
+    }
+
+    private async Task LoadReports()
+    {
         try
         {
-            reports = await AdminService.GetAppointmentReportAsync();
+            pagedReports = await AdminService.GetAppointmentReportAsync(
+                currentPage,
+                pageSize);
+
+            reports = pagedReports?.Items.ToList() ?? [];
         }
         catch (System.Net.Http.HttpRequestException ex)
         {
-            // If unauthorized, redirect to login. Otherwise show no data.
-            if (ex.Message != null && (ex.Message.Contains("401") || ex.Message.Contains("Unauthorized")))
+            if (ex.Message.Contains("401") || ex.Message.Contains("Unauthorized"))
             {
                 NavigationManager.NavigateTo("/login", true);
                 return;
             }
 
-            // Swallow other errors and leave reports as an empty list to show the empty state
-            reports = new List<AppointmentReportDto>();
+            reports = [];
+            pagedReports = null;
         }
+    }
+
+    private async Task PreviousPage()
+    {
+        if (pagedReports?.HasPrevious == true)
+        {
+            currentPage--;
+            await LoadReports();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (pagedReports?.HasNext == true)
+        {
+            currentPage++;
+            await LoadReports();
+        }
+    }
+
+    private async Task GoToPage(int page)
+    {
+        if (page < 1 || page > (pagedReports?.TotalPages ?? 1))
+            return;
+
+        currentPage = page;
+        await LoadReports();
     }
 
 }

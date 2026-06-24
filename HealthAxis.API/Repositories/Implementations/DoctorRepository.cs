@@ -1,6 +1,7 @@
 ﻿using HealthAxis.API.Data;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
+using HealthAxis.Shared.Common;
 using HealthAxis.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 namespace HealthAxis.API.Repositories.Implementations
@@ -60,12 +61,13 @@ namespace HealthAxis.API.Repositories.Implementations
                 .ToListAsync(ct);
         }
 
-        public async Task<IEnumerable<Doctor>> GetDoctorsAsync(
-    Specialisation? specialisation,
-    string? search,
-    CancellationToken ct = default)
+        public async Task<PagedResult<Doctor>> GetDoctorsAsync(
+            PaginationRequest request,
+            Specialisation? specialisation,
+            string? search,
+            CancellationToken ct = default)
         {
-            IQueryable<Doctor> query = _context.Doctors;
+            IQueryable<Doctor> query = _context.Doctors.AsNoTracking();
 
             if (specialisation.HasValue)
             {
@@ -84,9 +86,21 @@ namespace HealthAxis.API.Repositories.Implementations
                     EF.Functions.Like(d.FullName, $"%{search}%"));
             }
 
-            return await query
+            int totalCount = await query.CountAsync(ct);
+
+            var doctors = await query
                 .OrderBy(d => d.FullName)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .ToListAsync(ct);
+
+            return new PagedResult<Doctor>
+            {
+                Items = doctors,
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
     }
 }

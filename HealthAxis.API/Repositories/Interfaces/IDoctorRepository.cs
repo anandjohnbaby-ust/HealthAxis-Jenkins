@@ -1,4 +1,5 @@
 ﻿using HealthAxis.API.Models;
+using HealthAxis.Shared.Common;
 using HealthAxis.Shared.Enums;
 
 namespace HealthAxis.API.Repositories.Interfaces
@@ -17,9 +18,10 @@ namespace HealthAxis.API.Repositories.Interfaces
                     string searchTerm,
                     CancellationToken ct = default);
 
-        Task<IEnumerable<Doctor>> GetDoctorsAsync(
-                    Specialisation? specialisation,
-                    string? search,
-                    CancellationToken ct = default);
+        Task<PagedResult<Doctor>> GetDoctorsAsync(
+            PaginationRequest request,
+            Specialisation? specialisation,
+            string? search,
+            CancellationToken ct = default);
     }
 }

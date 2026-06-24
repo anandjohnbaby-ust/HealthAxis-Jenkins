@@ -57,12 +57,15 @@ namespace HealthAxis.Admin.Services
                    ?? new PagedResult<UserManagementDto>();
         }
 
-        public async Task<List<AppointmentReportDto>> GetAppointmentReportAsync()
+        public async Task<PagedResult<AppointmentReportDto>?> GetAppointmentReportAsync(
+            int pageNumber = 1,
+            int pageSize = 10)
         {
             await AttachAuthHeaderAsync();
-            return await _http.GetFromJsonAsync<List<AppointmentReportDto>>
-                ("api/admin/reports/appointments")
-                ?? new List<AppointmentReportDto>();
+
+            var url = $"api/admin/reports/appointments?pageNumber={pageNumber}&pageSize={pageSize}";
+
+            return await _http.GetFromJsonAsync<PagedResult<AppointmentReportDto>>(url);
         }
 
         public async Task<DashboardDto> GetDashboardAsync()

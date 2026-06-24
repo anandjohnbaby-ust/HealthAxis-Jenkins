@@ -51,9 +51,10 @@ namespace HealthAxis.API.Controllers
         }
 
         [HttpGet("reports/appointments")]
-        public async Task<IActionResult> GetAppointmentReport()
+        public async Task<ActionResult<PagedResult<AppointmentReportDto>>> GetAppointmentReport(
+            [FromQuery] PaginationRequest request)
         {
-            var report = await _adminService.GetAppointmentReport();
+            var report = await _adminService.GetAppointmentReport(request);
 
             return Ok(report);
         }

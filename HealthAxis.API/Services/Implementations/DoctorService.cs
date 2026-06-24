@@ -3,6 +3,7 @@ using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
+using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.Enums;
 
@@ -90,18 +91,25 @@ namespace HealthAxis.API.Services.Implementations
             return _mapper.Map<IEnumerable<DoctorDto>>(doctors);
         }
 
-        public async Task<IEnumerable<DoctorDto>> GetDoctorsAsync(
-                Specialisation? specialisation,
-                string? search,
-                CancellationToken ct = default)
+        public async Task<PagedResult<DoctorDto>> GetDoctorsAsync(
+            PaginationRequest request,
+            Specialisation? specialisation,
+            string? search,
+            CancellationToken ct = default)
         {
-            var doctors =
-                await _doctorRepository.GetDoctorsAsync(
-                    specialisation,
-                    search,
-                    ct);
+            var pagedDoctors = await _doctorRepository.GetDoctorsAsync(
+                request,
+                specialisation,
+                search,
+                ct);
 
-            return _mapper.Map<IEnumerable<DoctorDto>>(doctors);
+            return new PagedResult<DoctorDto>
+            {
+                Items = _mapper.Map<IEnumerable<DoctorDto>>(pagedDoctors.Items),
+                TotalCount = pagedDoctors.TotalCount,
+                PageNumber = pagedDoctors.PageNumber,
+                PageSize = pagedDoctors.PageSize
+            };
         }
     }
 }
