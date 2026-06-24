@@ -10,6 +10,7 @@ using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.Enums;
 using Microsoft.AspNetCore.Identity;
+using HealthAxis.Shared.Common;
 
 namespace HealthAxis.API.Services.Implementations
 {
@@ -135,9 +136,11 @@ namespace HealthAxis.API.Services.Implementations
             return await _appointmentRepository.GetAppointmentReportAsync();
         }
 
-        public async Task<IEnumerable<UserManagementDto>> GetUsers(string? role)
+        public async Task<PagedResult<UserManagementDto>> GetUsers(
+            string? role,
+            PaginationRequest request)
         {
-            return await _userRepository.GetUsersAsync(role);
+            return await _userRepository.GetUsersAsync(role, request);
         }
 
         public async Task<DashboardDto> GetDashboardAsync()

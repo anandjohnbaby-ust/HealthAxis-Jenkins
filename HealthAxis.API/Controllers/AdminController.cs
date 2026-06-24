@@ -1,9 +1,10 @@
-﻿using HealthAxis.Shared.DTOs.AuthDtos;
-using HealthAxis.API.Services.Interfaces;
+﻿using HealthAxis.API.Services.Interfaces;
+using HealthAxis.Shared.Common;
+using HealthAxis.Shared.DTOs.AdminDtos;
+using HealthAxis.Shared.DTOs.AuthDtos;
+using HealthAxis.Shared.DTOs.DoctorDtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using HealthAxis.Shared.DTOs.DoctorDtos;
-using HealthAxis.Shared.DTOs.AdminDtos;
 
 namespace HealthAxis.API.Controllers
 {
@@ -58,9 +59,11 @@ namespace HealthAxis.API.Controllers
         }
 
         [HttpGet("users")]
-        public async Task<IActionResult> GetUsers([FromQuery] string? role)
+        public async Task<IActionResult> GetUsers(
+            [FromQuery] string? role,
+            [FromQuery] PaginationRequest request)
         {
-            var users = await _adminService.GetUsers(role);
+            var users = await _adminService.GetUsers(role, request);
 
             return Ok(users);
         }

@@ -1,5 +1,6 @@
-﻿using HealthAxis.Shared.DTOs.DoctorDtos;
-using HealthAxis.API.Services.Interfaces;
+﻿using HealthAxis.API.Services.Interfaces;
+using HealthAxis.Shared.DTOs.DoctorDtos;
+using HealthAxis.Shared.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,18 +17,6 @@ namespace HealthAxis.API.Controllers
             IDoctorService doctorService)
         {
             _doctorService = doctorService;
-        }
-
-        [HttpGet]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IEnumerable<DoctorDto>>>
-            GetAllDoctors(
-                CancellationToken ct)
-        {
-            var doctors =
-                await _doctorService.GetAllAsync(ct);
-
-            return Ok(doctors);
         }
 
         [HttpGet("{id:int}")]
@@ -59,5 +48,20 @@ namespace HealthAxis.API.Controllers
             return Ok(doctor);
         }
 
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<IEnumerable<DoctorDto>>> GetDoctors(
+                [FromQuery] Specialisation? specialisation,
+                [FromQuery] string? search,
+                CancellationToken ct)
+        {
+            var doctors =
+                await _doctorService.GetDoctorsAsync(
+                    specialisation,
+                    search,
+                    ct);
+
+            return Ok(doctors);
+        }
     }
 }

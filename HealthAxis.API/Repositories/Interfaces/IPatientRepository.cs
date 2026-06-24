@@ -7,5 +7,9 @@ namespace HealthAxis.API.Repositories.Interfaces
 
         Task<Patient?> GetHealthRecordsByPatientId(int patientId,
         CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<Patient>> GetPatientsAsync(
+            string? search,
+            CancellationToken ct = default);
     }
 }

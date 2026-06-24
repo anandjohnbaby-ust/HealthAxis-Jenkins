@@ -82,5 +82,18 @@ namespace HealthAxis.API.Services.Implementations
             return _mapper.Map<IEnumerable<HealthRecordDto>>
                 (patient.HealthRecords);
         }
+
+        public async Task<IEnumerable<PatientDto>> GetPatientsAsync(
+            string? search,
+            CancellationToken ct = default)
+        {
+            var patients =
+                await _patientRepository.GetPatientsAsync(
+                    search,
+                    ct);
+
+            return _mapper.Map<IEnumerable<PatientDto>>(patients);
+        }
+
     }
 }

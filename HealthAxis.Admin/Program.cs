@@ -12,6 +12,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped<DoctorService>();
 builder.Services.AddScoped<AdminService>();
+builder.Services.AddScoped<PatientService>();
 
 // Configure HttpClient to point to your API. Used the API HTTPS URL from launchSettings.
 builder.Services.AddScoped(sp => new HttpClient

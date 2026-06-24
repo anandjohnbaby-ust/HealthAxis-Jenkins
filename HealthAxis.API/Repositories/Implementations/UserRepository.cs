@@ -1,6 +1,7 @@
 ﻿using HealthAxis.API.Data;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
+using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AdminDtos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -20,42 +21,50 @@ namespace HealthAxis.API.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<IEnumerable<UserManagementDto>> GetUsersAsync(string? role)
+        public async Task<PagedResult<UserManagementDto>> GetUsersAsync(
+            string? role,
+            PaginationRequest request)
         {
-            var users = await _userManager.Users
-                .Include(u => u.Doctor)
-                .Include(u => u.Patient)
+            var query = _userManager.Users.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(role))
+            {
+                var usersInRole = await _userManager.GetUsersInRoleAsync(role);
+                var userIds = usersInRole.Select(x => x.Id).ToHashSet();
+
+                query = query.Where(x => userIds.Contains(x.Id));
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var users = await query
+                .OrderBy(x => x.UserName)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .ToListAsync();
 
-            var result = new List<UserManagementDto>();
+            var items = new List<UserManagementDto>();
 
             foreach (var user in users)
             {
                 var roles = await _userManager.GetRolesAsync(user);
 
-                var userRole = roles.FirstOrDefault() ?? string.Empty;
-
-                if (!string.IsNullOrWhiteSpace(role) &&
-                    !userRole.Equals(role, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                result.Add(new UserManagementDto
+                items.Add(new UserManagementDto
                 {
                     UserId = user.Id,
-                    Email = user.Email ?? "",
-                    PhoneNumber = user.PhoneNumber,
-                    EmailConfirmed = user.EmailConfirmed,
-                    Role = userRole,
-                    FullName = user.Doctor?.FullName
-                               ?? user.Patient?.FullName
-                               ?? "Admin",
-                    IsActive = user.Doctor?.IsActive ?? true
+                    FullName = user.UserName!,
+                    Email = user.Email!,
+                    Role = roles.FirstOrDefault() ?? string.Empty
                 });
             }
 
-            return result;
+            return new PagedResult<UserManagementDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
     }
 }

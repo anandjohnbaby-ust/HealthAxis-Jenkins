@@ -1,7 +1,8 @@
-﻿using HealthAxis.Shared.DTOs.AppointmentDtos;
-using HealthAxis.Shared.DTOs.DoctorDtos;
-using HealthAxis.API.Models;
+﻿using HealthAxis.API.Models;
+using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AdminDtos;
+using HealthAxis.Shared.DTOs.AppointmentDtos;
+using HealthAxis.Shared.DTOs.DoctorDtos;
 
 namespace HealthAxis.API.Services.Interfaces
 {
@@ -15,7 +16,9 @@ namespace HealthAxis.API.Services.Interfaces
 
         Task<IEnumerable<AppointmentReportDto>> GetAppointmentReport();
 
-        Task<IEnumerable<UserManagementDto>> GetUsers(string? role);
+        Task<PagedResult<UserManagementDto>> GetUsers(
+            string? role,
+            PaginationRequest request);
 
         Task<DashboardDto> GetDashboardAsync();
 

@@ -1,7 +1,8 @@
-﻿using System.Net.Http.Json;
-using System.Net.Http.Headers;
+﻿using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AdminDtos;
 using Microsoft.JSInterop;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 
 namespace HealthAxis.Admin.Services
 {
@@ -38,18 +39,22 @@ namespace HealthAxis.Admin.Services
             }
         }
 
-        public async Task<List<UserManagementDto>> GetUsersAsync(string? role = null)
+        public async Task<PagedResult<UserManagementDto>> GetUsersAsync(
+            string? role = null,
+            int pageNumber = 1,
+            int pageSize = 10)
         {
-            var url = "api/admin/users";
+            var url = $"api/admin/users?pageNumber={pageNumber}&pageSize={pageSize}";
 
             if (!string.IsNullOrWhiteSpace(role))
             {
-                url += $"?role={role}";
+                url += $"&role={Uri.EscapeDataString(role)}";
             }
 
             await AttachAuthHeaderAsync();
-            return await _http.GetFromJsonAsync<List<UserManagementDto>>(url)
-                   ?? new List<UserManagementDto>();
+
+            return await _http.GetFromJsonAsync<PagedResult<UserManagementDto>>(url)
+                   ?? new PagedResult<UserManagementDto>();
         }
 
         public async Task<List<AppointmentReportDto>> GetAppointmentReportAsync()

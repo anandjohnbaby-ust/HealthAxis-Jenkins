@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
-using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
+using HealthAxis.Shared.DTOs.DoctorDtos;
+using HealthAxis.Shared.Enums;
 
 namespace HealthAxis.API.Services.Implementations
 {
@@ -65,5 +66,42 @@ namespace HealthAxis.API.Services.Implementations
                 doctor);
         }
 
+        public async Task<IEnumerable<DoctorDto>> FilterBySpecialisationAsync(
+                Specialisation? specialisation,
+                CancellationToken ct = default)
+        {
+            var doctors =
+                await _doctorRepository.FilterBySpecialisationAsync(
+                    specialisation,
+                    ct);
+
+            return _mapper.Map<IEnumerable<DoctorDto>>(doctors);
+        }
+
+        public async Task<IEnumerable<DoctorDto>> SearchAsync(
+            string searchTerm,
+            CancellationToken ct = default)
+        {
+            var doctors =
+                await _doctorRepository.SearchAsync(
+                    searchTerm,
+                    ct);
+
+            return _mapper.Map<IEnumerable<DoctorDto>>(doctors);
+        }
+
+        public async Task<IEnumerable<DoctorDto>> GetDoctorsAsync(
+                Specialisation? specialisation,
+                string? search,
+                CancellationToken ct = default)
+        {
+            var doctors =
+                await _doctorRepository.GetDoctorsAsync(
+                    specialisation,
+                    search,
+                    ct);
+
+            return _mapper.Map<IEnumerable<DoctorDto>>(doctors);
+        }
     }
 }

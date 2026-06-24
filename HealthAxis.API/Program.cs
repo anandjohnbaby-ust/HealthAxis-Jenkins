@@ -209,14 +209,20 @@ builder.Services.AddAutoMapper(
 //----------------------------------------------------------
 // CORS
 //----------------------------------------------------------
-// Allow the Admin Blazor app (and local API origins) to call this API during development
+// During development allow the admin SPA to call the API. Be cautious with AllowAnyOrigin in production.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAdmin",
         policy => policy
-            .WithOrigins("https://localhost:7197", "https://localhost:7207")
+            // Allow common local dev origins (include http and https ports)
+            .WithOrigins("https://localhost:7197", "http://localhost:5036", "https://localhost:7207")
             .AllowAnyHeader()
-            .AllowAnyMethod());
+            .AllowAnyMethod()
+            .AllowCredentials());
+
+    // Fallback permissive policy for development if origin mismatches during local testing
+    options.AddPolicy("AllowAllDev",
+        p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
 var app = builder.Build();
@@ -252,7 +258,15 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // Apply CORS before authentication/authorization
-app.UseCors("AllowAdmin");
+if (app.Environment.IsDevelopment())
+{
+    // Use permissive policy during development to avoid CORS issues while testing from different local ports
+    app.UseCors("AllowAllDev");
+}
+else
+{
+    app.UseCors("AllowAdmin");
+}
 
 app.UseAuthentication();
 

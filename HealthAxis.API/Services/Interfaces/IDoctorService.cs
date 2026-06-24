@@ -1,4 +1,5 @@
 ﻿using HealthAxis.Shared.DTOs.DoctorDtos;
+using HealthAxis.Shared.Enums;
 
 namespace HealthAxis.API.Services.Interfaces
 {
@@ -13,6 +14,19 @@ namespace HealthAxis.API.Services.Interfaces
 
         Task<DoctorDto> GetAvailableDoctorByIdAsync(
             int doctorId,
+            CancellationToken ct = default);
+
+        Task<IEnumerable<DoctorDto>> FilterBySpecialisationAsync(
+            Specialisation? specialisation,
+            CancellationToken ct = default);
+
+        Task<IEnumerable<DoctorDto>> SearchAsync(
+            string searchTerm,
+            CancellationToken ct = default);
+
+        Task<IEnumerable<DoctorDto>> GetDoctorsAsync(
+            Specialisation? specialisation,
+            string? search,
             CancellationToken ct = default);
     }
 }

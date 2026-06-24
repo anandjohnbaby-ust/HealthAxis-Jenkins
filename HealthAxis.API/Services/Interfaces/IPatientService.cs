@@ -5,7 +5,8 @@ namespace HealthAxis.API.Services.Interfaces
 {
     public interface IPatientService
     {
-        Task<IEnumerable<PatientDto>> GetAllAsync(
+        Task<IEnumerable<PatientDto>> GetPatientsAsync(
+            string? search,
             CancellationToken ct = default);
 
         Task<PatientDto?> GetByIdAsync(
@@ -17,9 +18,8 @@ namespace HealthAxis.API.Services.Interfaces
             UpdatePatientDto dto,
             CancellationToken ct = default);
 
-        Task<IEnumerable<HealthRecordDto>>
-            GetHealthRecordsByPatientId(
-                int patientId,
-                CancellationToken ct = default);
+        Task<IEnumerable<HealthRecordDto>> GetHealthRecordsByPatientId(
+            int patientId,
+            CancellationToken ct = default);
     }
 }

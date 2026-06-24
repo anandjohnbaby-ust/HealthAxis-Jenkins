@@ -1,0 +1,402 @@
+﻿@page "/patients"
+
+@using HealthAxis.Admin.Services
+@using HealthAxis.Shared.DTOs.PatientDtos
+@using HealthAxis.Shared.Enums
+
+@inject PatientService PatientService
+
+<PageTitle>Patients</PageTitle>
+
+<div class="page-header mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div class="header-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+        </div>
+        <div>
+            <h2 class="fw-bold mb-1">Patients</h2>
+            <p class="text-muted mb-0">View and manage registered patients.</p>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4">
+
+    <div class="card-header bg-white py-3">
+        <div class="row align-items-center">
+            <div class="col-md-4 ms-auto">
+                <div class="search-wrap">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input class="form-control"
+                           placeholder="Search by ID, name or email..."
+                           value="@searchText"
+                           @oninput="SearchPatients" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (patients is null)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" style="width:3rem;height:3rem;" role="status"></div>
+            <div class="mt-3 text-muted">Loading patients...</div>
+        </div>
+    }
+    else if (!patients.Any())
+    {
+        <div class="text-center py-5">
+            <div class="empty-icon mb-2">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
+                </svg>
+            </div>
+            <h5>No patients found</h5>
+            <p class="text-muted">Try a different name, ID or email.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Age</th>
+                        <th>Gender</th>
+                        <th>Phone</th>
+                        <th>Registered</th>
+                        <th width="100">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var patient in patients!)
+                    {
+                        <tr>
+                            <td class="text-muted">#@patient.PatientId</td>
+                            <td class="fw-semibold">@patient.FullName</td>
+                            <td class="text-muted">@patient.Email</td>
+                            <td>@patient.Age</td>
+                            <td>
+                                <span class="badge @GetGenderBadge(patient.Gender)">@patient.Gender</span>
+                            </td>
+                            <td class="text-muted">@patient.PhoneNumber</td>
+                            <td class="text-muted">@patient.CreatedDate.ToString("dd MMM yyyy")</td>
+                            <td>
+                                <button class="btn btn-sm btn-edit" @onclick="() => OpenEditModal(patient)">
+                                    Edit
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+</div>
+
+@if (showEditModal)
+{
+    <div class="modal fade show d-block" style="background:rgba(14,58,92,.45);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit patient</h5>
+                    <button class="btn-close" @onclick="CloseModal"></button>
+                </div>
+
+                <EditForm Model="editPatient" OnValidSubmit="SavePatient">
+
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="modal-body">
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Full name</label>
+                                <InputText class="form-control" @bind-Value="editPatient.FullName" />
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <InputText class="form-control" @bind-Value="editPatient.Email" />
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phone number</label>
+                                <InputText class="form-control" @bind-Value="editPatient.PhoneNumber" />
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Date of birth</label>
+                                <InputDate class="form-control" @bind-Value="editPatient.DateOfBirth" />
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Gender</label>
+                                <InputSelect class="form-select" @bind-Value="editPatient.Gender">
+                                    @foreach (Gender gender in Enum.GetValues<Gender>())
+                                    {
+                                        <option value="@gender">@gender</option>
+                                    }
+                                </InputSelect>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-cancel" @onclick="CloseModal">Cancel</button>
+                        <button type="submit" class="btn btn-save">Save changes</button>
+                    </div>
+
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+
+    :root {
+        --hx-primary: #155E91;
+        --hx-primary-dark: #0E3A5C;
+        --hx-primary-light: #EAF2F8;
+        --hx-bg: #FAFBFC;
+        --hx-text: #1E293B;
+        --hx-accent: #E2A33B;
+        --hx-border: #E2E8F0;
+    }
+
+    .page-header {
+        background: white;
+        padding: 24px 30px;
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(15, 76, 69, 0.06);
+    }
+
+    .header-icon {
+        width: 46px;
+        height: 46px;
+        min-width: 46px;
+        border-radius: 12px;
+        background: var(--hx-primary-light);
+        color: var(--hx-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .page-header h2 { color: var(--hx-text); }
+
+    .search-wrap {
+        position: relative;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #adb5bd;
+        pointer-events: none;
+    }
+
+    .search-wrap .form-control {
+        padding-left: 36px;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--hx-primary);
+        box-shadow: 0 0 0 3px rgba(15, 76, 69, 0.12);
+    }
+
+    .table thead th {
+        font-size: .78rem;
+        text-transform: uppercase;
+        letter-spacing: .06rem;
+        color: #6c757d;
+        padding: 16px;
+        background: var(--hx-primary-light);
+        border-bottom: none;
+        font-weight: 700;
+    }
+
+    .table thead th:first-child { border-radius: 0; }
+
+    .table tbody td {
+        padding: 16px;
+        border-bottom-color: var(--hx-border);
+    }
+
+    .table tbody tr:hover {
+        background: #FBFAF7;
+    }
+
+    .badge {
+        padding: .45rem .8rem;
+        font-size: .72rem;
+        font-weight: 600;
+        border-radius: 50rem;
+        letter-spacing: .02rem;
+    }
+
+    .bg-primary { background: #DCE9F5 !important; color: var(--hx-primary) !important; }
+    .bg-success { background: #E1F0EC !important; color: #1D7874 !important; }
+    .bg-secondary { background: #EDEAE3 !important; color: #6c757d !important; }
+
+    .btn-edit {
+        border: 1px solid var(--hx-primary);
+        color: var(--hx-primary);
+        background: transparent;
+        font-weight: 600;
+        font-size: .82rem;
+        border-radius: 8px;
+        padding: .35rem .9rem;
+        transition: all .15s ease;
+    }
+
+    .btn-edit:hover {
+        background: var(--hx-primary);
+        color: white;
+    }
+
+    .empty-icon {
+        color: #ced4da;
+        display: flex;
+        justify-content: center;
+    }
+
+    .modal-content {
+        border-radius: 16px;
+        border: none;
+        overflow: hidden;
+    }
+
+    .modal-header {
+        border-bottom: 1px solid var(--hx-border);
+        background: var(--hx-primary-light);
+    }
+
+    .modal-title { color: var(--hx-text); font-weight: 700; }
+
+    .modal-footer {
+        border-top: 1px solid var(--hx-border);
+    }
+
+    .form-label {
+        font-size: .85rem;
+        font-weight: 600;
+        color: var(--hx-text);
+    }
+
+    .btn-save {
+        background: var(--hx-primary);
+        border: none;
+        color: white;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: .5rem 1.3rem;
+    }
+
+    .btn-save:hover { background: var(--hx-primary-dark); color: white; }
+
+    .btn-cancel {
+        background: transparent;
+        border: 1px solid var(--hx-border);
+        color: #6c757d;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: .5rem 1.3rem;
+    }
+
+    .validation-message {
+        color: #c0392b;
+        font-size: .85rem;
+    }
+
+</style>
+
+@code
+{
+    private List<PatientDto>? patients;
+
+    private bool showEditModal;
+    private int editingPatientId;
+    private string searchText = string.Empty;
+    private UpdatePatientDto editPatient = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPatients();
+    }
+
+    private async Task LoadPatients()
+    {
+        patients = await PatientService.GetPatients(searchText);
+    }
+
+    private void OpenEditModal(PatientDto patient)
+    {
+        editingPatientId = patient.PatientId;
+
+        editPatient = new UpdatePatientDto
+        {
+            FullName = patient.FullName,
+            Email = patient.Email,
+            PhoneNumber = patient.PhoneNumber,
+            DateOfBirth = patient.DateOfBirth,
+            Gender = patient.Gender
+        };
+
+        showEditModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showEditModal = false;
+    }
+
+    private async Task SavePatient()
+    {
+        var updatedPatient = await PatientService.UpdatePatient(editingPatientId, editPatient);
+
+        if (updatedPatient is not null)
+        {
+            await LoadPatients();
+            showEditModal = false;
+        }
+    }
+
+    private string GetGenderBadge(Gender gender)
+    {
+        return gender switch
+        {
+            Gender.Male => "bg-primary",
+            Gender.Female => "bg-success",
+            Gender.Other => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    private async Task SearchPatients(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? "";
+        await LoadPatients();
+    }
+}

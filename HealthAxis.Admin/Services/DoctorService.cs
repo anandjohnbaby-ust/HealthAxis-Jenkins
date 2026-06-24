@@ -1,8 +1,9 @@
-﻿using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using HealthAxis.Shared.DTOs.AdminDtos;
+﻿using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
+using HealthAxis.Shared.Enums;
 using Microsoft.JSInterop;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 
 namespace HealthAxis.Admin.Services
 {
@@ -64,6 +65,49 @@ namespace HealthAxis.Admin.Services
             response.EnsureSuccessStatusCode();
 
             return await response.Content.ReadFromJsonAsync<DoctorDto>();
+        }
+
+        public async Task<List<DoctorDto>?> FilterDoctors(
+            Specialisation? specialisation)
+        {
+            await SetAuthorizationHeader();
+
+            if (specialisation is null)
+            {
+                return await GetDoctors();
+            }
+
+            return await _http.GetFromJsonAsync<List<DoctorDto>>(
+                $"api/doctors/filter?specialisation={specialisation}");
+        }
+        public async Task<List<DoctorDto>?> SearchDoctors(string searchTerm)
+        {
+            await SetAuthorizationHeader();
+
+            return await _http.GetFromJsonAsync<List<DoctorDto>>(
+                $"api/doctors/search?search={Uri.EscapeDataString(searchTerm)}");
+        }
+
+        public async Task<List<DoctorDto>?> GetDoctors(
+            Specialisation? specialisation = null,
+            string? search = null)
+        {
+            await SetAuthorizationHeader();
+
+            var url = "api/doctors";
+
+            var query = new List<string>();
+
+            if (specialisation.HasValue)
+                query.Add($"specialisation={specialisation.Value}");
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query.Add($"search={Uri.EscapeDataString(search)}");
+
+            if (query.Any())
+                url += "?" + string.Join("&", query);
+
+            return await _http.GetFromJsonAsync<List<DoctorDto>>(url);
         }
     }
 }
