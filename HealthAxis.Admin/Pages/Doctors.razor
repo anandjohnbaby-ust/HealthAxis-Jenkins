@@ -195,9 +195,8 @@
 @if (showForm)
 {
     <div class="modal fade show d-block" style="background:rgba(14,58,92,.45);" tabindex="-1" role="dialog" aria-modal="true">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
-
                 <div class="modal-header">
                     <h5 class="modal-title">@(isEditing ? "Edit doctor" : "Add doctor")</h5>
                     <button type="button" class="btn-close" aria-label="Close" @onclick="Cancel"></button>

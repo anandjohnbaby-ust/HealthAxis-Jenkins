@@ -11,14 +11,11 @@ namespace HealthAxis.API.Repositories.Implementations
     public class UserRepository : IUserRepository
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ApplicationDbContext _context;
 
         public UserRepository(
-            UserManager<ApplicationUser> userManager,
-            ApplicationDbContext context)
+            UserManager<ApplicationUser> userManager)
         {
             _userManager = userManager;
-            _context = context;
         }
 
         public async Task<PagedResult<UserManagementDto>> GetUsersAsync(
