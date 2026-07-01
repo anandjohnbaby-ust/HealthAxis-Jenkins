@@ -1,0 +1,74 @@
+<header class="auth-header">
+  <div class="auth-header__row">
+    <a routerLink="/" class="ha-brand">
+      <span class="ha-brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
+          <path
+            d="M12 21s-7.5-4.6-10-9.1C0.3 8.2 2 4.5 5.6 4c2-0.3 3.8 0.7 4.9 2.2L12 7.7l1.5-1.5C14.6 4.7 16.4 3.7 18.4 4c3.6 0.5 5.3 4.2 3.6 7.9C19.5 16.4 12 21 12 21z"
+            fill="currentColor"
+          />
+          <path
+            d="M7 12h2.2l1.1-2.4L11.8 15l1.3-3h2.7"
+            stroke="#fff"
+            stroke-width="1.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
+      <span class="ha-brand__name">HealthAxis</span>
+    </a>
+  </div>
+</header>
+
+<div class="auth-page">
+  <div class="auth-card">
+    <h1 class="auth-card__title">Welcome back</h1>
+    <p class="auth-card__subtitle">Log in to continue to HealthAxis</p>
+
+    @if (serverError()) {
+      <div class="alert alert--error">{{ serverError() }}</div>
+    }
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+        />
+        <app-input-error
+          [control]="loginForm.get('email')"
+          [message]="emailErrorMessage"
+        />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+        />
+        <app-input-error
+          [control]="loginForm.get('password')"
+          [message]="VALIDATION_MESSAGES.REQUIRED('Password')"
+        />
+      </div>
+
+      <button type="submit" class="btn btn--primary btn--block" [disabled]="loading()">
+        Log in
+        <app-button-loader [loading]="loading()" />
+      </button>
+    </form>
+
+    <p class="auth-card__footer">
+      Don't have an account? <a routerLink="/register">Create one</a>
+    </p>
+  </div>
+</div>

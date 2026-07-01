@@ -1,0 +1,35 @@
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  min-height: 60px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-header__brand {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0b3b36;
+}
+
+.app-header__logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px;
+  border: 1px solid #0b3b36;
+  border-radius: 10px;
+  background: transparent;
+  color: #0b3b36;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.app-shell {
+  min-height: calc(100vh - 60px);
+}

@@ -8,6 +8,8 @@
 
         public int DoctorId { get; set; }
 
+        public string DoctorName { get; set; } = string.Empty;
+
         public int PatientId { get; set; }
 
         public DateTime VisitDate { get; set; }

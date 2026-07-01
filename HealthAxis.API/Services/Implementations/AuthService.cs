@@ -1,17 +1,21 @@
 ﻿using HealthAxis.API.Data;
-using HealthAxis.Shared.DTOs.AuthDtos;
+using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
+using HealthAxis.API.Repositories.Implementations;
+using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
+using HealthAxis.Shared.DTOs.AuthDtos;
+using HealthAxis.Shared.DTOs.CommonDtos;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
 
 namespace HealthAxis.API.Services.Implementation
 {
-    public class AuthService(UserManager<ApplicationUser> userManager, ApplicationDbContext context, IConfiguration config) : IAuthService
+    public class AuthService(UserManager<ApplicationUser> userManager, ApplicationDbContext context, IPatientRepository patientRepository, IDoctorRepository doctorRepository, IConfiguration config) : IAuthService
     {
         public async Task<(bool Success, string Message, string AccessToken, string RefreshToken, int ExpiresIn)> Login(LoginDto request)
         {
@@ -130,6 +134,42 @@ namespace HealthAxis.API.Services.Implementation
                 new Claim(ClaimTypes.NameIdentifier, user.Id)
             };
 
+            // Add PatientId for patients
+            if (roles.Contains("Patient"))
+            {
+                var patient =
+                    await patientRepository.GetByUserIdAsync(user.Id);
+
+                if (patient is not null)
+                {
+                    claims.Add(
+                        new Claim("patientId",
+                            patient.PatientId.ToString()));
+
+                    claims.Add(
+                        new Claim("fullName",
+                            patient.FullName));
+                }
+            }
+
+            if (roles.Contains("Doctor"))
+            {
+                var doctor =
+                    await doctorRepository.GetByUserIdAsync(user.Id);
+
+                if (doctor is not null)
+                {
+                    claims.Add(
+                        new Claim("doctorId",
+                            doctor.DoctorId.ToString()));
+
+                    claims.Add(
+                        new Claim("fullName",
+                            doctor.FullName));
+                }
+            }
+
+
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
@@ -160,10 +200,10 @@ namespace HealthAxis.API.Services.Implementation
         }
 
         public async Task<(bool Success,
-    string Message,
-    string AccessToken,
-    string RefreshToken,
-    int ExpiresIn)> RefreshToken(RefreshTokenDto request)
+            string Message,
+            string AccessToken,
+            string RefreshToken,
+            int ExpiresIn)> RefreshToken(RefreshTokenDto request)
         {
             var user = await userManager.Users
                 .FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken);
@@ -216,6 +256,31 @@ namespace HealthAxis.API.Services.Implementation
                 newAccessToken,
                 newRefreshToken,
                 expiresIn);
+        }
+
+        public async Task ChangePasswordAsync(
+            string userId,
+            ChangePasswordDto dto)
+        {
+            var user = await userManager.FindByIdAsync(userId);
+
+            if (user is null)
+            {
+                throw new NotFoundException("User not found.");
+            }
+
+            var result = await userManager.ChangePasswordAsync(
+                user,
+                dto.CurrentPassword,
+                dto.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                throw new ValidationException(
+                    string.Join(
+                        Environment.NewLine,
+                        result.Errors.Select(e => e.Description)));
+            }
         }
     }
 }

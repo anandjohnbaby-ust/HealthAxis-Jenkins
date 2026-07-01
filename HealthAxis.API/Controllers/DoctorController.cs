@@ -1,9 +1,13 @@
 ﻿using HealthAxis.API.Services.Interfaces;
 using HealthAxis.Shared.Common;
+using HealthAxis.Shared.DTOs.AdminDtos;
+using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
+using HealthAxis.Shared.DTOs.HealthRecordDtos;
 using HealthAxis.Shared.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace HealthAxis.API.Controllers
 {
@@ -14,56 +18,126 @@ namespace HealthAxis.API.Controllers
     {
         private readonly IDoctorService _doctorService;
 
-        public DoctorsController(
-            IDoctorService doctorService)
+        public DoctorsController(IDoctorService doctorService)
         {
             _doctorService = doctorService;
         }
 
+        [AllowAnonymous]
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Doctor,Admin")]
-        public async Task<ActionResult<DoctorDto>>
-            GetDoctorById(
-                int id,
-                CancellationToken ct)
+        public async Task<IActionResult> GetDoctor(int id)
         {
-            var doctor =
-                await _doctorService.GetByIdAsync(id, ct);
-
-            return Ok(doctor);
+            return Ok(await _doctorService.GetDoctorById(id));
         }
 
-        [HttpGet("{id:int}/availability")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult>
-            GetDoctorAvailability(
-                int id,
-                CancellationToken ct)
-        {
-            DoctorDto doctor =
-                await _doctorService
-                    .GetAvailableDoctorByIdAsync(
-                        id,
-                        ct);
-
-            return Ok(doctor);
-        }
-
-        [HttpGet]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<PagedResult<DoctorDto>>> GetDoctors(
-            [FromQuery] PaginationRequest request,
-            [FromQuery] Specialisation? specialisation,
-            [FromQuery] string? search,
+        [Authorize(Roles = "Doctor")]
+        [HttpGet("me")]
+        public async Task<ActionResult<DoctorDto>> GetMyProfile(
             CancellationToken ct)
         {
-            var doctors = await _doctorService.GetDoctorsAsync(
-                request,
-                specialisation,
-                search,
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            var doctor = await _doctorService.GetDoctorByUserIdAsync(
+                userId,
                 ct);
 
-            return Ok(doctors);
+            return Ok(doctor);
+        }
+
+        [Authorize(Roles = "Doctor")]
+        [HttpPut("me")]
+        public async Task<ActionResult<DoctorDto>> UpdateMyProfile(
+            [FromBody] UpdateDoctorDto dto,
+            CancellationToken ct)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            var doctor = await _doctorService.UpdateDoctorByUserIdAsync(
+                userId,
+                dto,
+                ct);
+
+            return Ok(doctor);
+        }
+
+
+        [Authorize(Roles = "Doctor")]
+        [HttpGet("appointments")]
+        public async Task<IActionResult> GetAppointments(CancellationToken ct)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            return Ok(await _doctorService.GetAppointmentsAsync(userId, ct));
+        }
+
+        [Authorize(Roles = "Doctor")]
+        [HttpGet("schedule/today")]
+        public async Task<IActionResult> GetTodaySchedule(CancellationToken ct)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            return Ok(await _doctorService.GetTodaysAppointmentsAsync(userId, ct)); 
+        }
+
+        [Authorize(Roles = "Doctor")]
+        [HttpGet("schedule/week")]
+        public async Task<IActionResult> GetWeekSchedule(CancellationToken ct)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            return Ok(await _doctorService.GetWeeklyAppointmentsAsync(userId, ct));
+        }
+
+
+        [HttpPut("appointments/{appointmentId:int}/status")]
+        public async Task<ActionResult<AppointmentDto>> UpdateAppointmentStatus(
+            int appointmentId,
+            [FromBody] UpdateAppointmentStatusDto dto,
+            CancellationToken ct)
+        {
+            var appointment = await _doctorService.UpdateAppointmentStatusAsync(
+                appointmentId,
+                dto,
+                ct);
+
+            return Ok(appointment);
+        }
+
+        [HttpPost("health-records")]
+        public async Task<ActionResult<HealthRecordDto>> AddHealthRecord(
+            CreateHealthRecordDto dto,
+            CancellationToken ct)
+        {
+            var record = await _doctorService.AddHealthRecordAsync(
+                dto,
+                ct);
+
+            return Ok(record);
+        }
+
+        [HttpGet("health-records/{id:int}")]
+        public async Task<ActionResult<HealthRecordDto>> GetHealthRecord(
+            int id,
+            CancellationToken ct)
+        {
+            var healthRecord = await _doctorService.GetHealthRecordByIdAsync(
+                id,
+                ct);
+
+            return Ok(healthRecord);
+        }
+
+        [HttpGet("dashboard")]
+        public async Task<ActionResult<DoctorDashboardDto>> GetDashboard(
+            CancellationToken ct)
+        {
+            var doctorId = int.Parse(User.FindFirst("doctorId")!.Value);
+
+            var dashboard = await _doctorService.GetDashboardAsync(
+                doctorId,
+                ct);
+
+            return Ok(dashboard);
         }
     }
 }

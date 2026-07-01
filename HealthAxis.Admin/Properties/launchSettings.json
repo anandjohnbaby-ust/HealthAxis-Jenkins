@@ -16,7 +16,7 @@
       "commandName": "Project",
       "launchUrl": "login",
       "dotnetRunMessages": true,
-      "launchBrowser": true,
+      "launchBrowser": false,
       "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
       "applicationUrl": "https://localhost:7197;http://localhost:5036",
       "environmentVariables": {
@@ -25,3 +25,5 @@
     }
   }
 }
+
+

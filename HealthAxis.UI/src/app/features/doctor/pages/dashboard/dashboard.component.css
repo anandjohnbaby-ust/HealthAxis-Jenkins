@@ -1,0 +1,158 @@
+/* ===========================
+   Dashboard Layout
+=========================== */
+
+.container-fluid {
+    padding: 1.5rem;
+}
+
+/* ===========================
+   Welcome Section
+=========================== */
+
+h2 {
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* ===========================
+   Cards
+=========================== */
+
+.card {
+    border: none;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all .25s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    background: #fff;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* ===========================
+   Statistics Cards
+=========================== */
+
+.card h6 {
+    color: #6c757d;
+    font-size: .85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.card h2 {
+    margin-top: .75rem;
+    margin-bottom: 0;
+    font-size: 2.3rem;
+    font-weight: 700;
+}
+
+.text-primary {
+    color: #0d6efd !important;
+}
+
+.text-success {
+    color: #198754 !important;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+/* ===========================
+   Table
+=========================== */
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table tbody td {
+    vertical-align: middle;
+    padding: .9rem;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8fbff;
+}
+
+/* ===========================
+   Status Badges
+=========================== */
+
+.badge {
+    padding: .45rem .8rem;
+    font-size: .8rem;
+    font-weight: 500;
+    border-radius: 50rem;
+}
+
+/* ===========================
+   Loading Spinner
+=========================== */
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* ===========================
+   Empty State
+=========================== */
+
+.text-center p {
+    font-size: 1rem;
+}
+
+/* ===========================
+   Responsive
+=========================== */
+
+@media (max-width: 768px) {
+
+    .container-fluid {
+        padding: 1rem;
+    }
+
+    h2 {
+        font-size: 1.75rem;
+    }
+
+    .card h2 {
+        font-size: 1.8rem;
+    }
+
+    .card-body {
+        padding: 1.2rem;
+    }
+
+    .table {
+        font-size: .9rem;
+    }
+}

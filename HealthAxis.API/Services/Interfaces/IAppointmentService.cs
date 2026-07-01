@@ -1,4 +1,6 @@
-﻿using HealthAxis.Shared.DTOs.AppointmentDtos;
+﻿using HealthAxis.Shared.Common;
+using HealthAxis.Shared.DTOs.AdminDtos;
+using HealthAxis.Shared.DTOs.AppointmentDtos;
 
 namespace HealthAxis.API.Services.Interfaces
 {
@@ -7,7 +9,10 @@ namespace HealthAxis.API.Services.Interfaces
         Task<IEnumerable<AppointmentDto>> GetAllAsync(
             CancellationToken ct = default);
 
-        Task<AppointmentDto> AddAsync(
+        Task<PagedResult<AppointmentReportDto>> GetAppointmentReportAsync(
+            PaginationRequest request);
+
+        Task<AppointmentDto> BookAppointmentAsync(
             CreateAppointmentDto dto,
             CancellationToken ct = default);
 
@@ -19,5 +24,13 @@ namespace HealthAxis.API.Services.Interfaces
         Task<AppointmentDto> DeleteAsync(
             int id,
             CancellationToken ct = default);
+
+        Task<AppointmentDto> CancelAppointmentByPatientAsync(
+                    int patientId,
+                    int appointmentId,
+                    CancelAppointmentDto dto,
+                    CancellationToken ct = default);
+
+
     }
 }

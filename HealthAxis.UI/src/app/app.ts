@@ -1,11 +1,24 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { NgIf } from '@angular/common';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
+  imports: [RouterOutlet],
   templateUrl: './app.html',
-  standalone: false,
-  styleUrl: './app.css'
+  styleUrls: ['./app.css']
 })
 export class App {
-  protected readonly title = signal('HealthAxis.UI');
+  protected readonly title = signal('hap-demo');
+  private readonly authService = inject(AuthService);
+
+  protected isLoggedIn(): boolean {
+    return this.authService.isLoggedIn();
+  }
+
+  protected logout(): void {
+    this.authService.logout();
+  }
 }

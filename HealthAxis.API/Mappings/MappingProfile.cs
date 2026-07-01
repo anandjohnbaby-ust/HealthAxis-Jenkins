@@ -39,12 +39,27 @@ namespace HealthAxis.API.Profiles
 
             CreateMap<UpdateAppointmentStatusDto, Appointment>();
 
-            CreateMap<Appointment, AppointmentDto>();
+            CreateMap<Appointment, AppointmentDto>()
+                .ForMember(
+                    dest => dest.DoctorName,
+                    opt => opt.MapFrom(src => src.Doctor.FullName))
+                .ForMember(
+                    dest => dest.PatientName,
+                    opt => opt.MapFrom(src => src.Patient.FullName))
+                .ForMember(
+                    dest => dest.HealthRecordId,
+                    opt => opt.MapFrom(src =>
+                        src.HealthRecord != null
+                            ? src.HealthRecord.RecordId
+                            : (int?)null));
 
             // Health Record Mappings
             CreateMap<CreateHealthRecordDto,HealthRecord>();
 
-            CreateMap<HealthRecord, HealthRecordDto>();
+            //CreateMap<HealthRecord, HealthRecordDto>();
+            CreateMap<HealthRecord, HealthRecordDto>()
+            .ForMember(dest => dest.DoctorName,
+                opt => opt.MapFrom(src => src.Doctor.FullName));
         }
     }
 }

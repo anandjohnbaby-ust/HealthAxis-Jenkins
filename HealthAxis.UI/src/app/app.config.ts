@@ -1,0 +1,28 @@
+// src/app/app.config.ts
+import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { provideRouter, withComponentInputBinding, withViewTransitions } from '@angular/router';
+
+import { routes } from './app.routes';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { errorInterceptor } from './core/interceptors/error.interceptor';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // Angular 18+ zoneless change detection for maximum performance
+    provideZonelessChangeDetection(),
+    
+    // Routing configured with modern view transitions and input binding
+    provideRouter(
+      routes, 
+      withComponentInputBinding(), 
+      withViewTransitions()
+    ),
+    
+    // HTTP Client using the native Fetch API, plus your security/error interceptors
+    provideHttpClient(
+      withFetch(), 
+      withInterceptors([authInterceptor, errorInterceptor])
+    )
+  ]
+};

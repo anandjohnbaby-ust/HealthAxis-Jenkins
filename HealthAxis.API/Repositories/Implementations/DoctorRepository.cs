@@ -2,65 +2,42 @@
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.Shared.Common;
+using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 namespace HealthAxis.API.Repositories.Implementations
 {
     public class DoctorRepository : Repository<Doctor>, IDoctorRepository
     {
-        public DoctorRepository(ApplicationDbContext context) : base(context) {}
+        public DoctorRepository(ApplicationDbContext context) : base(context) { }
 
-        public async Task<Doctor?> GetAvailableDoctorByIdAsync(
-            int doctorId,
+        public async Task<IEnumerable<Doctor>> GetAvailableDoctorsAsync(
+            Specialisation? specialisation,
+            string? search,
             CancellationToken ct = default)
         {
-            return await _context.Doctors
-                .FirstOrDefaultAsync(
-                    d => d.DoctorId == doctorId &&
-                         d.IsActive,
-                    ct);
-        }
-
-        public async Task<IEnumerable<Doctor>> FilterBySpecialisationAsync(
-                Specialisation? specialisation,
-                CancellationToken ct = default)
-        {
-            var query = _context.Doctors.AsQueryable();
+            var query = _context.Doctors
+                .Where(d => d.IsActive)
+                .AsQueryable();
 
             if (specialisation.HasValue)
             {
-                query = query.Where(d =>
-                    d.Specialisation == specialisation.Value);
+                query = query.Where(
+                    d => d.Specialisation == specialisation.Value);
             }
 
-            return await query
-                .OrderBy(d => d.FullName)
-                .ToListAsync(ct);
-        }
-
-        public async Task<IEnumerable<Doctor>> SearchAsync(
-            string searchTerm,
-            CancellationToken ct = default)
-        {
-            if (string.IsNullOrWhiteSpace(searchTerm))
+            if (!string.IsNullOrWhiteSpace(search))
             {
-                return await _context.Doctors
-                    .OrderBy(d => d.FullName)
-                    .ToListAsync(ct);
+                search = search.Trim();
+
+                query = query.Where(d =>
+                    d.FullName.Contains(search));
             }
 
-            searchTerm = searchTerm.Trim();
-
-            int.TryParse(searchTerm, out int doctorId);
-
-            return await _context.Doctors
-                .Where(d =>
-                    (doctorId > 0 && d.DoctorId == doctorId) ||
-                    EF.Functions.Like(d.FullName, $"%{searchTerm}%"))
-                .OrderBy(d => d.FullName)
-                .ToListAsync(ct);
+            return await query.ToListAsync(ct);
         }
 
+        // Search, filter, pagenation all doctors
         public async Task<PagedResult<Doctor>> GetDoctorsAsync(
             PaginationRequest request,
             Specialisation? specialisation,
@@ -102,5 +79,110 @@ namespace HealthAxis.API.Repositories.Implementations
                 PageSize = request.PageSize
             };
         }
+
+        public async Task<Doctor?> GetByUserIdAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
+        {
+            return await _context.Doctors
+                .FirstOrDefaultAsync(
+                    d => d.UserId == userId,
+                    cancellationToken);
+        }
+
+        // ===================================================
+        // Doctor Dashboard
+        // ===================================================
+
+        public async Task<IEnumerable<Appointment>> GetAppointmentsAsync(
+            int doctorId,
+            CancellationToken ct = default)
+        {
+            return await _context.Appointments
+                .AsNoTracking()
+                .Include(a => a.Patient)
+                .Include(a => a.Doctor)
+                .Include(a => a.HealthRecord)
+                .Where(a => a.DoctorId == doctorId)
+                .OrderBy(a => a.ScheduledDate)
+                .ThenBy(a => a.TimeSlot)
+                .ToListAsync(ct);
+        }
+
+        public async Task<IEnumerable<Appointment>> GetTodaysAppointmentsAsync(
+            int doctorId,
+            DateTime today,
+            CancellationToken ct = default)
+        {
+            return await _context.Appointments
+                .AsNoTracking()
+                .Include(a => a.Patient)
+                .Include(a => a.Doctor)
+                .Include(a => a.HealthRecord)
+                .Where(a =>
+                    a.DoctorId == doctorId &&
+                    a.ScheduledDate.Date == today.Date)
+                .OrderBy(a => a.TimeSlot)
+                .ToListAsync(ct);
+        }
+
+        public async Task<IEnumerable<Appointment>> GetWeeklyAppointmentsAsync(
+            int doctorId,
+            DateTime startDate,
+            DateTime endDate,
+            CancellationToken ct = default)
+        {
+            return await _context.Appointments
+                .AsNoTracking()
+                .Include(a => a.Patient)
+                .Include(a => a.Doctor)
+                .Include(a => a.HealthRecord)
+                .Where(a =>
+                    a.DoctorId == doctorId &&
+                    a.ScheduledDate.Date >= startDate.Date &&
+                    a.ScheduledDate.Date <= endDate.Date)
+                .OrderBy(a => a.ScheduledDate)
+                .ThenBy(a => a.TimeSlot)
+                .ToListAsync(ct);
+        }
+
+        public async Task<DoctorDashboardDto?> GetDashboardAsync(
+            int doctorId,
+            CancellationToken ct = default)
+        {
+            var today = DateTime.Today;
+            var weekEnd = today.AddDays(7);
+
+            return await _context.Doctors
+                .Where(d => d.DoctorId == doctorId)
+                .Select(d => new DoctorDashboardDto
+                {
+                    FullName = d.FullName,
+
+                    TodayAppointments = d.Appointments.Count(a =>
+                        a.ScheduledDate.Date == today),
+
+                    WeeklyAppointments = d.Appointments.Count(a =>
+                        a.ScheduledDate >= today &&
+                        a.ScheduledDate < weekEnd),
+
+                    TotalAppointments = d.Appointments.Count(),
+
+                    TodaySchedule = d.Appointments
+                        .Where(a => a.ScheduledDate.Date == today)
+                        .OrderBy(a => a.TimeSlot)
+                        .Select(a => new TodayAppointmentDto
+                        {
+                            AppointmentId = a.AppointmentId,
+                            PatientName = a.Patient.FullName,
+                            ScheduledDate = a.ScheduledDate,
+                            TimeSlot = a.TimeSlot,
+                            Status = a.Status
+                        })
+                        .ToList()
+                })
+                .FirstOrDefaultAsync(ct);
+        }
+
     }
 }

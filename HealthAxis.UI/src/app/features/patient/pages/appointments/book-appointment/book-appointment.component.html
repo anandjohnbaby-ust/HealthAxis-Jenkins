@@ -1,0 +1,176 @@
+<!-- src/app/features/patient/pages/appointments/book-appointment/book-appointment.component.html -->
+
+<div class="page">
+
+  <div class="page-header">
+    <h1>Book an Appointment</h1>
+  </div>
+
+  @if (serverError()) {
+    <div class="alert alert--error">
+      {{ serverError() }}
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="alert alert--success">
+      {{ successMessage() }}
+    </div>
+  }
+
+  <form
+    class="card"
+    [formGroup]="bookingForm"
+    (ngSubmit)="onSubmit()"
+    novalidate>
+
+    <!-- ================= Specialisation ================= -->
+
+    <div class="field">
+
+      <label for="specialisation">
+        Specialisation
+      </label>
+
+      <select
+        id="specialisation"
+        formControlName="specialisation">
+
+        <option [ngValue]="null">
+          Select a specialisation
+        </option>
+
+        @for (opt of specialisationOptions; track opt.value) {
+
+          <option [ngValue]="opt.value">
+            {{ opt.label }}
+          </option>
+
+        }
+
+      </select>
+
+      <app-input-error
+        [control]="bookingForm.get('specialisation')"
+        [message]="VALIDATION_MESSAGES.REQUIRED('Specialisation')">
+      </app-input-error>
+
+    </div>
+
+    <!-- ================= Doctor ================= -->
+
+    <div class="field">
+
+      <label for="doctorId">
+        Doctor
+      </label>
+
+      <select
+        id="doctorId"
+        formControlName="doctorId"
+        [disabled]="!bookingForm.get('specialisation')?.value || doctorsLoading()">
+
+        @if (!bookingForm.get('specialisation')?.value) {
+
+          <option [ngValue]="null">
+            Select a specialisation first
+          </option>
+
+        } @else if (doctorsLoading()) {
+
+          <option [ngValue]="null">
+            Loading available doctors...
+          </option>
+
+        } @else if (doctors().length === 0) {
+
+          <option [ngValue]="null">
+            No available doctors
+          </option>
+
+        } @else {
+
+          <option [ngValue]="null">
+            Select a doctor
+          </option>
+
+          @for (doc of doctors(); track doc.doctorId) {
+
+            <option [ngValue]="doc.doctorId">
+              {{ doc.fullName }}
+              <!-- — {{ doc.yearsOfExperience }} yrs
+              — ₹{{ doc.consultationFee }} -->
+            </option>
+
+          }
+
+        }
+
+      </select>
+
+      <app-input-error
+        [control]="bookingForm.get('doctorId')"
+        [message]="VALIDATION_MESSAGES.REQUIRED('Doctor')">
+      </app-input-error>
+
+    </div>
+
+    <!-- ================= Date ================= -->
+
+    <div class="field">
+
+      <label for="scheduledDate">
+        Date
+      </label>
+
+      <input
+        id="scheduledDate"
+        type="date"
+        formControlName="scheduledDate"
+        [min]="minDate" />
+
+      <app-input-error
+        [control]="bookingForm.get('scheduledDate')"
+        [message]="dateErrorMessage()">
+      </app-input-error>
+
+    </div>
+
+    <!-- ================= Time ================= -->
+
+    <div class="field">
+
+      <label for="timeSlot">
+        Time
+      </label>
+
+      <input
+        id="timeSlot"
+        type="time"
+        formControlName="timeSlot" />
+
+      <app-input-error
+        [control]="bookingForm.get('timeSlot')"
+        [message]="VALIDATION_MESSAGES.REQUIRED('Time slot')">
+      </app-input-error>
+
+    </div>
+
+    <!-- ================= Submit ================= -->
+
+    <button
+      type="submit"
+      class="btn btn--primary"
+      [disabled]="submitting()">
+
+      Confirm Booking
+
+      <app-button-loader
+        [loading]="submitting()">
+      </app-button-loader>
+
+    </button>
+
+  </form>
+
+</div>

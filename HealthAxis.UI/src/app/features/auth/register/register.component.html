@@ -1,0 +1,121 @@
+<header class="auth-header">
+  <div class="auth-header__row">
+    <a routerLink="/" class="ha-brand">
+      <span class="ha-brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
+          <path
+            d="M12 21s-7.5-4.6-10-9.1C0.3 8.2 2 4.5 5.6 4c2-0.3 3.8 0.7 4.9 2.2L12 7.7l1.5-1.5C14.6 4.7 16.4 3.7 18.4 4c3.6 0.5 5.3 4.2 3.6 7.9C19.5 16.4 12 21 12 21z"
+            fill="currentColor"
+          />
+          <path
+            d="M7 12h2.2l1.1-2.4L11.8 15l1.3-3h2.7"
+            stroke="#fff"
+            stroke-width="1.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
+      <span class="ha-brand__name">HealthAxis</span>
+    </a>
+  </div>
+</header>
+
+<div class="auth-page">
+  <div class="auth-card">
+    <h1 class="auth-card__title">Create your account</h1>
+    <p class="auth-card__subtitle">Patient registration for HealthAxis</p>
+
+    @if (serverError()) {
+      <div class="alert alert--error">{{ serverError() }}</div>
+    }
+    @if (successMessage()) {
+      <div class="alert alert--success">{{ successMessage() }}</div>
+    }
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="field">
+        <label for="fullName">Full name</label>
+        <input id="fullName" type="text" formControlName="fullName" placeholder="Jane Doe" />
+        <app-input-error
+          [control]="registerForm.get('fullName')"
+          [message]="VALIDATION_MESSAGES.NAME_INVALID"
+        />
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="dateOfBirth">Date of birth</label>
+          <input id="dateOfBirth" type="date" formControlName="dateOfBirth" />
+          <app-input-error
+            [control]="registerForm.get('dateOfBirth')"
+            [message]="dobErrorMessage()"
+          />
+        </div>
+
+        <div class="field">
+          <label for="gender">Gender</label>
+          <select id="gender" formControlName="gender">
+            <option [ngValue]="null" disabled>Select</option>
+            @for (g of genderOptions; track g.value) {
+              <option [ngValue]="g.value">{{ g.label }}</option>
+            }
+          </select>
+          <app-input-error
+            [control]="registerForm.get('gender')"
+            [message]="VALIDATION_MESSAGES.REQUIRED('Gender')"
+          />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="phoneNumber">Phone number</label>
+          <input id="phoneNumber" type="tel" formControlName="phoneNumber" placeholder="9876543210" />
+          <app-input-error
+            [control]="registerForm.get('phoneNumber')"
+            [message]="VALIDATION_MESSAGES.PHONE_INVALID"
+          />
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" formControlName="email" placeholder="you@example.com" autocomplete="email" />
+          <app-input-error
+            [control]="registerForm.get('email')"
+            [message]="emailErrorMessage"
+          />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" formControlName="password" placeholder="Create a password" autocomplete="new-password" />
+          <app-input-error
+            [control]="registerForm.get('password')"
+            [message]="VALIDATION_MESSAGES.PASSWORD_PATTERN"
+          />
+        </div>
+
+        <div class="field">
+          <label for="confirmPassword">Confirm password</label>
+          <input id="confirmPassword" type="password" formControlName="confirmPassword" placeholder="Re-enter your password" autocomplete="new-password" />
+          <app-input-error
+            [control]="registerForm.get('confirmPassword')"
+            [message]="VALIDATION_MESSAGES.PASSWORD_MISMATCH"
+          />
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn--primary btn--block" [disabled]="loading()">
+        Create account
+        <app-button-loader [loading]="loading()" />
+      </button>
+    </form>
+
+    <p class="auth-card__footer">
+      Already have an account? <a routerLink="/login">Log in</a>
+    </p>
+  </div>
+</div>

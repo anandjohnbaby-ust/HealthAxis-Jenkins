@@ -1,0 +1,186 @@
+<!-- src/app/features/patient/pages/doctors/doctors.component.html -->
+
+<div class="page">
+
+  <div class="page-header">
+
+    <h1>Available Doctors</h1>
+
+    <p>
+      Browse our available doctors and book an appointment with the specialist you need.
+    </p>
+
+  </div>
+
+  <!-- ================= Filters ================= -->
+
+<div class="filters">
+
+  <div class="filter-item">
+
+    <label for="specialisation">
+      Specialisation:
+    </label>
+
+    <select
+      id="specialisation"
+      [(ngModel)]="selectedSpecialisation"
+      (ngModelChange)="onSpecialisationChange()">
+
+      <option [ngValue]="null">
+        All Specialisations
+      </option>
+
+      @for (option of specialisationOptions; track option.value) {
+
+        <option [ngValue]="option.value">
+          {{ option.label }}
+        </option>
+
+      }
+
+    </select>
+
+  </div>
+
+  <div class="filter-item">
+
+    <label for="search">
+      Search:
+    </label>
+
+    <input
+      id="search"
+      type="text"
+      placeholder="Doctor name..."
+      [(ngModel)]="search"
+      (ngModelChange)="onSearchChange()">
+
+  </div>
+
+  <button
+    type="button"
+    class="btn-reset"
+    (click)="resetFilters()">
+
+    Reset
+
+  </button>
+
+</div>
+
+
+  <!-- ================= Loading ================= -->
+
+  @if (loading()) {
+
+    <div class="loading">
+
+      <div class="spinner"></div>
+
+      <p>Loading doctors...</p>
+
+    </div>
+
+  }
+
+  @else {
+        @if (doctors().length === 0) {
+
+        <div class="empty">
+
+            <h3>No Doctors Found</h3>
+
+            <p>
+            Try changing your search or filter.
+            </p>
+
+        </div>
+
+        }
+        @else {
+
+        <div class="doctor-grid">
+
+            @for (doctor of doctors(); track doctor.doctorId) {
+          <div class="doctor-card">
+
+            <div class="doctor-header">
+
+              <div class="avatar">
+
+                {{ doctor.fullName.charAt(0).toUpperCase() }}
+
+              </div>
+
+              <div>
+
+                <h3>
+
+                  {{ doctor.fullName }}
+
+                </h3>
+
+                <span class="specialisation">
+
+                  {{ specialisationLabel(doctor.specialisation) }}
+
+                </span>
+
+              </div>
+
+            </div>
+
+            <div class="doctor-details">
+
+              <div class="detail">
+
+                <span class="label">
+                  Experience
+                </span>
+
+                <strong>
+                  {{ doctor.yearsOfExperience }} Years
+                </strong>
+
+              </div>
+
+              <div class="detail">
+
+                <span class="label">
+                  Consultation Fee
+                </span>
+
+                <strong>
+
+                  ₹{{ doctor.consultationFee }}
+
+                </strong>
+
+              </div>
+
+            </div>
+
+            <div class="doctor-footer">
+
+                <button
+                    class="btn-book"
+                    (click)="bookAppointment(doctor)">
+
+                    Book Appointment
+
+                </button>
+
+            </div>
+
+          </div>
+
+        }
+
+      </div>
+
+    }
+
+  }
+
+</div>

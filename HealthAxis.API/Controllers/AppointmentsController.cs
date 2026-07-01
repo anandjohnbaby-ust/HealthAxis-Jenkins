@@ -29,39 +29,6 @@ namespace HealthAxis.API.Controllers
             return Ok(appointments);
         }
 
-        [HttpPost]
-        [Authorize(Roles = "Patient")]
-        public async Task<ActionResult<AppointmentDto>>
-            CreateAppointment(
-                CreateAppointmentDto dto,
-                CancellationToken ct)
-        {
-            var createdAppointment =
-                await _appointmentService.AddAsync(dto, ct);
-
-            return CreatedAtAction(
-                nameof(GetAllAppointments),
-                new { id = createdAppointment.AppointmentId },
-                createdAppointment);
-        }
-
-        [HttpPut("{id:int}/status")]
-        [Authorize(Roles = "Doctor")]
-        public async Task<ActionResult<AppointmentDto>>
-            UpdateAppointmentStatus(
-                int id,
-                UpdateAppointmentStatusDto dto,
-                CancellationToken ct)
-        {
-            var updatedAppointment =
-                await _appointmentService.UpdateStatusAsync(
-                    id,
-                    dto,
-                    ct);
-
-            return Ok(updatedAppointment);
-        }
-
         [HttpDelete("{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<AppointmentDto>>

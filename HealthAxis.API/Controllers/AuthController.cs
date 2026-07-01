@@ -1,7 +1,11 @@
-﻿using HealthAxis.Shared.DTOs.AuthDtos;
-using HealthAxis.API.Models;
+﻿using HealthAxis.API.Models;
+using HealthAxis.API.Services.Implementation;
 using HealthAxis.API.Services.Interfaces;
+using HealthAxis.Shared.DTOs.AuthDtos;
+using HealthAxis.Shared.DTOs.CommonDtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace HealthAxis.API.Controller
 {
@@ -73,6 +77,23 @@ namespace HealthAxis.API.Controller
                 RefreshToken = result.RefreshToken,
                 ExpiresIn = result.ExpiresIn
             });
+        }
+
+        [Authorize]
+        [HttpPut("change-password")]
+        public async Task<IActionResult> ChangePassword(
+            ChangePasswordDto dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId is null)
+            {
+                return Unauthorized();
+            }
+
+            await service.ChangePasswordAsync(userId, dto);
+
+            return NoContent();
         }
     }
 }

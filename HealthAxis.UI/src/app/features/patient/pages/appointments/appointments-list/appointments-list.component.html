@@ -1,0 +1,143 @@
+<!-- src/app/features/patient/pages/appointments/appointments-list/appointments-list.component.html -->
+
+<div class="page">
+  <div class="page__header">
+    <h1>My Appointments</h1>
+
+    <a
+      routerLink="/patient/appointments/book"
+      class="btn btn--primary">
+      Book Appointment
+    </a>
+  </div>
+
+  @if (loadError()) {
+    <div class="alert alert--error">
+      {{ loadError() }}
+    </div>
+  }
+
+  @if (loading()) {
+
+    <p>Loading...</p>
+
+  } @else if (!loadError() && appointments().length === 0) {
+
+    <div class="empty">
+      <p>You don't have any appointments yet.</p>
+
+      <a
+        routerLink="/patient/appointments/book"
+        class="btn btn--primary">
+        Book your first appointment
+      </a>
+    </div>
+
+  } @else if (appointments().length > 0) {
+
+    <table class="table">
+
+      <thead>
+        <tr>
+          <th>Doctor</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        @for (appt of appointments(); track appt.appointmentId) {
+
+          <tr>
+
+            <td>{{ appt.doctorName ?? ('Doctor #' + appt.doctorId) }}</td>
+
+            <td>{{ formatDate(appt.scheduledDate) }}</td>
+
+            <td>{{ appt.timeSlot }}</td>
+
+            <td>
+              <span
+                class="badge"
+                [class]="badgeClass(appt.status)">
+                {{ statusLabel(appt.status) }}
+              </span>
+            </td>
+
+            <td class="text-end">
+
+                @if (appt.status === 1) {
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    (click)="openCancelDialog(appt)">
+                    Cancel
+                  </button>
+                }
+
+            </td>
+
+          </tr>
+
+        }
+
+      </tbody>
+
+    </table>
+
+  }
+</div>
+
+<!-- Angular Confirmation Dialog -->
+@if (showCancelDialog()) {
+
+<div class="dialog-backdrop">
+
+  <div class="dialog">
+
+    <h3>Cancel Appointment</h3>
+
+    <p>
+      Are you sure you want to cancel this appointment?
+    </p>
+
+<div class="field">
+  <label>
+    Cancellation Reason
+    <span class="optional">(Optional)</span>
+  </label>
+
+  <textarea
+    rows="4"
+    [(ngModel)]="cancellationReason"
+    placeholder="Enter cancellation reason...">
+  </textarea>
+</div>
+
+    <div class="dialog-actions">
+
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="closeCancelDialog()">
+        No
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-danger"
+        (click)="confirmCancel()">
+        Yes, Cancel
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+} 

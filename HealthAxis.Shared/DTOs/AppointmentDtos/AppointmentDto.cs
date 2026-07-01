@@ -8,7 +8,11 @@ namespace HealthAxis.Shared.DTOs.AppointmentDtos
 
         public int PatientId { get; set; }
 
+        public string PatientName { get; set; } = string.Empty;
+
         public int DoctorId { get; set; }
+
+        public string DoctorName { get; set; } = string.Empty;
 
         public DateTime ScheduledDate { get; set; }
 
@@ -17,5 +21,8 @@ namespace HealthAxis.Shared.DTOs.AppointmentDtos
         public AppointmentStatus Status { get; set; }
 
         public string? CancellationReason { get; set; }
+
+        // ADD THIS
+        public int? HealthRecordId { get; set; }
     }
 }

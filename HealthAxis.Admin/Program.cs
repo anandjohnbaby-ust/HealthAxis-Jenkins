@@ -10,20 +10,30 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped<DoctorService>();
-builder.Services.AddScoped<AdminService>();
-builder.Services.AddScoped<PatientService>();
+// Register the message handler
+builder.Services.AddScoped<AuthMessageHandler>();
 
-// Configure HttpClient to point to your API. Used the API HTTPS URL from launchSettings.
-builder.Services.AddScoped(sp => new HttpClient
+// Configure HttpClient to automatically attach the JWT
+builder.Services.AddScoped(sp =>
 {
-    BaseAddress = new Uri("https://localhost:7207/")
+    var handler = sp.GetRequiredService<AuthMessageHandler>();
+
+    handler.InnerHandler = new HttpClientHandler();
+
+    return new HttpClient(handler)
+    {
+        BaseAddress = new Uri("https://localhost:7207/")
+    };
 });
 
-// Enable Blazor Authorization
+// Services
+builder.Services.AddScoped<DoctorService>();
+builder.Services.AddScoped<PatientService>();
+builder.Services.AddScoped<AdminService>();
+
+// Authentication
 builder.Services.AddAuthorizationCore();
 
-// Register Custom AuthenticationStateProvider
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 
 builder.Services.AddScoped<AuthenticationStateProvider>(sp =>

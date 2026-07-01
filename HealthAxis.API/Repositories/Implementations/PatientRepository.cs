@@ -2,6 +2,8 @@
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.Shared.Common;
+using HealthAxis.Shared.DTOs.PatientDtos;
+using HealthAxis.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthAxis.API.Repositories.Implementations
@@ -9,7 +11,6 @@ namespace HealthAxis.API.Repositories.Implementations
     public class PatientRepository : Repository<Patient>, IPatientRepository
     {
         public PatientRepository(ApplicationDbContext context) : base(context) {}
-
 
         public async Task<PagedResult<Patient>> GetPatientsAsync(
             PaginationRequest request,
@@ -47,16 +48,70 @@ namespace HealthAxis.API.Repositories.Implementations
             };
         }
 
-        // Get HealthRecords for a Patient by PatientId
         public async Task<Patient?> GetHealthRecordsByPatientId(
             int patientId,
             CancellationToken cancellationToken = default)
         {
             return await _context.Patients
                 .Include(p => p.HealthRecords)
+                    .ThenInclude(hr => hr.Doctor)
                 .FirstOrDefaultAsync(
                     p => p.PatientId == patientId,
                     cancellationToken);
         }
+
+        public async Task<Patient?> GetByUserIdAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
+        {
+            return await _context.Patients
+                .FirstOrDefaultAsync(
+                    p => p.UserId == userId,
+                    cancellationToken);
+        }
+        public async Task<IEnumerable<Appointment>> GetAppointmentsByPatientIdAsync(
+            int patientId,
+            CancellationToken ct = default)
+        {
+            return await _context.Appointments
+                .Where(a => a.PatientId == patientId)
+                .Include(a => a.Doctor)
+                .OrderByDescending(a => a.ScheduledDate)
+                .ToListAsync(ct);
+        }
+
+        public async Task<PatientDashboardDto?> GetDashboardAsync(
+            int patientId,
+            CancellationToken ct = default)
+        {
+            return await _context.Patients
+                .Where(p => p.PatientId == patientId)
+                .Select(p => new PatientDashboardDto
+                {
+                    FullName = p.FullName,
+
+                    TotalAppointments = p.Appointments.Count(),
+
+                    TotalHealthRecords = p.HealthRecords.Count(),
+
+                    NextAppointment = p.Appointments
+                        .Where(a =>
+                            a.Status != AppointmentStatus.Cancelled &&
+                            a.ScheduledDate >= DateTime.Today)
+                        .OrderBy(a => a.ScheduledDate)
+                        .ThenBy(a => a.TimeSlot)
+                        .Select(a => new DashboardAppointmentDto
+                        {
+                            AppointmentId = a.AppointmentId,
+                            DoctorName = a.Doctor.FullName,
+                            ScheduledDate = a.ScheduledDate,
+                            TimeSlot = a.TimeSlot,
+                            Status = a.Status
+                        })
+                        .FirstOrDefault()
+                })
+                .FirstOrDefaultAsync(ct);
+        }
+
     }
 }

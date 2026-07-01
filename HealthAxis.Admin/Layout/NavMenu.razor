@@ -215,13 +215,14 @@
 
     private async Task Logout()
     {
-        // Clear token from localStorage and notify auth provider
+        // Remove the token stored by Blazor
         await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "token");
+
+        // Update the authentication state
         AuthProvider.NotifyUserLoggedOut();
 
-        // Navigate without forcing a full reload so app state updates via auth provider
-        NavigationManager.NavigateTo("/login");
-    }
+        // Redirect to the Angular login page
+    NavigationManager.NavigateTo("http://localhost:4200/logout", true);    }
 
     private void ReloadPage()
     {

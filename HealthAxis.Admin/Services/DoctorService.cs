@@ -31,13 +31,31 @@ namespace HealthAxis.Admin.Services
                     new AuthenticationHeaderValue("Bearer", token);
             }
         }
-
-        public async Task<List<DoctorDto>?> GetDoctors()
+        public async Task<PagedResult<DoctorDto>?> GetDoctors(
+            int pageNumber = 1,
+            int pageSize = 10,
+            Specialisation? specialisation = null,
+            string? search = null)
         {
             await SetAuthorizationHeader();
 
-            return await _http.GetFromJsonAsync<List<DoctorDto>>(
-                "api/admin/doctors");
+            var url = "api/admin/doctors";
+
+            var query = new List<string>
+            {
+                $"pageNumber={pageNumber}",
+                $"pageSize={pageSize}"
+            };
+
+            if (specialisation.HasValue)
+                query.Add($"specialisation={specialisation}");
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query.Add($"search={Uri.EscapeDataString(search)}");
+
+            url += "?" + string.Join("&", query);
+
+            return await _http.GetFromJsonAsync<PagedResult<DoctorDto>>(url);
         }
 
         public async Task<DoctorDto?> CreateDoctor(CreateDoctorDto dto)
@@ -66,54 +84,6 @@ namespace HealthAxis.Admin.Services
             response.EnsureSuccessStatusCode();
 
             return await response.Content.ReadFromJsonAsync<DoctorDto>();
-        }
-
-        public async Task<List<DoctorDto>?> FilterDoctors(
-            Specialisation? specialisation)
-        {
-            await SetAuthorizationHeader();
-
-            if (specialisation is null)
-            {
-                return await GetDoctors();
-            }
-
-            return await _http.GetFromJsonAsync<List<DoctorDto>>(
-                $"api/doctors/filter?specialisation={specialisation}");
-        }
-        public async Task<List<DoctorDto>?> SearchDoctors(string searchTerm)
-        {
-            await SetAuthorizationHeader();
-
-            return await _http.GetFromJsonAsync<List<DoctorDto>>(
-                $"api/doctors/search?search={Uri.EscapeDataString(searchTerm)}");
-        }
-
-        public async Task<PagedResult<DoctorDto>?> GetDoctors(
-            int pageNumber = 1,
-            int pageSize = 10,
-            Specialisation? specialisation = null,
-            string? search = null)
-        {
-            await SetAuthorizationHeader();
-
-            var url = "api/doctors";
-
-            var query = new List<string>
-            {
-                $"pageNumber={pageNumber}",
-                $"pageSize={pageSize}"
-            };
-
-            if (specialisation.HasValue)
-                query.Add($"specialisation={specialisation.Value}");
-
-            if (!string.IsNullOrWhiteSpace(search))
-                query.Add($"search={Uri.EscapeDataString(search)}");
-
-            url += "?" + string.Join("&", query);
-
-            return await _http.GetFromJsonAsync<PagedResult<DoctorDto>>(url);
         }
     }
 }

@@ -1,0 +1,62 @@
+<div class="layout">
+  
+  <aside class="sidebar">
+    <h2>HealthAxis</h2>
+    <nav>
+      <a routerLink="/patient/dashboard" routerLinkActive="active">
+        Dashboard
+      </a>
+      <a routerLink="/patient/doctors" routerLinkActive="active">
+        Doctors
+      </a>
+      <a routerLink="/patient/health-records" routerLinkActive="active">
+        Health Records
+      </a>
+      <a routerLink="/patient/appointments" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        Appointments
+      </a>
+      <a routerLink="/patient/appointments/book" routerLinkActive="active">
+        Book Appointment
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+    
+    <header class="topbar">
+      <div class="topbar-title">
+        Patient Portal
+      </div>
+
+      <div class="profile" (click)="toggleMenu($event)">
+        <div class="avatar">
+          {{ initial() }}
+        </div>
+        
+        <div class="user-info">
+          <span class="user-name">
+            {{ fullName() }}
+          </span>
+        </div>
+        
+        <span class="arrow">▼</span>
+
+        @if (menuOpen()) {
+          <div class="profile-menu" (click)="$event.stopPropagation()">
+            <button type="button" (click)="goToProfile()">
+              My Profile
+            </button>
+            <button type="button" (click)="logout()">
+               Logout
+            </button>
+          </div>
+        }
+      </div>
+    </header>
+
+    <main class="content">
+      <router-outlet></router-outlet>
+    </main>
+    
+  </div>
+</div>

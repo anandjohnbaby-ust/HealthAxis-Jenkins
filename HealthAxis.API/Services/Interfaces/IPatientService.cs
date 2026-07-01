@@ -1,6 +1,9 @@
 ﻿using HealthAxis.Shared.Common;
+using HealthAxis.Shared.DTOs.AppointmentDtos;
+using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.DTOs.HealthRecordDtos;
 using HealthAxis.Shared.DTOs.PatientDtos;
+using HealthAxis.Shared.Enums;
 
 namespace HealthAxis.API.Services.Interfaces
 {
@@ -21,6 +24,29 @@ namespace HealthAxis.API.Services.Interfaces
             CancellationToken ct = default);
 
         Task<IEnumerable<HealthRecordDto>> GetHealthRecordsByPatientId(
+            int patientId,
+            CancellationToken ct = default);
+
+        Task<AppointmentDto> BookAppointmentAsync(
+            CreateAppointmentDto dto,
+            CancellationToken ct = default);
+
+        Task<IEnumerable<DoctorDto>> GetAvailableDoctorsAsync(
+            Specialisation? specialisation,
+            string? search,
+            CancellationToken ct = default);
+
+        Task<IEnumerable<AppointmentDto>> GetAppointmentsByPatientIdAsync(
+            int patientId,
+            CancellationToken ct = default);
+
+        Task<AppointmentDto> CancelAppointmentByPatientAsync(
+            int patientId,
+            int appointmentId,
+            CancelAppointmentDto dto,
+            CancellationToken ct = default);
+
+        Task<PatientDashboardDto> GetDashboardAsync(
             int patientId,
             CancellationToken ct = default);
     }

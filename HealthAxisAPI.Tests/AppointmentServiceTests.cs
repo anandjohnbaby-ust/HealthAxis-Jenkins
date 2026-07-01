@@ -1,989 +1,795 @@
-﻿//using AutoMapper;
-//using FluentAssertions;
-//using HealthAxis.Shared.DTOs.AppointmentDtos;
-//using HealthAxis.Shared.Enums;
-//using HealthAxis.API.Exceptions;
-//using HealthAxis.API.Models;
-//using HealthAxis.API.Repositories.Interfaces;
-//using HealthAxis.API.Services.Implementations;
-//using Moq;
-//using Xunit;
-
-//namespace HealthAxis.Tests.Services
-//{
-//    public class AppointmentServiceTests
-//    {
-//        private readonly Mock<IRepository<Appointment>> _appointmentRepository;
-//        private readonly Mock<IRepository<Doctor>> _doctorRepository;
-//        private readonly Mock<IPatientRepository> _patientRepository;
-//        private readonly Mock<IMapper> _mapper;
-
-//        private readonly AppointmentService _service;
-
-//        public AppointmentServiceTests()
-//        {
-//            _appointmentRepository =
-//                new Mock<IRepository<Appointment>>();
-
-//            _doctorRepository =
-//                new Mock<IRepository<Doctor>>();
-
-//            _patientRepository =
-//                new Mock<IPatientRepository>();
-
-//            _mapper =
-//                new Mock<IMapper>();
-
-//            _service =
-//                new AppointmentService(
-//                    _appointmentRepository.Object,
-//                    _doctorRepository.Object,
-//                    _patientRepository.Object,
-//                    _mapper.Object);
-//        }
-
-//        private List<Appointment> GetAppointments()
-//        {
-//            return new List<Appointment>
-//            {
-//                new Appointment
-//                {
-//                    AppointmentId = 1,
-//                    PatientId = 1,
-//                    DoctorId = 1,
-//                    ScheduledDate = DateTime.Today.AddDays(2),
-//                    TimeSlot = "10:00 AM",
-//                    Status = AppointmentStatus.Pending
-//                },
-
-//                new Appointment
-//                {
-//                    AppointmentId = 2,
-//                    PatientId = 2,
-//                    DoctorId = 2,
-//                    ScheduledDate = DateTime.Today.AddDays(3),
-//                    TimeSlot = "11:00 AM",
-//                    Status = AppointmentStatus.Confirmed
-//                }
-//            };
-//        }
-
-//        private List<AppointmentDto> GetAppointmentDtos()
-//        {
-//            return new List<AppointmentDto>
-//            {
-//                new AppointmentDto
-//                {
-//                    AppointmentId = 1,
-//                    PatientId = 1,
-//                    DoctorId = 1,
-//                    ScheduledDate = DateTime.Today.AddDays(2),
-//                    TimeSlot = "10:00 AM",
-//                    Status = AppointmentStatus.Pending
-//                },
-
-//                new AppointmentDto
-//                {
-//                    AppointmentId = 2,
-//                    PatientId = 2,
-//                    DoctorId = 2,
-//                    ScheduledDate = DateTime.Today.AddDays(3),
-//                    TimeSlot = "11:00 AM",
-//                    Status = AppointmentStatus.Confirmed
-//                }
-//            };
-//        }
-
-//        private Patient GetPatient()
-//        {
-//            return new Patient
-//            {
-//                PatientId = 1,
-//                FullName = "John",
-//                Email = "john@test.com",
-//                PhoneNumber = "9876543210"
-//            };
-//        }
-
-//        private Doctor GetDoctor(bool isActive = true)
-//        {
-//            return new Doctor
-//            {
-//                DoctorId = 1,
-//                FullName = "Dr John",
-//                IsActive = isActive,
-//                ConsultationFee = 500
-//            };
-//        }
-
-//        private CreateAppointmentDto GetCreateDto()
-//        {
-//            return new CreateAppointmentDto
-//            {
-//                PatientId = 1,
-//                DoctorId = 1,
-//                ScheduledDate = DateTime.Today.AddDays(2),
-//                TimeSlot = "10:00 AM"
-//            };
-//        }
-
-//        private Appointment GetAppointment(AppointmentStatus status = AppointmentStatus.Pending)
-//        {
-//            return new Appointment
-//            {
-//                AppointmentId = 1,
-//                PatientId = 1,
-//                DoctorId = 1,
-//                ScheduledDate = DateTime.Today.AddDays(2),
-//                TimeSlot = "10:00 AM",
-//                Status = status
-//            };
-//        }
-
-//        [Fact]
-//        public async Task GetAllAsync_ShouldReturnAllAppointments()
-//        {
-//            // Arrange
-
-//            var appointments = GetAppointments();
-
-//            var dtos = GetAppointmentDtos();
-
-//            _appointmentRepository
-//                .Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointments);
-
-//            _mapper
-//                .Setup(x => x.Map<IEnumerable<AppointmentDto>>(appointments))
-//                .Returns(dtos);
-
-//            // Act
-
-//            var result = await _service.GetAllAsync();
-
-//            // Assert
-
-//            result.Should().NotBeNull();
-
-//            result.Should().HaveCount(2);
-
-//            result.First().AppointmentId.Should().Be(1);
-
-//            _appointmentRepository.Verify(
-//                x => x.GetAllAsync(It.IsAny<CancellationToken>()),
-//                Times.Once);
-
-//            _mapper.Verify(
-//                x => x.Map<IEnumerable<AppointmentDto>>(appointments),
-//                Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task GetAllAsync_ShouldReturnEmptyCollection_WhenRepositoryReturnsEmpty()
-//        {
-//            // Arrange
-
-//            var appointments = new List<Appointment>();
-
-//            var dtos = new List<AppointmentDto>();
-
-//            _appointmentRepository
-//                .Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointments);
-
-//            _mapper
-//                .Setup(x => x.Map<IEnumerable<AppointmentDto>>(appointments))
-//                .Returns(dtos);
-
-//            // Act
-
-//            var result = await _service.GetAllAsync();
-
-//            // Assert
-
-//            result.Should().BeEmpty();
-//        }
-
-//        [Fact]
-//        public async Task GetAllAsync_ShouldThrowException_WhenRepositoryFails()
-//        {
-//            // Arrange
-
-//            _appointmentRepository
-//                .Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>()))
-//                .ThrowsAsync(new Exception("Database Error"));
-
-//            // Act
-
-//            Func<Task> action =
-//                async () => await _service.GetAllAsync();
-
-//            // Assert
-
-//            await action.Should()
-//                .ThrowAsync<Exception>()
-//                .WithMessage("Database Error");
-//        }
-
-//        [Fact]
-//        public async Task GetAllAsync_ShouldCallMapperOnce()
-//        {
-//            // Arrange
-
-//            var appointments = GetAppointments();
-
-//            var dtos = GetAppointmentDtos();
-
-//            _appointmentRepository
-//                .Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointments);
-
-//            _mapper
-//                .Setup(x => x.Map<IEnumerable<AppointmentDto>>(appointments))
-//                .Returns(dtos);
-
-//            // Act
-
-//            await _service.GetAllAsync();
-
-//            // Assert
-
-//            _mapper.Verify(
-//                x => x.Map<IEnumerable<AppointmentDto>>(appointments),
-//                Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task GetAllAsync_ShouldPassCancellationToken()
-//        {
-//            // Arrange
-
-//            var token = new CancellationToken();
-
-//            var appointments = GetAppointments();
-
-//            var dtos = GetAppointmentDtos();
-
-//            _appointmentRepository
-//                .Setup(x => x.GetAllAsync(token))
-//                .ReturnsAsync(appointments);
-
-//            _mapper
-//                .Setup(x => x.Map<IEnumerable<AppointmentDto>>(appointments))
-//                .Returns(dtos);
-
-//            // Act
-
-//            await _service.GetAllAsync(token);
-
-//            // Assert
-
-//            _appointmentRepository.Verify(
-//                x => x.GetAllAsync(token),
-//                Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task AddAsync_ShouldCreateAppointment()
-//        {
-//            // Arrange
-
-//            var dto = GetCreateDto();
-
-//            var patient = GetPatient();
-
-//            var doctor = GetDoctor();
-
-//            var appointment = new Appointment();
-
-//            var appointmentDto = new AppointmentDto
-//            {
-//                AppointmentId = 1,
-//                PatientId = 1,
-//                DoctorId = 1,
-//                Status = AppointmentStatus.Pending
-//            };
-
-//            _patientRepository
-//                .Setup(x => x.GetByIdAsync(dto.PatientId,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(patient);
-
-//            _doctorRepository
-//                .Setup(x => x.GetByIdAsync(dto.DoctorId,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(doctor);
-
-//            _mapper
-//                .Setup(x => x.Map<Appointment>(dto))
-//                .Returns(appointment);
-
-//            _appointmentRepository
-//                .Setup(x => x.AddAsync(appointment,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _mapper
-//                .Setup(x => x.Map<AppointmentDto>(appointment))
-//                .Returns(appointmentDto);
-
-//            // Act
-
-//            var result = await _service.AddAsync(dto);
-
-//            // Assert
-
-//            result.Should().NotBeNull();
-
-//            result.Status.Should().Be(AppointmentStatus.Pending);
-//        }
-
-//        [Fact]
-//        public async Task AddAsync_ShouldThrowValidationException_WhenDateIsPast()
-//        {
-//            // Arrange
-
-//            var dto = GetCreateDto();
-
-//            dto.ScheduledDate = DateTime.Today.AddDays(-1);
-
-//            // Act
-
-//            Func<Task> action = async () =>
-//                await _service.AddAsync(dto);
-
-//            // Assert
-
-//            await action.Should()
-//                .ThrowAsync<ValidationException>()
-//                .WithMessage("Appointments cannot be booked for past dates.");
-//        }
-
-//        [Fact]
-//        public async Task AddAsync_ShouldThrowValidationException_WhenDateExceedsSixMonths()
-//        {
-//            var dto = GetCreateDto();
-
-//            dto.ScheduledDate = DateTime.Today.AddMonths(7);
-
-//            Func<Task> action = async () =>
-//                await _service.AddAsync(dto);
-
-//            await action.Should()
-//                .ThrowAsync<ValidationException>()
-//                .WithMessage("Appointments can only be booked up to 6 months in advance.");
-//        }
-
-//        [Fact]
-//        public async Task AddAsync_ShouldThrowNotFound_WhenPatientDoesNotExist()
-//        {
-//            var dto = GetCreateDto();
-
-//            _patientRepository
-//                .Setup(x => x.GetByIdAsync(dto.PatientId,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync((Patient?)null);
-
-//            Func<Task> action = async () =>
-//                await _service.AddAsync(dto);
-
-//            await action.Should()
-//                .ThrowAsync<NotFoundException>()
-//                .WithMessage("Patient not found.");
-//        }
-
-//        [Fact]
-//        public async Task AddAsync_ShouldThrowNotFound_WhenDoctorDoesNotExist()
-//        {
-//            var dto = GetCreateDto();
-
-//            _patientRepository
-//                .Setup(x => x.GetByIdAsync(dto.PatientId,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(GetPatient());
-
-//            _doctorRepository
-//                .Setup(x => x.GetByIdAsync(dto.DoctorId,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync((Doctor?)null);
-
-//            Func<Task> action = async () =>
-//                await _service.AddAsync(dto);
-
-//            await action.Should()
-//                .ThrowAsync<NotFoundException>()
-//                .WithMessage("Doctor not found.");
-//        }
-
-//        [Fact]
-//        public async Task AddAsync_ShouldThrowValidationException_WhenDoctorInactive()
-//        {
-//            var dto = GetCreateDto();
-
-//            _patientRepository
-//                .Setup(x => x.GetByIdAsync(dto.PatientId,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(GetPatient());
-
-//            _doctorRepository
-//                .Setup(x => x.GetByIdAsync(dto.DoctorId,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(GetDoctor(false));
-
-//            Func<Task> action = async () =>
-//                await _service.AddAsync(dto);
-
-//            await action.Should()
-//                .ThrowAsync<ValidationException>()
-//                .WithMessage("Appointments cannot be booked with inactive doctors.");
-//        }
-
-//        [Fact]
-//        public async Task AddAsync_ShouldSetStatusToPending()
-//        {
-//            var dto = GetCreateDto();
-
-//            var appointment = new Appointment();
-
-//            _patientRepository
-//                .Setup(x => x.GetByIdAsync(dto.PatientId,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(GetPatient());
-
-//            _doctorRepository
-//                .Setup(x => x.GetByIdAsync(dto.DoctorId,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(GetDoctor());
-
-//            _mapper
-//                .Setup(x => x.Map<Appointment>(dto))
-//                .Returns(appointment);
-
-//            _appointmentRepository
-//                .Setup(x => x.AddAsync(appointment,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _mapper
-//                .Setup(x => x.Map<AppointmentDto>(appointment))
-//                .Returns(new AppointmentDto());
-
-//            await _service.AddAsync(dto);
-
-//            appointment.Status.Should().Be(AppointmentStatus.Pending);
-//        }
-
-//        [Fact]
-//        public async Task AddAsync_ShouldCallRepositoryOnce()
-//        {
-//            var dto = GetCreateDto();
-
-//            var appointment = new Appointment();
-
-//            _patientRepository
-//                .Setup(x => x.GetByIdAsync(dto.PatientId,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(GetPatient());
-
-//            _doctorRepository
-//                .Setup(x => x.GetByIdAsync(dto.DoctorId,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(GetDoctor());
-
-//            _mapper
-//                .Setup(x => x.Map<Appointment>(dto))
-//                .Returns(appointment);
-
-//            _appointmentRepository
-//                .Setup(x => x.AddAsync(appointment,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _mapper
-//                .Setup(x => x.Map<AppointmentDto>(appointment))
-//                .Returns(new AppointmentDto());
-
-//            await _service.AddAsync(dto);
-
-//            _appointmentRepository.Verify(
-//                x => x.AddAsync(appointment,
-//                    It.IsAny<CancellationToken>()),
-//                Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task UpdateStatusAsync_ShouldConfirmAppointment()
-//        {
-//            var appointment = GetAppointment(AppointmentStatus.Pending);
-
-//            var dto = new UpdateAppointmentStatusDto
-//            {
-//                Status = AppointmentStatus.Confirmed
-//            };
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _appointmentRepository
-//                .Setup(x => x.UpdateAsync(1, appointment, It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _mapper
-//                .Setup(x => x.Map<AppointmentDto>(appointment))
-//                .Returns(new AppointmentDto
-//                {
-//                    Status = AppointmentStatus.Confirmed
-//                });
-
-//            var result = await _service.UpdateStatusAsync(1, dto);
-
-//            result.Status.Should().Be(AppointmentStatus.Confirmed);
-//        }
-
-//        [Fact]
-//        public async Task UpdateStatusAsync_ShouldCancelAppointment()
-//        {
-//            var appointment = GetAppointment(AppointmentStatus.Confirmed);
-
-//            var dto = new UpdateAppointmentStatusDto
-//            {
-//                Status = AppointmentStatus.Cancelled,
-//                CancellationReason = "Patient Sick"
-//            };
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _appointmentRepository
-//                .Setup(x => x.UpdateAsync(1, appointment, It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _mapper
-//                .Setup(x => x.Map<AppointmentDto>(appointment))
-//                .Returns(new AppointmentDto
-//                {
-//                    Status = AppointmentStatus.Cancelled,
-//                    CancellationReason = "Patient Sick"
-//                });
-
-//            var result = await _service.UpdateStatusAsync(1, dto);
-
-//            result.Status.Should().Be(AppointmentStatus.Cancelled);
-
-//            result.CancellationReason.Should().Be("Patient Sick");
-//        }
-
-//        [Fact]
-//        public async Task UpdateStatusAsync_ShouldCompleteAppointment()
-//        {
-//            var appointment = GetAppointment(AppointmentStatus.Confirmed);
-
-//            var dto = new UpdateAppointmentStatusDto
-//            {
-//                Status = AppointmentStatus.Completed
-//            };
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _appointmentRepository
-//                .Setup(x => x.UpdateAsync(1, appointment, It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _mapper
-//                .Setup(x => x.Map<AppointmentDto>(appointment))
-//                .Returns(new AppointmentDto
-//                {
-//                    Status = AppointmentStatus.Completed
-//                });
-
-//            var result = await _service.UpdateStatusAsync(1, dto);
-
-//            result.Status.Should().Be(AppointmentStatus.Completed);
-//        }
-
-//        [Fact]
-//        public async Task UpdateStatusAsync_ShouldThrowNotFound_WhenAppointmentDoesNotExist()
-//        {
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
-//                .ReturnsAsync((Appointment?)null);
-
-//            var dto = new UpdateAppointmentStatusDto
-//            {
-//                Status = AppointmentStatus.Confirmed
-//            };
-
-//            Func<Task> action =
-//                async () => await _service.UpdateStatusAsync(1, dto);
-
-//            await action.Should()
-//                .ThrowAsync<NotFoundException>()
-//                .WithMessage("Appointment not found.");
-//        }
-
-//        [Fact]
-//        public async Task UpdateStatusAsync_ShouldThrow_WhenAlreadyCancelled()
-//        {
-//            var appointment =
-//                GetAppointment(AppointmentStatus.Cancelled);
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            var dto = new UpdateAppointmentStatusDto
-//            {
-//                Status = AppointmentStatus.Completed
-//            };
-
-//            Func<Task> action =
-//                async () => await _service.UpdateStatusAsync(1, dto);
-
-//            await action.Should()
-//                .ThrowAsync<ValidationException>()
-//                .WithMessage("Cancelled appointments cannot be modified.");
-//        }
-
-//        [Fact]
-//        public async Task UpdateStatusAsync_ShouldThrow_WhenAlreadyCompleted()
-//        {
-//            var appointment =
-//                GetAppointment(AppointmentStatus.Completed);
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            var dto = new UpdateAppointmentStatusDto
-//            {
-//                Status = AppointmentStatus.Cancelled
-//            };
-
-//            Func<Task> action =
-//                async () => await _service.UpdateStatusAsync(1, dto);
-
-//            await action.Should()
-//                .ThrowAsync<ValidationException>()
-//                .WithMessage("Completed appointments cannot be modified.");
-//        }
-
-//        [Fact]
-//        public async Task UpdateStatusAsync_ShouldThrow_WhenStatusAlreadyExists()
-//        {
-//            var appointment =
-//                GetAppointment(AppointmentStatus.Pending);
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            var dto = new UpdateAppointmentStatusDto
-//            {
-//                Status = AppointmentStatus.Pending
-//            };
-
-//            Func<Task> action =
-//                async () => await _service.UpdateStatusAsync(1, dto);
-
-//            await action.Should()
-//                .ThrowAsync<ValidationException>()
-//                .WithMessage("Appointment is already Pending.");
-//        }
-
-//        [Fact]
-//        public async Task UpdateStatusAsync_ShouldThrow_WhenPendingDirectlyCompleted()
-//        {
-//            var appointment =
-//                GetAppointment(AppointmentStatus.Pending);
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            var dto = new UpdateAppointmentStatusDto
-//            {
-//                Status = AppointmentStatus.Completed
-//            };
-
-//            Func<Task> action =
-//                async () => await _service.UpdateStatusAsync(1, dto);
-
-//            await action.Should()
-//                .ThrowAsync<ValidationException>()
-//                .WithMessage("Pending appointments must be confirmed before completion.");
-//        }
-
-//        [Fact]
-//        public async Task UpdateStatusAsync_ShouldThrow_WhenRevertingToPending()
-//        {
-//            var appointment =
-//                GetAppointment(AppointmentStatus.Confirmed);
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            var dto = new UpdateAppointmentStatusDto
-//            {
-//                Status = AppointmentStatus.Pending
-//            };
-
-//            Func<Task> action =
-//                async () => await _service.UpdateStatusAsync(1, dto);
-
-//            await action.Should()
-//                .ThrowAsync<ValidationException>()
-//                .WithMessage("Appointments cannot be reverted to pending status.");
-//        }
-
-//        [Fact]
-//        public async Task DeleteAsync_ShouldDeletePendingAppointment()
-//        {
-//            // Arrange
-
-//            var appointment = GetAppointment(AppointmentStatus.Pending);
-
-//            var dto = new AppointmentDto
-//            {
-//                AppointmentId = appointment.AppointmentId,
-//                Status = AppointmentStatus.Pending
-//            };
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _appointmentRepository
-//                .Setup(x => x.DeleteAsync(1,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _mapper
-//                .Setup(x => x.Map<AppointmentDto>(appointment))
-//                .Returns(dto);
-
-//            // Act
-
-//            var result = await _service.DeleteAsync(1);
-
-//            // Assert
-
-//            result.Should().NotBeNull();
-
-//            result.AppointmentId.Should().Be(1);
-//        }
-
-//        [Fact]
-//        public async Task DeleteAsync_ShouldThrowNotFoundException_WhenAppointmentDoesNotExist()
-//        {
-//            // Arrange
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(100,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync((Appointment?)null);
-
-//            // Act
-
-//            Func<Task> action =
-//                async () => await _service.DeleteAsync(100);
-
-//            // Assert
-
-//            await action.Should()
-//                .ThrowAsync<NotFoundException>()
-//                .WithMessage("Appointment not found.");
-//        }
-
-//        [Fact]
-//        public async Task DeleteAsync_ShouldThrowValidationException_WhenAppointmentCompleted()
-//        {
-//            // Arrange
-
-//            var appointment =
-//                GetAppointment(AppointmentStatus.Completed);
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            // Act
-
-//            Func<Task> action =
-//                async () => await _service.DeleteAsync(1);
-
-//            // Assert
-
-//            await action.Should()
-//                .ThrowAsync<ValidationException>()
-//                .WithMessage("Completed appointments cannot be deleted.");
-//        }
-
-//        [Fact]
-//        public async Task DeleteAsync_ShouldThrowValidationException_WhenAppointmentConfirmed()
-//        {
-//            // Arrange
-
-//            var appointment =
-//                GetAppointment(AppointmentStatus.Confirmed);
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            // Act
-
-//            Func<Task> action =
-//                async () => await _service.DeleteAsync(1);
-
-//            // Assert
-
-//            await action.Should()
-//                .ThrowAsync<ValidationException>()
-//                .WithMessage("Confirmed appointments cannot be deleted.");
-//        }
-
-//        [Fact]
-//        public async Task DeleteAsync_ShouldCallDeleteRepositoryOnce()
-//        {
-//            // Arrange
-
-//            var appointment =
-//                GetAppointment(AppointmentStatus.Pending);
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _appointmentRepository
-//                .Setup(x => x.DeleteAsync(1,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _mapper
-//                .Setup(x => x.Map<AppointmentDto>(appointment))
-//                .Returns(new AppointmentDto());
-
-//            // Act
-
-//            await _service.DeleteAsync(1);
-
-//            // Assert
-
-//            _appointmentRepository.Verify(
-//                x => x.DeleteAsync(
-//                    1,
-//                    It.IsAny<CancellationToken>()),
-//                Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task DeleteAsync_ShouldCallMapperOnce()
-//        {
-//            // Arrange
-
-//            var appointment =
-//                GetAppointment(AppointmentStatus.Pending);
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _appointmentRepository
-//                .Setup(x => x.DeleteAsync(1,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _mapper
-//                .Setup(x => x.Map<AppointmentDto>(appointment))
-//                .Returns(new AppointmentDto());
-
-//            // Act
-
-//            await _service.DeleteAsync(1);
-
-//            // Assert
-
-//            _mapper.Verify(
-//                x => x.Map<AppointmentDto>(appointment),
-//                Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task DeleteAsync_ShouldPassCancellationToken()
-//        {
-//            // Arrange
-
-//            var token = new CancellationToken();
-
-//            var appointment =
-//                GetAppointment(AppointmentStatus.Pending);
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1, token))
-//                .ReturnsAsync(appointment);
-
-//            _appointmentRepository
-//                .Setup(x => x.DeleteAsync(1, token))
-//                .ReturnsAsync(appointment);
-
-//            _mapper
-//                .Setup(x => x.Map<AppointmentDto>(appointment))
-//                .Returns(new AppointmentDto());
-
-//            // Act
-
-//            await _service.DeleteAsync(1, token);
-
-//            // Assert
-
-//            _appointmentRepository.Verify(
-//                x => x.GetByIdAsync(1, token),
-//                Times.Once);
-
-//            _appointmentRepository.Verify(
-//                x => x.DeleteAsync(1, token),
-//                Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task DeleteAsync_ShouldThrowException_WhenRepositoryFails()
-//        {
-//            // Arrange
-
-//            var appointment =
-//                GetAppointment(AppointmentStatus.Pending);
-
-//            _appointmentRepository
-//                .Setup(x => x.GetByIdAsync(1,
-//                    It.IsAny<CancellationToken>()))
-//                .ReturnsAsync(appointment);
-
-//            _appointmentRepository
-//                .Setup(x => x.DeleteAsync(1,
-//                    It.IsAny<CancellationToken>()))
-//                .ThrowsAsync(new Exception("Database Error"));
-
-//            // Act
-
-//            Func<Task> action =
-//                async () => await _service.DeleteAsync(1);
-
-//            // Assert
-
-//            await action.Should()
-//                .ThrowAsync<Exception>()
-//                .WithMessage("Database Error");
-//        }
-
-//    }
-//}
+﻿// =====================================================================================
+// AppointmentServiceTests.cs
+// -------------------------------------------------------------------------------------
+// NOTE ON ASSUMPTIONS:
+// I don't have the source for Appointment, Doctor, Patient, the DTOs, or IRepository<T>,
+// only what's inferable from AppointmentService.cs and IAppointmentRepository.cs.
+// The tests below assume the following shapes, which are the most natural fit for the
+// code shown. If any property/method name is slightly different in your actual classes,
+// rename accordingly (the test *structure*, mock setups, and assertions will still hold):
+//
+//   IRepository<T>            : GetByIdAsync(int, CancellationToken), AddAsync(T, CancellationToken),
+//                                UpdateAsync(int, T, CancellationToken), DeleteAsync(int, CancellationToken),
+//                                GetAllAsync(CancellationToken)
+//   IPatientRepository         : GetByIdAsync(int, CancellationToken)   (plus IRepository<Patient> members)
+//   IAppointmentRepository     : IRepository<Appointment> + GetAppointmentReportAsync(PaginationRequest)
+//   Appointment                : Id, PatientId, DoctorId, ScheduledDate, Status, CancellationReason,
+//                                Confirm(), Cancel(string reason), Complete()
+//   Doctor                     : Id, IsActive
+//   Patient                    : Id
+//   CreateAppointmentDto       : PatientId, DoctorId, ScheduledDate
+//   UpdateAppointmentStatusDto : Status, CancellationReason
+//   CancelAppointmentDto       : CancellationReason
+//
+// AppointmentDto (confirmed from source):
+//   AppointmentId, PatientId, PatientName, DoctorId, DoctorName, ScheduledDate, TimeSlot,
+//   Status, CancellationReason, HealthRecordId
+//
+// Appointment/Doctor/Patient are still assumed shapes (not provided), so `appointment.Id`
+// below refers to the domain entity's own Id property, which is distinct from the DTO's
+// AppointmentId. Since these are concrete domain classes (not interfaces), they are
+// instantiated directly rather than mocked, so Confirm()/Cancel()/Complete() run their real
+// logic and we can assert on the resulting state.
+// =====================================================================================
+
+using AutoMapper;
+using HealthAxis.API.Exceptions;
+using HealthAxis.API.Models;
+using HealthAxis.API.Repositories.Interfaces;
+using HealthAxis.API.Services.Implementations;
+using HealthAxis.Shared.Common;
+using HealthAxis.Shared.DTOs.AdminDtos;
+using HealthAxis.Shared.DTOs.AppointmentDtos;
+using HealthAxis.Shared.Enums;
+using Moq;
+using Xunit;
+
+namespace HealthAxis.API.Tests.Services
+{
+    public class AppointmentServiceTests
+    {
+        private readonly Mock<IAppointmentRepository> _appointmentRepositoryMock;
+        private readonly Mock<IRepository<Doctor>> _doctorRepositoryMock;
+        private readonly Mock<IPatientRepository> _patientRepositoryMock;
+        private readonly Mock<IMapper> _mapperMock;
+        private readonly AppointmentService _sut; // system under test
+
+        public AppointmentServiceTests()
+        {
+            _appointmentRepositoryMock = new Mock<IAppointmentRepository>();
+            _doctorRepositoryMock = new Mock<IRepository<Doctor>>();
+            _patientRepositoryMock = new Mock<IPatientRepository>();
+            _mapperMock = new Mock<IMapper>();
+
+            _sut = new AppointmentService(
+                _appointmentRepositoryMock.Object,
+                _doctorRepositoryMock.Object,
+                _patientRepositoryMock.Object,
+                _mapperMock.Object);
+        }
+
+        // -------------------------------------------------------------------
+        // Helpers
+        // -------------------------------------------------------------------
+
+        private static Patient CreatePatient(int id = 1) => new Patient { PatientId = id };
+
+        private static Doctor CreateDoctor(int id = 1, bool isActive = true) =>
+            new Doctor { DoctorId = id, IsActive = isActive };
+
+        private static Appointment CreateAppointment(
+            int id = 1,
+            int patientId = 1,
+            int doctorId = 1,
+            AppointmentStatus status = AppointmentStatus.Pending,
+            DateTime? scheduledDate = null) =>
+            new Appointment
+            {
+                AppointmentId = id,
+                PatientId = patientId,
+                DoctorId = doctorId,
+                Status = status,
+                ScheduledDate = scheduledDate ?? DateTime.Today.AddDays(1)
+            };
+
+        // =====================================================================
+        // GetAllAsync
+        // =====================================================================
+
+        [Fact]
+        public async Task GetAllAsync_ReturnsMappedAppointments_WhenAppointmentsExist()
+        {
+            // Arrange
+            var appointments = new List<Appointment> { CreateAppointment(1), CreateAppointment(2) };
+            var expectedDtos = new List<AppointmentDto>
+            {
+                new AppointmentDto { AppointmentId = 1 },
+                new AppointmentDto { AppointmentId = 2 }
+            };
+
+            _appointmentRepositoryMock
+                .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointments);
+
+            _mapperMock
+                .Setup(m => m.Map<IEnumerable<AppointmentDto>>(appointments))
+                .Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetAllAsync();
+
+            // Assert
+            Assert.Equal(expectedDtos, result);
+            _appointmentRepositoryMock.Verify(r => r.GetAllAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetAllAsync_ReturnsEmptyCollection_WhenNoAppointmentsExist()
+        {
+            // Arrange
+            _appointmentRepositoryMock
+                .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Appointment>());
+
+            _mapperMock
+                .Setup(m => m.Map<IEnumerable<AppointmentDto>>(It.IsAny<IEnumerable<Appointment>>()))
+                .Returns(new List<AppointmentDto>());
+
+            // Act
+            var result = await _sut.GetAllAsync();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        // =====================================================================
+        // GetAppointmentReportAsync
+        // =====================================================================
+
+        [Fact]
+        public async Task GetAppointmentReportAsync_ReturnsPagedResult_FromRepository()
+        {
+            // Arrange
+            var request = new PaginationRequest { PageNumber = 1, PageSize = 10 };
+            var expected = new PagedResult<AppointmentReportDto>
+            {
+                Items = new List<AppointmentReportDto> { new AppointmentReportDto() },
+                TotalCount = 1
+            };
+
+            _appointmentRepositoryMock
+                .Setup(r => r.GetAppointmentReportAsync(request))
+                .ReturnsAsync(expected);
+
+            // Act
+            var result = await _sut.GetAppointmentReportAsync(request);
+
+            // Assert
+            Assert.Same(expected, result);
+            _appointmentRepositoryMock.Verify(r => r.GetAppointmentReportAsync(request), Times.Once);
+        }
+
+        // =====================================================================
+        // BookAppointmentAsync
+        // =====================================================================
+
+        [Fact]
+        public async Task BookAppointmentAsync_ThrowsValidationException_WhenDateIsInThePast()
+        {
+            // Arrange
+            var dto = new CreateAppointmentDto
+            {
+                PatientId = 1,
+                DoctorId = 1,
+                ScheduledDate = DateTime.Today.AddDays(-1)
+            };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<ValidationException>(() => _sut.BookAppointmentAsync(dto));
+            Assert.Equal("Appointments cannot be booked for past dates.", ex.Message);
+
+            _patientRepositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task BookAppointmentAsync_ThrowsValidationException_WhenDateIsMoreThanSixMonthsAhead()
+        {
+            // Arrange
+            var dto = new CreateAppointmentDto
+            {
+                PatientId = 1,
+                DoctorId = 1,
+                ScheduledDate = DateTime.Today.AddMonths(6).AddDays(1)
+            };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<ValidationException>(() => _sut.BookAppointmentAsync(dto));
+            Assert.Equal("Appointments can only be booked up to 6 months in advance.", ex.Message);
+        }
+
+        [Fact]
+        public async Task BookAppointmentAsync_AllowsBooking_ExactlyAtSixMonthBoundary()
+        {
+            // Arrange
+            var dto = new CreateAppointmentDto
+            {
+                PatientId = 1,
+                DoctorId = 1,
+                ScheduledDate = DateTime.Today.AddMonths(6)
+            };
+
+            SetupHappyPathBooking(dto);
+
+            // Act
+            var result = await _sut.BookAppointmentAsync(dto);
+
+            // Assert
+            Assert.NotNull(result);
+        }
+
+        [Fact]
+        public async Task BookAppointmentAsync_AllowsBooking_WhenDateIsToday()
+        {
+            // Arrange
+            var dto = new CreateAppointmentDto
+            {
+                PatientId = 1,
+                DoctorId = 1,
+                ScheduledDate = DateTime.Today
+            };
+
+            SetupHappyPathBooking(dto);
+
+            // Act
+            var result = await _sut.BookAppointmentAsync(dto);
+
+            // Assert
+            Assert.NotNull(result);
+        }
+
+        [Fact]
+        public async Task BookAppointmentAsync_ThrowsNotFoundException_WhenPatientDoesNotExist()
+        {
+            // Arrange
+            var dto = new CreateAppointmentDto
+            {
+                PatientId = 99,
+                DoctorId = 1,
+                ScheduledDate = DateTime.Today.AddDays(1)
+            };
+
+            _patientRepositoryMock
+                .Setup(r => r.GetByIdAsync(dto.PatientId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Patient?)null);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<NotFoundException>(() => _sut.BookAppointmentAsync(dto));
+            Assert.Equal("Patient not found.", ex.Message);
+
+            _doctorRepositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task BookAppointmentAsync_ThrowsNotFoundException_WhenDoctorDoesNotExist()
+        {
+            // Arrange
+            var dto = new CreateAppointmentDto
+            {
+                PatientId = 1,
+                DoctorId = 99,
+                ScheduledDate = DateTime.Today.AddDays(1)
+            };
+
+            _patientRepositoryMock
+                .Setup(r => r.GetByIdAsync(dto.PatientId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreatePatient(dto.PatientId));
+
+            _doctorRepositoryMock
+                .Setup(r => r.GetByIdAsync(dto.DoctorId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Doctor?)null);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<NotFoundException>(() => _sut.BookAppointmentAsync(dto));
+            Assert.Equal("Doctor not found.", ex.Message);
+        }
+
+        [Fact]
+        public async Task BookAppointmentAsync_ThrowsValidationException_WhenDoctorIsInactive()
+        {
+            // Arrange
+            var dto = new CreateAppointmentDto
+            {
+                PatientId = 1,
+                DoctorId = 1,
+                ScheduledDate = DateTime.Today.AddDays(1)
+            };
+
+            _patientRepositoryMock
+                .Setup(r => r.GetByIdAsync(dto.PatientId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreatePatient(dto.PatientId));
+
+            _doctorRepositoryMock
+                .Setup(r => r.GetByIdAsync(dto.DoctorId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateDoctor(dto.DoctorId, isActive: false));
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<ValidationException>(() => _sut.BookAppointmentAsync(dto));
+            Assert.Equal("Appointments cannot be booked with inactive doctors.", ex.Message);
+
+            _appointmentRepositoryMock.Verify(
+                r => r.AddAsync(It.IsAny<Appointment>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+        }
+
+        [Fact]
+        public async Task BookAppointmentAsync_CreatesAppointmentWithPendingStatus_OnSuccess()
+        {
+            // Arrange
+            var dto = new CreateAppointmentDto
+            {
+                PatientId = 1,
+                DoctorId = 1,
+                ScheduledDate = DateTime.Today.AddDays(1)
+            };
+
+            var mappedAppointment = CreateAppointment(patientId: dto.PatientId, doctorId: dto.DoctorId);
+            var savedAppointment = CreateAppointment(id: 42, patientId: dto.PatientId, doctorId: dto.DoctorId);
+            var expectedDto = new AppointmentDto { AppointmentId = 42, Status = AppointmentStatus.Pending };
+
+            _patientRepositoryMock
+                .Setup(r => r.GetByIdAsync(dto.PatientId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreatePatient(dto.PatientId));
+
+            _doctorRepositoryMock
+                .Setup(r => r.GetByIdAsync(dto.DoctorId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateDoctor(dto.DoctorId, isActive: true));
+
+            _mapperMock
+                .Setup(m => m.Map<Appointment>(dto))
+                .Returns(mappedAppointment);
+
+            _appointmentRepositoryMock
+                .Setup(r => r.AddAsync(
+                    It.Is<Appointment>(a => a.Status == AppointmentStatus.Pending),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(savedAppointment);
+
+            _mapperMock
+                .Setup(m => m.Map<AppointmentDto>(savedAppointment))
+                .Returns(expectedDto);
+
+            // Act
+            var result = await _sut.BookAppointmentAsync(dto);
+
+            // Assert
+            Assert.Equal(expectedDto, result);
+            Assert.Equal(AppointmentStatus.Pending, mappedAppointment.Status);
+
+            _appointmentRepositoryMock.Verify(
+                r => r.AddAsync(
+                    It.Is<Appointment>(a => a.Status == AppointmentStatus.Pending),
+                    It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        private void SetupHappyPathBooking(CreateAppointmentDto dto)
+        {
+            var mappedAppointment = CreateAppointment(patientId: dto.PatientId, doctorId: dto.DoctorId);
+            var savedAppointment = CreateAppointment(id: 1, patientId: dto.PatientId, doctorId: dto.DoctorId);
+
+            _patientRepositoryMock
+                .Setup(r => r.GetByIdAsync(dto.PatientId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreatePatient(dto.PatientId));
+
+            _doctorRepositoryMock
+                .Setup(r => r.GetByIdAsync(dto.DoctorId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateDoctor(dto.DoctorId, isActive: true));
+
+            _mapperMock
+                .Setup(m => m.Map<Appointment>(dto))
+                .Returns(mappedAppointment);
+
+            _appointmentRepositoryMock
+                .Setup(r => r.AddAsync(It.IsAny<Appointment>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(savedAppointment);
+
+            _mapperMock
+                .Setup(m => m.Map<AppointmentDto>(savedAppointment))
+                .Returns(new AppointmentDto { AppointmentId = savedAppointment.AppointmentId });
+        }
+
+        // =====================================================================
+        // UpdateStatusAsync
+        // =====================================================================
+
+        [Fact]
+        public async Task UpdateStatusAsync_ThrowsNotFoundException_WhenAppointmentDoesNotExist()
+        {
+            // Arrange
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Appointment?)null);
+
+            var dto = new UpdateAppointmentStatusDto { Status = AppointmentStatus.Confirmed };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<NotFoundException>(() => _sut.UpdateStatusAsync(1, dto));
+            Assert.Equal("Appointment not found.", ex.Message);
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ThrowsValidationException_WhenAppointmentIsAlreadyCancelled()
+        {
+            // Arrange
+            var appointment = CreateAppointment(status: AppointmentStatus.Cancelled);
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            var dto = new UpdateAppointmentStatusDto { Status = AppointmentStatus.Confirmed };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<ValidationException>(() => _sut.UpdateStatusAsync(appointment.AppointmentId, dto));
+            Assert.Equal("Cancelled appointments cannot be modified.", ex.Message);
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ThrowsValidationException_WhenAppointmentIsAlreadyCompleted()
+        {
+            // Arrange
+            var appointment = CreateAppointment(status: AppointmentStatus.Completed);
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            var dto = new UpdateAppointmentStatusDto { Status = AppointmentStatus.Cancelled };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<ValidationException>(() => _sut.UpdateStatusAsync(appointment.AppointmentId, dto));
+            Assert.Equal("Completed appointments cannot be modified.", ex.Message);
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ThrowsValidationException_WhenUpdatingToSameStatus()
+        {
+            // Arrange
+            var appointment = CreateAppointment(status: AppointmentStatus.Confirmed);
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            var dto = new UpdateAppointmentStatusDto { Status = AppointmentStatus.Confirmed };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<ValidationException>(() => _sut.UpdateStatusAsync(appointment.AppointmentId, dto));
+            Assert.Equal("Appointment is already Confirmed.", ex.Message);
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ThrowsValidationException_WhenCompletingPendingAppointmentDirectly()
+        {
+            // Arrange
+            var appointment = CreateAppointment(status: AppointmentStatus.Pending);
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            var dto = new UpdateAppointmentStatusDto { Status = AppointmentStatus.Completed };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<ValidationException>(() => _sut.UpdateStatusAsync(appointment.AppointmentId, dto));
+            Assert.Equal("Pending appointments must be confirmed before completion.", ex.Message);
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ThrowsValidationException_WhenRevertingToPending()
+        {
+            // Arrange
+            var appointment = CreateAppointment(status: AppointmentStatus.Confirmed);
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            var dto = new UpdateAppointmentStatusDto { Status = AppointmentStatus.Pending };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<ValidationException>(() => _sut.UpdateStatusAsync(appointment.AppointmentId, dto));
+            Assert.Equal("Appointments cannot be reverted to pending status.", ex.Message);
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ConfirmsAppointment_WhenTransitioningFromPendingToConfirmed()
+        {
+            // Arrange
+            var appointment = CreateAppointment(status: AppointmentStatus.Pending);
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            _appointmentRepositoryMock
+                .Setup(r => r.UpdateAsync(appointment.AppointmentId, It.IsAny<Appointment>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((int id, Appointment a, CancellationToken _) => a);
+
+            var expectedDto = new AppointmentDto { AppointmentId = appointment.AppointmentId, Status = AppointmentStatus.Confirmed };
+            _mapperMock
+                .Setup(m => m.Map<AppointmentDto>(It.Is<Appointment>(a => a.Status == AppointmentStatus.Confirmed)))
+                .Returns(expectedDto);
+
+            var dto = new UpdateAppointmentStatusDto { Status = AppointmentStatus.Confirmed };
+
+            // Act
+            var result = await _sut.UpdateStatusAsync(appointment.AppointmentId, dto);
+
+            // Assert
+            Assert.Equal(AppointmentStatus.Confirmed, appointment.Status);
+            Assert.Equal(expectedDto, result);
+            _appointmentRepositoryMock.Verify(
+                r => r.UpdateAsync(appointment.AppointmentId, It.IsAny<Appointment>(), It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_CancelsAppointment_AndSetsCancellationReason()
+        {
+            // Arrange
+            var appointment = CreateAppointment(status: AppointmentStatus.Pending);
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            _appointmentRepositoryMock
+                .Setup(r => r.UpdateAsync(appointment.AppointmentId, It.IsAny<Appointment>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((int id, Appointment a, CancellationToken _) => a);
+
+            _mapperMock
+                .Setup(m => m.Map<AppointmentDto>(It.IsAny<Appointment>()))
+                .Returns(new AppointmentDto { AppointmentId = appointment.AppointmentId, Status = AppointmentStatus.Cancelled });
+
+            var dto = new UpdateAppointmentStatusDto
+            {
+                Status = AppointmentStatus.Cancelled,
+                CancellationReason = "Doctor unavailable"
+            };
+
+            // Act
+            await _sut.UpdateStatusAsync(appointment.AppointmentId, dto);
+
+            // Assert
+            Assert.Equal(AppointmentStatus.Cancelled, appointment.Status);
+            Assert.Equal("Doctor unavailable", appointment.CancellationReason);
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_CancelsAppointment_WithEmptyReason_WhenReasonIsNull()
+        {
+            // Arrange
+            var appointment = CreateAppointment(status: AppointmentStatus.Pending);
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            _appointmentRepositoryMock
+                .Setup(r => r.UpdateAsync(appointment.AppointmentId, It.IsAny<Appointment>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((int id, Appointment a, CancellationToken _) => a);
+
+            _mapperMock
+                .Setup(m => m.Map<AppointmentDto>(It.IsAny<Appointment>()))
+                .Returns(new AppointmentDto { AppointmentId = appointment.AppointmentId, Status = AppointmentStatus.Cancelled });
+
+            var dto = new UpdateAppointmentStatusDto
+            {
+                Status = AppointmentStatus.Cancelled,
+                CancellationReason = null
+            };
+
+            // Act
+            await _sut.UpdateStatusAsync(appointment.AppointmentId, dto);
+
+            // Assert
+            Assert.Equal(string.Empty, appointment.CancellationReason);
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_CompletesAppointment_WhenTransitioningFromConfirmedToCompleted()
+        {
+            // Arrange
+            var appointment = CreateAppointment(status: AppointmentStatus.Confirmed);
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            _appointmentRepositoryMock
+                .Setup(r => r.UpdateAsync(appointment.AppointmentId, It.IsAny<Appointment>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((int id, Appointment a, CancellationToken _) => a);
+
+            _mapperMock
+                .Setup(m => m.Map<AppointmentDto>(It.IsAny<Appointment>()))
+                .Returns(new AppointmentDto { AppointmentId = appointment.AppointmentId, Status = AppointmentStatus.Completed });
+
+            var dto = new UpdateAppointmentStatusDto { Status = AppointmentStatus.Completed };
+
+            // Act
+            await _sut.UpdateStatusAsync(appointment.AppointmentId, dto);
+
+            // Assert
+            Assert.Equal(AppointmentStatus.Completed, appointment.Status);
+        }
+
+        // =====================================================================
+        // DeleteAsync
+        // =====================================================================
+
+        [Fact]
+        public async Task DeleteAsync_ThrowsNotFoundException_WhenAppointmentDoesNotExist()
+        {
+            // Arrange
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Appointment?)null);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<NotFoundException>(() => _sut.DeleteAsync(1));
+            Assert.Equal("Appointment not found.", ex.Message);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ThrowsValidationException_WhenAppointmentIsCompleted()
+        {
+            // Arrange
+            var appointment = CreateAppointment(status: AppointmentStatus.Completed);
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<ValidationException>(() => _sut.DeleteAsync(appointment.AppointmentId));
+            Assert.Equal("Completed appointments cannot be deleted.", ex.Message);
+
+            _appointmentRepositoryMock.Verify(
+                r => r.DeleteAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ThrowsValidationException_WhenAppointmentIsConfirmed()
+        {
+            // Arrange
+            var appointment = CreateAppointment(status: AppointmentStatus.Confirmed);
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<ValidationException>(() => _sut.DeleteAsync(appointment.AppointmentId));
+            Assert.Equal("Confirmed appointments cannot be deleted.", ex.Message);
+        }
+
+        [Theory]
+        [InlineData(AppointmentStatus.Pending)]
+        [InlineData(AppointmentStatus.Cancelled)]
+        public async Task DeleteAsync_DeletesAppointment_WhenStatusAllowsDeletion(AppointmentStatus status)
+        {
+            // Arrange
+            var appointment = CreateAppointment(status: status);
+            var expectedDto = new AppointmentDto { AppointmentId = appointment.AppointmentId, Status = status };
+
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            _appointmentRepositoryMock
+                .Setup(r => r.DeleteAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            _mapperMock
+                .Setup(m => m.Map<AppointmentDto>(appointment))
+                .Returns(expectedDto);
+
+            // Act
+            var result = await _sut.DeleteAsync(appointment.AppointmentId);
+
+            // Assert
+            Assert.Equal(expectedDto, result);
+            _appointmentRepositoryMock.Verify(
+                r => r.DeleteAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        // =====================================================================
+        // CancelAppointmentByPatientAsync
+        // =====================================================================
+
+        [Fact]
+        public async Task CancelAppointmentByPatientAsync_ThrowsNotFoundException_WhenAppointmentDoesNotExist()
+        {
+            // Arrange
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Appointment?)null);
+
+            var dto = new CancelAppointmentDto { CancellationReason = "Change of plans" };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<NotFoundException>(
+                () => _sut.CancelAppointmentByPatientAsync(patientId: 1, appointmentId: 1, dto));
+            Assert.Equal("Appointment not found.", ex.Message);
+        }
+
+        [Fact]
+        public async Task CancelAppointmentByPatientAsync_ThrowsValidationException_WhenAppointmentBelongsToAnotherPatient()
+        {
+            // Arrange
+            var appointment = CreateAppointment(patientId: 5, status: AppointmentStatus.Pending);
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            var dto = new CancelAppointmentDto { CancellationReason = "Change of plans" };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<ValidationException>(
+                () => _sut.CancelAppointmentByPatientAsync(patientId: 999, appointmentId: appointment.AppointmentId, dto));
+            Assert.Equal("This appointment does not belong to the patient.", ex.Message);
+        }
+
+        [Fact]
+        public async Task CancelAppointmentByPatientAsync_ThrowsValidationException_WhenAppointmentIsNotPending()
+        {
+            // Arrange
+            var appointment = CreateAppointment(patientId: 1, status: AppointmentStatus.Confirmed);
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            var dto = new CancelAppointmentDto { CancellationReason = "Change of plans" };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<ValidationException>(
+                () => _sut.CancelAppointmentByPatientAsync(patientId: 1, appointmentId: appointment.AppointmentId, dto));
+            Assert.Equal("Only pending appointments can be cancelled.", ex.Message);
+        }
+
+        [Fact]
+        public async Task CancelAppointmentByPatientAsync_CancelsAppointment_WhenPendingAndOwnedByPatient()
+        {
+            // Arrange
+            var appointment = CreateAppointment(patientId: 1, status: AppointmentStatus.Pending);
+            var dto = new CancelAppointmentDto { CancellationReason = "No longer needed" };
+            var expectedDto = new AppointmentDto
+            {
+                AppointmentId = appointment.AppointmentId,
+                Status = AppointmentStatus.Cancelled,
+                CancellationReason = dto.CancellationReason
+            };
+
+            _appointmentRepositoryMock
+                .Setup(r => r.GetByIdAsync(appointment.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            _appointmentRepositoryMock
+                .Setup(r => r.UpdateAsync(appointment.AppointmentId, It.IsAny<Appointment>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((int id, Appointment a, CancellationToken _) => a);
+
+            _mapperMock
+                .Setup(m => m.Map<AppointmentDto>(It.Is<Appointment>(a =>
+                    a.Status == AppointmentStatus.Cancelled &&
+                    a.CancellationReason == dto.CancellationReason)))
+                .Returns(expectedDto);
+
+            // Act
+            var result = await _sut.CancelAppointmentByPatientAsync(
+                patientId: 1,
+                appointmentId: appointment.AppointmentId,
+                dto);
+
+            // Assert
+            Assert.Equal(AppointmentStatus.Cancelled, appointment.Status);
+            Assert.Equal(dto.CancellationReason, appointment.CancellationReason);
+            Assert.Equal(expectedDto, result);
+
+            _appointmentRepositoryMock.Verify(
+                r => r.UpdateAsync(appointment.AppointmentId, It.IsAny<Appointment>(), It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+    }
+}

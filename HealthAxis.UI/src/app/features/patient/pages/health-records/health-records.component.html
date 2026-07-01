@@ -1,0 +1,125 @@
+<div class="page container py-4">
+
+  <h2>My Health Records</h2>
+
+  @if (loading()) {
+    <div class="text-center">
+      <div class="spinner-border"></div>
+    </div>
+  }
+  @else if (records().length > 0) {
+
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Record ID</th>
+            <th>Doctor</th>
+            <th>Date</th>
+            <th>Diagnosis</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (record of records(); track record.recordId) {
+            <tr>
+              <td class="record-id">#{{ record.recordId }}</td>
+              <td>{{ record.doctorName }}</td>
+              <td>{{ record.visitDate | date:'dd MMM yyyy' }}</td>
+              <td><span class="diagnosis-pill">{{ record.diagnosis }}</span></td>
+
+              <td class="text-center">
+                <button
+                  class="btn-outline-primary btn-sm"
+                  (click)="viewRecord(record)">
+                  View
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+  }
+  @else {
+    <div class="alert-info">
+      No health records found.
+    </div>
+  }
+
+</div>
+
+@if (selectedRecord()) {
+
+  <div class="ha-modal-backdrop" (click)="closeModal()">
+    <div class="ha-modal-dialog" (click)="$event.stopPropagation()">
+
+      <div class="ha-modal-header">
+        <h5 class="ha-modal-title">Health Record Details</h5>
+        <button
+          type="button"
+          class="ha-modal-close"
+          (click)="closeModal()"
+          aria-label="Close">
+          &times;
+        </button>
+      </div>
+
+      <div class="ha-modal-body">
+        <div class="ha-modal-grid">
+
+          <div class="ha-modal-field">
+            <strong>Record ID</strong>
+            <p>#{{ selectedRecord()!.recordId }}</p>
+          </div>
+
+          <div class="ha-modal-field">
+            <strong>Appointment ID</strong>
+            <p>#{{ selectedRecord()!.appointmentId }}</p>
+          </div>
+
+          <div class="ha-modal-field">
+            <strong>Doctor</strong>
+            <p>{{ selectedRecord()!.doctorName }}</p>
+          </div>
+
+          <div class="ha-modal-field">
+            <strong>Visit Date</strong>
+            <p>{{ selectedRecord()!.visitDate | date:'dd MMM yyyy' }}</p>
+          </div>
+
+          <div class="ha-modal-field ha-modal-field--full">
+            <strong>Diagnosis</strong>
+            <p>{{ selectedRecord()!.diagnosis }}</p>
+          </div>
+
+          <div class="ha-modal-field ha-modal-field--full">
+            <strong>Prescription</strong>
+            <p>{{ selectedRecord()!.prescription }}</p>
+          </div>
+
+          @if (selectedRecord()!.notes) {
+            <div class="ha-modal-field ha-modal-field--full">
+              <strong>Notes</strong>
+              <p>{{ selectedRecord()!.notes }}</p>
+            </div>
+          }
+
+        </div>
+      </div>
+
+      <div class="ha-modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="closeModal()">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+}

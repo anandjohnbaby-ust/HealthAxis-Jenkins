@@ -1,0 +1,222 @@
+/* src/app/features/patient/pages/appointments/appointments-list/appointments-list.component.css */
+
+.page {
+  padding: 40px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+h1 {
+  color: #0B3B36;
+  font-size: 1.6rem;
+  margin: 0;
+}
+
+.btn {
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-block;
+  border: none;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.btn--primary {
+  background: #0B3B36;
+  color: #fff;
+}
+
+.btn--primary:hover {
+  background: #0F4F48;
+}
+
+.btn-outline-danger {
+  background: #fff;
+  color: #B42318;
+  border: 1px solid #B42318;
+}
+
+.btn-outline-danger:hover {
+  background: #B42318;
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #E5E7EB;
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background: #D1D5DB;
+}
+
+.btn-danger {
+  background: #B42318;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #991B1B;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: .82rem;
+}
+
+.empty {
+  background: #fff;
+  border-radius: 10px;
+  padding: 40px;
+  text-align: center;
+  color: #6B7672;
+}
+
+.empty .btn {
+  margin-top: 16px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+
+th,
+td {
+  padding: 14px 18px;
+  text-align: left;
+  font-size: .9rem;
+}
+
+.text-end {
+  text-align: right;
+}
+
+thead {
+  background: #F0EEE8;
+}
+
+th {
+  color: #4A5754;
+  font-weight: 600;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+
+tbody tr {
+  border-top: 1px solid #EEEDE8;
+}
+
+tbody tr:hover {
+  background: #FAFAF8;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.badge--1 {
+  background: #FFF3CD;
+  color: #8A6300;
+}
+
+.badge--2 {
+  background: #DCEEFF;
+  color: #0B5394;
+}
+
+.badge--3 {
+  background: #FDECEC;
+  color: #B42318;
+}
+
+.badge--4 {
+  background: #E7F6EC;
+  color: #1E7A3C;
+}
+
+.badge--unknown {
+  background: #ECECEA;
+  color: #5A6360;
+}
+
+.alert {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: .85rem;
+  margin-bottom: 18px;
+}
+
+.alert--error {
+  background: #FDECEC;
+  color: #B42318;
+}
+
+/* ===== Confirmation Dialog ===== */
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.dialog {
+  width: 420px;
+  max-width: 90%;
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.2);
+  animation: dialogFade .2s ease;
+}
+
+.dialog h3 {
+  margin: 0 0 12px;
+  color: #0B3B36;
+  font-size: 1.2rem;
+}
+
+.dialog p {
+  margin: 0 0 24px;
+  color: #4B5563;
+  line-height: 1.5;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@keyframes dialogFade {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

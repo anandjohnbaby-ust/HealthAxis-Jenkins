@@ -1,268 +1,166 @@
-﻿//using FluentAssertions;
-//using HealthAxis.API.DTOs.AuthDtos;
-//using HealthAxis.API.Models;
-//using HealthAxis.API.Services.Implementation;
-//using Microsoft.AspNetCore.Identity;
-//using Microsoft.Extensions.Configuration;
-//using Moq;
-//using Xunit;
+using FluentAssertions;
+using HealthAxis.API.Data;
+using HealthAxis.API.Exceptions;
+using HealthAxis.API.Models;
+using HealthAxis.API.Services.Implementation;
+using HealthAxis.API.Repositories.Interfaces;
+using HealthAxis.Shared.DTOs.AuthDtos;
+using HealthAxis.Shared.DTOs.CommonDtos;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Moq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Xunit;
 
-//namespace HealthAxis.Tests.Services
-//{
-//    public class AuthServiceTests
-//    {
-//        private readonly Mock<UserManager<ApplicationUser>> _userManager;
-//        private readonly Mock<IConfiguration> _configuration;
+namespace HealthAxis.Tests.Services
+{
+    public class AuthServiceTests
+    {
+        private readonly Mock<UserManager<ApplicationUser>> _userManager;
+        private readonly Mock<ApplicationDbContext> _context;
+        private readonly Mock<IPatientRepository> _patientRepository;
+        private readonly Mock<IDoctorRepository> _doctorRepository;
+        private readonly IConfiguration _configuration;
 
-//        private readonly AuthService _service;
+        private readonly AuthService _service;
 
-//        //public AuthServiceTests()
-//        //{
-//        //    var store =
-//        //        new Mock<IUserStore<ApplicationUser>>();
+        public AuthServiceTests()
+        {
+            var store = new Mock<IUserStore<ApplicationUser>>();
+            _userManager = new Mock<UserManager<ApplicationUser>>(
+                store.Object, null, null, null, null, null, null, null, null);
 
-//        //    _userManager =
-//        //        new Mock<UserManager<ApplicationUser>>(
-//        //            store.Object,
-//        //            null!,
-//        //            null!,
-//        //            null!,
-//        //            null!,
-//        //            null!,
-//        //            null!,
-//        //            null!,
-//        //            null!);
+            _context = new Mock<ApplicationDbContext>(new DbContextOptions<ApplicationDbContext>());
 
-//        //    _configuration =
-//        //        new Mock<IConfiguration>();
+            _patientRepository = new Mock<IPatientRepository>();
+            _doctorRepository = new Mock<IDoctorRepository>();
 
-//        //    _configuration
-//        //        .Setup(x => x["Jwt:AccessTokenExpirationMinutes"])
-//        //        .Returns("15");
+            var inMemorySettings = new Dictionary<string, string>
+            {
+                { "Jwt:Key", "supersecretkey1234567890" },
+                { "Jwt:Issuer", "test" },
+                { "Jwt:Audience", "test" },
+                { "Jwt:AccessTokenExpirationMinutes", "60" },
+                { "Jwt:RefreshTokenExpirationDays", "7" }
+            };
 
-//        //    _configuration
-//        //        .Setup(x => x["Jwt:Issuer"])
-//        //        .Returns("HealthAxis.API");
+            _configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemorySettings)
+                .Build();
 
-//        //    _configuration
-//        //        .Setup(x => x["Jwt:Audience"])
-//        //        .Returns("HealthAxis.API");
+            _service = new AuthService(
+                _userManager.Object,
+                _context.Object,
+                _patientRepository.Object,
+                _doctorRepository.Object,
+                _configuration);
+        }
 
-//        //    _configuration
-//        //        .Setup(x => x["Jwt:Key"])
-//        //        .Returns("78acd5d93d025413e160ebc47dd1c2ead48aee30e3a4080b71c49c9221c97958");
+        [Fact]
+        public async Task Login_ShouldReturnInvalid_WhenUserNotFound()
+        {
+            _userManager.Setup(u => u.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
 
-//        //    _service =
-//        //        new AuthService(
-//        //            _userManager.Object,
-//        //            _configuration.Object);
-//        //}
+            var (success, message, at, rt, exp) = await _service.Login(new LoginDto { Email = "x@x.com", Password = "p" });
 
-//        //private RegisterDto GetRegisterDto()
-//        //{
-//        //    return new RegisterDto
-//        //    {
-//        //        Email = "john@test.com",
-//        //        Password = "Password@123",
-//        //        ConfirmPassword = "Password@123",
-//        //        Role = "Patient"
-//        //    };
-//        //}
+            success.Should().BeFalse();
+            message.Should().Be("Invalid Credentials");
+        }
 
-//        private ApplicationUser GetUser()
-//        {
-//            return new ApplicationUser
-//            {
-//                Id = "1",
-//                Email = "john@test.com",
-//                UserName = "john@test.com"
-//            };
-//        }
+        [Fact]
+        public async Task Login_ShouldReturnInvalid_WhenPasswordIncorrect()
+        {
+            var user = new ApplicationUser { Id = "u1", Email = "x@x.com" };
+            _userManager.Setup(u => u.FindByEmailAsync(user.Email)).ReturnsAsync(user);
+            _userManager.Setup(u => u.CheckPasswordAsync(user, "wrong")).ReturnsAsync(false);
 
+            var (success, message, at, rt, exp) = await _service.Login(new LoginDto { Email = user.Email, Password = "wrong" });
 
-//        //[Fact]
-//        //public async Task Register_ShouldFail_WhenPasswordsDoNotMatch()
-//        //{
-//        //    var dto = GetRegisterDto();
+            success.Should().BeFalse();
+            message.Should().Be("Invalid Credentials");
+        }
 
-//        //    dto.ConfirmPassword = "WrongPassword";
+        [Fact]
+        public async Task Login_ShouldReturnTokens_WhenCredentialsValid()
+        {
+            var user = new ApplicationUser { Id = "u2", Email = "y@y.com" };
+            _userManager.Setup(u => u.FindByEmailAsync(user.Email)).ReturnsAsync(user);
+            _userManager.Setup(u => u.CheckPasswordAsync(user, "right")).ReturnsAsync(true);
+            _userManager.Setup(u => u.GetRolesAsync(user)).ReturnsAsync(new List<string>());
+            _userManager.Setup(u => u.UpdateAsync(user)).ReturnsAsync(IdentityResult.Success);
 
-//        //    var result =
-//        //        await _service.Register(dto);
+            var (success, message, at, rt, exp) = await _service.Login(new LoginDto { Email = user.Email, Password = "right" });
 
-//        //    result.Success.Should().BeFalse();
+            success.Should().BeTrue();
+            message.Should().Be("Login Successful");
+            at.Should().NotBeNullOrEmpty();
+            rt.Should().NotBeNullOrEmpty();
+            exp.Should().Be(60);
+            _userManager.Verify(u => u.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Once);
+        }
 
-//        //    result.Message.Should()
-//        //        .Be("Password Do not Match");
-//        //}
+        [Fact]
+        public async Task ChangePassword_ShouldThrowNotFound_WhenUserMissing()
+        {
+            _userManager.Setup(u => u.FindByIdAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
 
-//        //[Fact]
-//        //public async Task Register_ShouldReturnIdentityErrors()
-//        //{
-//        //    var dto = GetRegisterDto();
+            Func<Task> action = async () => await _service.ChangePasswordAsync("x", new ChangePasswordDto());
 
-//        //    var errors = new IdentityError[]
-//        //    {
-//        //new IdentityError
-//        //{
-//        //    Description = "Email already exists"
-//        //}
-//        //    };
+            await action.Should().ThrowAsync<NotFoundException>().WithMessage("User not found.");
+        }
 
-//        //    _userManager
-//        //        .Setup(x => x.CreateAsync(
-//        //            It.IsAny<ApplicationUser>(),
-//        //            dto.Password))
-//        //        .ReturnsAsync(
-//        //            IdentityResult.Failed(errors));
+        [Fact]
+        public async Task ChangePassword_ShouldThrowValidation_WhenChangeFails()
+        {
+            var user = new ApplicationUser { Id = "u3" };
+            _userManager.Setup(u => u.FindByIdAsync(user.Id)).ReturnsAsync(user);
+            _userManager.Setup(u => u.ChangePasswordAsync(user, "c", "n")).ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "err" }));
 
-//        //    var result =
-//        //        await _service.Register(dto);
+            Func<Task> action = async () => await _service.ChangePasswordAsync(user.Id, new ChangePasswordDto { CurrentPassword = "c", NewPassword = "n" });
 
-//        //    result.Success.Should().BeFalse();
+            await action.Should().ThrowAsync<ValidationException>().WithMessage("err");
+        }
 
-//        //    result.Message.Should()
-//        //        .Contain("Email already exists");
-//        //}
+        [Fact]
+        public async Task ChangePassword_ShouldSucceed_WhenChangeSucceeds()
+        {
+            var user = new ApplicationUser { Id = "u4" };
+            _userManager.Setup(u => u.FindByIdAsync(user.Id)).ReturnsAsync(user);
+            _userManager.Setup(u => u.ChangePasswordAsync(user, "c", "n")).ReturnsAsync(IdentityResult.Success);
 
-//        //[Fact]
-//        //public async Task Register_ShouldCallCreateAsyncOnce()
-//        //{
-//        //    var dto = GetRegisterDto();
+            await _service.ChangePasswordAsync(user.Id, new ChangePasswordDto { CurrentPassword = "c", NewPassword = "n" });
 
-//        //    _userManager
-//        //        .Setup(x => x.CreateAsync(
-//        //            It.IsAny<ApplicationUser>(),
-//        //            dto.Password))
-//        //        .ReturnsAsync(IdentityResult.Success);
+            _userManager.Verify(u => u.ChangePasswordAsync(user, "c", "n"), Times.Once);
+        }
 
-//        //    _userManager
-//        //        .Setup(x => x.AddToRoleAsync(
-//        //            It.IsAny<ApplicationUser>(),
-//        //            dto.Role))
-//        //        .ReturnsAsync(IdentityResult.Success);
+        [Fact]
+        public async Task RefreshToken_ShouldReturnInvalid_WhenNotFound()
+        {
+            var users = new List<ApplicationUser> { new ApplicationUser { RefreshToken = "a" } };
+            _userManager.Setup(u => u.Users).Returns(users.AsQueryable());
 
-//        //    await _service.Register(dto);
+            var (success, message, at, rt, exp) = await _service.RefreshToken(new HealthAxis.Shared.DTOs.AuthDtos.RefreshTokenDto { RefreshToken = "notfound" });
 
-//        //    _userManager.Verify(
-//        //        x => x.CreateAsync(
-//        //            It.IsAny<ApplicationUser>(),
-//        //            dto.Password),
-//        //        Times.Once);
-//        //}
+            success.Should().BeFalse();
+            message.Should().Be("Invalid Refresh Token.");
+        }
 
-//        //[Fact]
-//        //public async Task Register_ShouldAddUserToRole()
-//        //{
-//        //    var dto = GetRegisterDto();
+        [Fact]
+        public async Task RefreshToken_ShouldReturnExpired_WhenTokenExpired()
+        {
+            var token = "tok123";
+            var user = new ApplicationUser { RefreshToken = token, RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(-1) };
+            var users = new List<ApplicationUser> { user };
+            _userManager.Setup(u => u.Users).Returns(users.AsQueryable());
 
-//        //    _userManager
-//        //        .Setup(x => x.CreateAsync(
-//        //            It.IsAny<ApplicationUser>(),
-//        //            dto.Password))
-//        //        .ReturnsAsync(IdentityResult.Success);
+            var (success, message, at, rt, exp) = await _service.RefreshToken(new HealthAxis.Shared.DTOs.AuthDtos.RefreshTokenDto { RefreshToken = token });
 
-//        //    _userManager
-//        //        .Setup(x => x.AddToRoleAsync(
-//        //            It.IsAny<ApplicationUser>(),
-//        //            dto.Role))
-//        //        .ReturnsAsync(IdentityResult.Success);
-
-//        //    await _service.Register(dto);
-
-//        //    _userManager.Verify(
-//        //        x => x.AddToRoleAsync(
-//        //            It.IsAny<ApplicationUser>(),
-//        //            dto.Role),
-//        //        Times.Once);
-//        //}
-
-//        //[Fact]
-//        //public async Task Register_ShouldCreateUserWithCorrectEmail()
-//        //{
-//        //    // Arrange
-
-//        //    var dto = GetRegisterDto();
-
-//        //    ApplicationUser? createdUser = null;
-
-//        //    _userManager
-//        //        .Setup(x => x.CreateAsync(
-//        //            It.IsAny<ApplicationUser>(),
-//        //            dto.Password))
-//        //        .Callback<ApplicationUser, string>((user, _) =>
-//        //        {
-//        //            createdUser = user;
-//        //        })
-//        //        .ReturnsAsync(IdentityResult.Success);
-
-//        //    _userManager
-//        //        .Setup(x => x.AddToRoleAsync(
-//        //            It.IsAny<ApplicationUser>(),
-//        //            dto.Role))
-//        //        .ReturnsAsync(IdentityResult.Success);
-
-//        //    // Act
-
-//        //    await _service.Register(dto);
-
-//        //    // Assert
-
-//        //    createdUser.Should().NotBeNull();
-
-//        //    createdUser!.Email.Should().Be(dto.Email);
-
-//        //    createdUser.UserName.Should().Be(dto.Email);
-//        //}
-
-//        [Fact]
-//        public async Task Login_ShouldFail_WhenUserDoesNotExist()
-//        {
-//            var dto = new LoginDto
-//            {
-//                Email = "unknown@test.com",
-//                Password = "Password@123"
-//            };
-
-//            _userManager
-//                .Setup(x => x.FindByEmailAsync(dto.Email))
-//                .ReturnsAsync((ApplicationUser?)null);
-
-//            var result = await _service.Login(dto);
-
-//            result.Success.Should().BeFalse();
-
-//            result.Message.Should().Be("Invalid Credentials");
-
-//            result.AccessToken.Should().BeEmpty();
-
-//            result.RefreshToken.Should().BeEmpty();
-//        }
-
-//        [Fact]
-//        public async Task Login_ShouldFail_WhenPasswordIsWrong()
-//        {
-//            var dto = new LoginDto
-//            {
-//                Email = "john@test.com",
-//                Password = "WrongPassword"
-//            };
-
-//            var user = GetUser();
-
-//            _userManager
-//                .Setup(x => x.FindByEmailAsync(dto.Email))
-//                .ReturnsAsync(user);
-
-//            _userManager
-//                .Setup(x => x.CheckPasswordAsync(user, dto.Password))
-//                .ReturnsAsync(false);
-
-//            var result = await _service.Login(dto);
-
-//            result.Success.Should().BeFalse();
-
-//            result.Message.Should().Be("Invalid Credentials");
-//        }
-//    }
-//}
+            success.Should().BeFalse();
+            message.Should().Be("Refresh Token has expired.");
+        }
+    }
+}

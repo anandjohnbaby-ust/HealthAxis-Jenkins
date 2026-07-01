@@ -1,0 +1,90 @@
+<div class="layout-wrapper">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h2>HealthAxis</h2>
+      <small>Doctor Portal</small>
+    </div>
+
+    <nav class="sidebar-nav">
+
+      <a
+        routerLink="/doctor/dashboard"
+        routerLinkActive="active-link"
+        [routerLinkActiveOptions]="{ exact: true }">
+         Dashboard
+      </a>
+
+      <a
+        routerLink="/doctor/appointments"
+        routerLinkActive="active-link"
+        [routerLinkActiveOptions]="{ exact: true }">
+         All Appointments
+      </a>
+
+      <a
+        routerLink="/doctor/today"
+        routerLinkActive="active-link">
+         Today's Schedule
+      </a>
+
+      <a
+        routerLink="/doctor/week"
+        routerLinkActive="active-link">
+         Weekly Schedule
+      </a>
+
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+
+    <header class="topbar">
+
+      <div class="topbar-title">
+        Doctor Portal
+      </div>
+
+      <div class="profile" (click)="toggleMenu($event)">
+
+        <div class="avatar">
+          {{ initial() }}
+        </div>
+
+        <div class="user-info">
+          <span class="user-name">
+            {{ doctorName() }}
+          </span>
+        </div>
+
+        <span class="arrow">▼</span>
+
+        @if(menuOpen()){
+
+        <div class="profile-menu" (click)="$event.stopPropagation()">
+
+          <button type="button" (click)="goToProfile()">
+            👤 My Profile
+          </button>
+
+          <button type="button" (click)="logout()">
+            🚪 Logout
+          </button>
+
+        </div>
+
+        }
+
+      </div>
+
+    </header>
+
+    <main class="content">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+
+</div>

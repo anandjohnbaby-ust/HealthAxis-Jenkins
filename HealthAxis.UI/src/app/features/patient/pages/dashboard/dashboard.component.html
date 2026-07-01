@@ -1,0 +1,155 @@
+<div class="container-fluid py-4">
+
+  @if (loading()) {
+
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary"></div>
+    </div>
+
+  } @else {
+
+    <!-- Welcome -->
+
+    <div class="mb-4">
+      <h2 class="fw-bold">
+        Welcome, {{ dashboard()?.fullName }} 
+      </h2>
+
+      <p class="text-muted mb-0">
+        Here's a quick overview of your healthcare activities.
+      </p>
+    </div>
+
+    <!-- Summary Cards -->
+
+    <div class="row g-4 mb-4">
+
+      <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body text-center">
+
+            <h6 class="text-muted">
+              Total Appointments
+            </h6>
+
+            <h2 class="fw-bold text-primary">
+              {{ dashboard()?.totalAppointments }}
+            </h2>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body text-center">
+
+            <h6 class="text-muted">
+              Health Records
+            </h6>
+
+            <h2 class="fw-bold text-success">
+              {{ dashboard()?.totalHealthRecords }}
+            </h2>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body text-center">
+
+            <h6 class="text-muted">
+              Next Appointment
+            </h6>
+
+            @if (dashboard()?.nextAppointment) {
+
+              <div class="fw-semibold">
+                {{ dashboard()?.nextAppointment?.scheduledDate | date:'dd MMM yyyy' }}
+              </div>
+
+              <small class="text-muted">
+                {{ dashboard()?.nextAppointment?.timeSlot }}
+              </small>
+
+            } @else {
+
+              <span class="text-muted">
+                None
+              </span>
+
+            }
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Next Appointment Details -->
+
+    <div class="card shadow-sm border-0">
+
+      <div class="card-header bg-white">
+        <h5 class="mb-0">
+          Upcoming Appointment
+        </h5>
+      </div>
+
+      <div class="card-body">
+
+        @if (dashboard()?.nextAppointment) {
+
+          <div class="row">
+
+            <div class="col-md-3">
+              <strong>Doctor</strong>
+              <p class="mb-3">
+                Dr. {{ dashboard()?.nextAppointment?.doctorName }}
+              </p>
+            </div>
+
+            <div class="col-md-3">
+              <strong>Date</strong>
+              <p class="mb-3">
+                {{ dashboard()?.nextAppointment?.scheduledDate | date:'dd MMM yyyy' }}
+              </p>
+            </div>
+
+            <div class="col-md-3">
+              <strong>Time</strong>
+              <p class="mb-3">
+                {{ dashboard()?.nextAppointment?.timeSlot }}
+              </p>
+            </div>
+
+            <div class="col-md-3">
+              <strong>Status</strong>
+              <p class="mb-3">
+                {{ AppointmentStatus[dashboard()?.nextAppointment?.status!] }}
+              </p>
+            </div>
+
+          </div>
+
+        } @else {
+
+          <div class="text-center py-4">
+
+            <h6 class="text-muted">
+              No upcoming appointments.
+            </h6>
+
+          </div>
+
+        }
+
+      </div>
+
+    </div>
+
+  }
+
+</div>

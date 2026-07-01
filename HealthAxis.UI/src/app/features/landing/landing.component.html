@@ -1,0 +1,212 @@
+<!-- src/app/features/landing/landing.component.html -->
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header class="ha-header" [class.ha-header--scrolled]="scrolled()">
+  <div class="ha-container ha-header__row">
+    <a href="#top" class="ha-brand" (click)="closeMenu()">
+      <span class="ha-brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
+          <path d="M12 21s-7.5-4.6-10-9.1C0.3 8.2 2 4.5 5.6 4c2-0.3 3.8 0.7 4.9 2.2L12 7.7l1.5-1.5C14.6 4.7 16.4 3.7 18.4 4c3.6 0.5 5.3 4.2 3.6 7.9C19.5 16.4 12 21 12 21z" fill="currentColor"/>
+          <path d="M7 12h2.2l1.1-2.4L11.8 15l1.3-3h2.7" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="ha-brand__name">HealthAxis</span>
+    </a>
+
+    <nav class="ha-nav" [class.ha-nav--open]="menuOpen()" aria-label="Primary">
+      <a href="#services" (click)="closeMenu()">Services</a>
+      <a href="#how-it-works" (click)="closeMenu()">How it works</a>
+      <a href="#faq" (click)="closeMenu()">FAQ</a>
+
+      <div class="ha-nav__actions">
+        <button type="button" class="btn-ghost" (click)="goToLogin()">Log in</button>
+        <button type="button" class="btn-solid" (click)="goToRegister()">Create account</button>
+      </div>
+    </nav>
+
+    <button
+      type="button"
+      class="ha-menu-toggle"
+      [class.is-open]="menuOpen()"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="menuOpen()"
+      aria-label="Toggle menu"
+    >
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============================================================
+       HERO
+       ============================================================ -->
+  <section class="hero">
+    <div class="ha-container hero__row">
+      <div class="hero__copy">
+        <p class="eyebrow">Healthcare coordination, simplified</p>
+        <h1 class="hero__headline">
+          Your care,<br />
+          finally <span class="hero__accent">in one place</span>.
+        </h1>
+        <p class="hero__sub">
+          HealthAxis brings your records, appointments, and care history
+          together in a single, secure place — so booking, tracking, and
+          finding the right doctor never feels like a hassle.
+        </p>
+
+        <div class="hero__ctas">
+          <button type="button" class="btn-solid btn-lg" (click)="goToRegister()">
+            Create your account
+          </button>
+          <button type="button" class="btn-outline btn-lg" (click)="goToLogin()">
+            Log in
+          </button>
+        </div>
+
+        <p class="hero__microcopy">Free for patients · No paperwork · Takes about 3 minutes</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       SERVICES
+       ============================================================ -->
+  <section class="pillars" id="services">
+    <div class="ha-container">
+      <div class="section-head">
+        <p class="eyebrow eyebrow--deep">What you can do</p>
+        <h2 class="section-head__title">
+          Everything about your care,<br />in one connected place.
+        </h2>
+        <p class="section-head__sub">
+          HealthAxis isn't a clinic and it isn't another portal to manage.
+          It's the layer that connects the ones you already use.
+        </p>
+      </div>
+
+      <div class="pillars__grid">
+        @for (item of services; track item.title) {
+          <article class="pillar-card">
+            <span class="pillar-card__mark">{{ item.mark }}</span>
+            <h3 class="pillar-card__title">{{ item.title }}</h3>
+            <p class="pillar-card__body">{{ item.body }}</p>
+          </article>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       HOW IT WORKS
+       ============================================================ -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="ha-container">
+      <div class="section-head section-head--on-deep">
+        <p class="eyebrow eyebrow--on-deep">Getting started</p>
+        <h2 class="section-head__title section-head__title--on-deep">
+          Three steps. No clinic visit required.
+        </h2>
+      </div>
+
+      <ol class="steps">
+        @for (step of steps; track step.index; let last = $last) {
+          <li class="steps__item">
+            <span class="steps__index">{{ step.index }}</span>
+            <div class="steps__content">
+              <h3 class="steps__title">{{ step.title }}</h3>
+              <p class="steps__body">{{ step.body }}</p>
+            </div>
+            @if (!last) {
+              <span class="steps__connector" aria-hidden="true"></span>
+            }
+          </li>
+        }
+      </ol>
+
+      <div class="how-it-works__cta">
+        <button type="button" class="btn-solid btn-lg" (click)="goToRegister()">
+          Create your account
+        </button>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       FAQ
+       ============================================================ -->
+  <section class="faq" id="faq">
+    <div class="ha-container faq__row">
+      <div class="section-head section-head--left">
+        <p class="eyebrow eyebrow--deep">Questions</p>
+        <h2 class="section-head__title">Good to know before you start</h2>
+      </div>
+
+      <div class="faq__list">
+        @for (item of faqs; track item.question) {
+          <div class="faq__item" [class.faq__item--open]="item.open">
+            <button
+              type="button"
+              class="faq__question"
+              (click)="toggleFaq(item)"
+              [attr.aria-expanded]="item.open"
+            >
+              <span>{{ item.question }}</span>
+              <span class="faq__icon" aria-hidden="true">{{ item.open ? '−' : '+' }}</span>
+            </button>
+            @if (item.open) {
+              <p class="faq__answer">{{ item.answer }}</p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FINAL CTA
+       ============================================================ -->
+  <section class="final-cta">
+    <div class="ha-container final-cta__inner">
+      <h2 class="final-cta__title">Ready to simplify your care?</h2>
+      <p class="final-cta__sub">Join HealthAxis and bring your records, appointments, and history into one secure view.</p>
+      <div class="final-cta__actions">
+        <button type="button" class="btn-solid btn-lg" (click)="goToRegister()">
+          Create your account
+        </button>
+        <button type="button" class="btn-outline btn-lg btn-outline--on-deep" (click)="goToLogin()">
+          Log in
+        </button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="ha-footer">
+  <div class="ha-container ha-footer__row">
+    <div class="ha-footer__brand">
+      <span class="ha-brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+          <path d="M12 21s-7.5-4.6-10-9.1C0.3 8.2 2 4.5 5.6 4c2-0.3 3.8 0.7 4.9 2.2L12 7.7l1.5-1.5C14.6 4.7 16.4 3.7 18.4 4c3.6 0.5 5.3 4.2 3.6 7.9C19.5 16.4 12 21 12 21z" fill="currentColor"/>
+        </svg>
+      </span>
+      <span class="ha-brand__name">HealthAxis</span>
+    </div>
+
+    <nav class="ha-footer__links" aria-label="Footer">
+      <a href="#services">Services</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+
+    <p class="ha-footer__legal">© {{ year }} HealthAxis. All rights reserved.</p>
+  </div>
+</footer>

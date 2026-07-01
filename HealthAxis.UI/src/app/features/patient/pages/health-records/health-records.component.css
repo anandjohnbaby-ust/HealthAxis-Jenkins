@@ -1,0 +1,262 @@
+.page h2 {
+  color: #0B3B36;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+/* ---------- table ---------- */
+
+.table-responsive {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(11, 59, 54, 0.08);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.table thead th {
+  background: #F3F5F4;
+  color: #0B3B36;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 15px 18px;
+  text-align: left;
+  border-bottom: 1px solid #E5E7EB;
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: 15px 18px;
+  font-size: .95rem;
+  color: #374151;
+  border-bottom: 1px solid #E5E7EB;
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: #F8FAF8;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ---------- View Button ---------- */
+
+.btn-outline-primary {
+  display: inline-block;
+  padding: 7px 18px;
+
+  background: transparent;
+  color: #0B3B36;
+
+  border: 1.5px solid #0B3B36;
+  border-radius: 8px;
+
+  font-size: .9rem;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: .2s;
+}
+
+.btn-outline-primary:hover {
+  background: #0B3B36;
+  color: #fff;
+}
+
+/* ---------- Spinner ---------- */
+
+.spinner-border {
+  width: 2.5rem;
+  height: 2.5rem;
+
+  border: 3px solid #E7F2EE;
+  border-top-color: #0B3B36;
+
+  border-radius: 50%;
+  display: inline-block;
+
+  animation: ha-spin .8s linear infinite;
+}
+
+@keyframes ha-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Empty State ---------- */
+
+.alert-info {
+  background: #EAF7F2;
+  color: #0B3B36;
+  border: 1px solid #CFE6DB;
+  border-radius: 10px;
+  padding: 16px 20px;
+  font-size: .95rem;
+}
+
+/* ---------- Modal ---------- */
+
+.ha-modal-backdrop {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(11, 59, 54, .45);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+  z-index: 1050;
+
+  animation: ha-fade-in .15s ease-out;
+}
+
+@keyframes ha-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ha-modal-dialog {
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+
+  overflow-y: auto;
+
+  background: #fff;
+  border-radius: 12px;
+
+  box-shadow: 0 12px 32px rgba(11, 59, 54, .18);
+
+  animation: ha-pop-in .18s ease-out;
+}
+
+@keyframes ha-pop-in {
+  from {
+    transform: translateY(12px) scale(.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.ha-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 18px 24px;
+
+  background: #0B3B36;
+  color: #fff;
+
+  border-radius: 12px 12px 0 0;
+}
+
+.ha-modal-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.ha-modal-close {
+  border: none;
+  background: transparent;
+
+  color: #fff;
+  font-size: 1.6rem;
+
+  cursor: pointer;
+}
+
+.ha-modal-close:hover {
+  opacity: .75;
+}
+
+.ha-modal-body {
+  padding: 24px;
+}
+
+.ha-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.ha-modal-field--full {
+  grid-column: 1 / -1;
+}
+
+.ha-modal-field strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #0B3B36;
+  font-size: .8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.ha-modal-field p {
+  margin: 0;
+  color: #374151;
+  font-size: .95rem;
+  line-height: 1.6;
+}
+
+.ha-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  border-top: 1px solid #E5E7EB;
+}
+
+/* ---------- ADDED: Footer Close Button Styling ---------- */
+.ha-modal-footer .btn-secondary {
+  padding: 8px 20px;
+  background: #E5E7EB;
+  color: #374151;
+  border: none;
+  border-radius: 8px;
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.ha-modal-footer .btn-secondary:hover {
+  background: #D1D5DB;
+}
+
+.ha-modal-footer .btn-secondary:active {
+  transform: scale(0.97);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 576px) {
+  .ha-modal-grid {
+    grid-template-columns: 1fr;
+  }
+}

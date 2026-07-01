@@ -1,0 +1,105 @@
+/* Dashboard */
+
+.container-fluid {
+    padding: 1rem;
+}
+
+/* Welcome */
+
+h2 {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* Cards */
+
+.card {
+    border: none;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all .25s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    background: #fff;
+    border-bottom: 1px solid #eef2f7;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 1rem 1.25rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Statistics */
+
+.card h6 {
+    color: #6c757d;
+    font-size: .9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.card h2 {
+    margin-top: .5rem;
+    margin-bottom: 0;
+    font-size: 2.2rem;
+    font-weight: 700;
+}
+
+.text-primary {
+    color: #0d6efd !important;
+}
+
+.text-success {
+    color: #198754 !important;
+}
+
+/* Appointment Section */
+
+strong {
+    display: block;
+    margin-bottom: .35rem;
+    color: #495057;
+}
+
+p {
+    margin-bottom: 0;
+    color: #212529;
+}
+
+/* Loading */
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+
+    .card h2 {
+        font-size: 1.8rem;
+    }
+
+    h2 {
+        font-size: 1.7rem;
+    }
+
+    .card-body {
+        padding: 1.2rem;
+    }
+}

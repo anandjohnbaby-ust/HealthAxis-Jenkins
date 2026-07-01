@@ -7,9 +7,10 @@ namespace HealthAxis.Admin.Authentication
 {
     public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     {
-        private ClaimsPrincipal _currentUser = new(new ClaimsIdentity());
-
         private readonly IJSRuntime _js;
+
+        private ClaimsPrincipal _currentUser =
+            new(new ClaimsIdentity());
 
         public CustomAuthenticationStateProvider(IJSRuntime js)
         {
@@ -18,64 +19,87 @@ namespace HealthAxis.Admin.Authentication
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            if (_currentUser.Identity!.IsAuthenticated)
-            {
-                return new AuthenticationState(_currentUser);
-            }
+            Console.WriteLine("GetAuthenticationStateAsync CALLED");
 
             var token = await _js.InvokeAsync<string>("localStorage.getItem", "token");
 
+            Console.WriteLine("TOKEN = " + token);
+
             if (string.IsNullOrWhiteSpace(token))
             {
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+                Console.WriteLine("NO TOKEN");
+
+                return new AuthenticationState(
+                    new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
-            var claims = ParseClaimsFromJwt(token);
+            var claims = ParseClaimsFromJwt(token).ToList();
+
+            Console.WriteLine("CLAIMS = " + claims.Count);
+
+            foreach (var c in claims)
+            {
+                Console.WriteLine($"{c.Type} = {c.Value}");
+            }
 
             var identity = new ClaimsIdentity(claims, "jwt");
 
-            _currentUser = new ClaimsPrincipal(identity);
+            Console.WriteLine("Authenticated = " + identity.IsAuthenticated);
 
-            return new AuthenticationState(_currentUser);
+            return new AuthenticationState(new ClaimsPrincipal(identity));
         }
 
-        private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
+        private static AuthenticationState Anonymous()
+        {
+            return new AuthenticationState(
+                new ClaimsPrincipal(
+                    new ClaimsIdentity()));
+        }
+
+        private static IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
         {
             var claims = new List<Claim>();
 
-            var payload = jwt.Split('.')[1];
-
-            switch (payload.Length % 4)
+            try
             {
-                case 2:
-                    payload += "==";
-                    break;
+                var payload = jwt.Split('.')[1];
 
-                case 3:
-                    payload += "=";
-                    break;
-            }
-
-            var jsonBytes = Convert.FromBase64String(payload);
-
-            var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(jsonBytes);
-
-            if (keyValuePairs == null)
-                return claims;
-
-            foreach (var kvp in keyValuePairs)
-            {
-                if (kvp.Value.ValueKind == JsonValueKind.Array)
+                switch (payload.Length % 4)
                 {
-                    foreach (var element in kvp.Value.EnumerateArray())
+                    case 2:
+                        payload += "==";
+                        break;
+                    case 3:
+                        payload += "=";
+                        break;
+                }
+
+                var jsonBytes = Convert.FromBase64String(payload);
+
+                var keyValuePairs =
+                    JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(jsonBytes);
+
+                if (keyValuePairs is null)
+                    return claims;
+
+                foreach (var kvp in keyValuePairs)
+                {
+                    if (kvp.Value.ValueKind == JsonValueKind.Array)
                     {
-                        claims.Add(new Claim(kvp.Key, element.ToString()));
+                        foreach (var value in kvp.Value.EnumerateArray())
+                        {
+                            claims.Add(new Claim(kvp.Key, value.ToString()));
+                        }
+                    }
+                    else
+                    {
+                        claims.Add(new Claim(kvp.Key, kvp.Value.ToString()));
                     }
                 }
-                else
-                {
-                    claims.Add(new Claim(kvp.Key, kvp.Value.ToString()));
-                }
+            }
+            catch
+            {
+                // Invalid JWT
             }
 
             return claims;
@@ -85,20 +109,26 @@ namespace HealthAxis.Admin.Authentication
         {
             var claims = ParseClaimsFromJwt(token);
 
-            var identity = new ClaimsIdentity(claims, "jwt");
+            var identity = new ClaimsIdentity(
+                claims,
+                authenticationType: "jwt");
 
             _currentUser = new ClaimsPrincipal(identity);
 
             NotifyAuthenticationStateChanged(
-                Task.FromResult(new AuthenticationState(_currentUser)));
+                Task.FromResult(
+                    new AuthenticationState(_currentUser)));
         }
 
         public void NotifyUserLoggedOut()
         {
-            _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+            _currentUser =
+                new ClaimsPrincipal(
+                    new ClaimsIdentity());
 
             NotifyAuthenticationStateChanged(
-                Task.FromResult(new AuthenticationState(_currentUser)));
+                Task.FromResult(
+                    new AuthenticationState(_currentUser)));
         }
     }
 }

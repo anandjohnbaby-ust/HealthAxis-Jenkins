@@ -1,0 +1,183 @@
+/* src/app/features/doctor/layout/doctor-layout.component.css */
+
+.layout-wrapper {
+  display: flex;
+  min-height: 100vh;
+  background: #f8f9fa;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* ================= Sidebar ================= */
+
+.sidebar {
+  width: 250px;
+  background: #0B3B36;
+  color: #fff;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  margin-bottom: 32px;
+}
+
+.sidebar-brand h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.sidebar-brand small {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255,255,255,.75);
+  font-size: .9rem;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-nav a {
+  color: #fff;
+  text-decoration: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  transition: 0.2s;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav a.active-link {
+  background: rgba(255,255,255,.15);
+}
+
+/* ================= Right Side ================= */
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= Top Bar ================= */
+
+.topbar {
+  height: 72px;
+  background: #fff;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+}
+
+.topbar-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0B3B36;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  position: relative;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #0B3B36;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: .95rem;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.arrow {
+  font-size: .7rem;
+  color: #6B7280;
+}
+
+/* ================= Dropdown ================= */
+
+.profile-menu {
+  position: absolute;
+  top: 60px;
+  right: 0;
+  width: 190px;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+  z-index: 1000;
+}
+
+.profile-menu button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 14px 18px;
+  text-align: left;
+  cursor: pointer;
+  transition: .2s;
+  font-size: .9rem;
+}
+
+.profile-menu button:hover {
+  background: #F3F4F6;
+}
+
+/* ================= Main Content ================= */
+
+.content {
+  flex: 1;
+  padding: 30px;
+  overflow: auto;
+}
+
+/* ================= Responsive ================= */
+
+@media (max-width: 768px) {
+
+  .sidebar {
+    width: 220px;
+    padding: 20px;
+  }
+
+  .topbar {
+    padding: 0 18px;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .user-info {
+    display: none;
+  }
+}

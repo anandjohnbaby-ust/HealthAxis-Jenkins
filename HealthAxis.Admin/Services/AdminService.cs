@@ -39,24 +39,6 @@ namespace HealthAxis.Admin.Services
             }
         }
 
-        public async Task<PagedResult<UserManagementDto>> GetUsersAsync(
-            string? role = null,
-            int pageNumber = 1,
-            int pageSize = 10)
-        {
-            var url = $"api/admin/users?pageNumber={pageNumber}&pageSize={pageSize}";
-
-            if (!string.IsNullOrWhiteSpace(role))
-            {
-                url += $"&role={Uri.EscapeDataString(role)}";
-            }
-
-            await AttachAuthHeaderAsync();
-
-            return await _http.GetFromJsonAsync<PagedResult<UserManagementDto>>(url)
-                   ?? new PagedResult<UserManagementDto>();
-        }
-
         public async Task<PagedResult<AppointmentReportDto>?> GetAppointmentReportAsync(
             int pageNumber = 1,
             int pageSize = 10)

@@ -2,10 +2,11 @@
 
 @inject NavigationManager Navigation
 
-@code
-{
+@code {
+
     protected override void OnInitialized()
     {
-        Navigation.NavigateTo("/login", true);
+        Navigation.NavigateTo("/dashboard");
     }
+
 }

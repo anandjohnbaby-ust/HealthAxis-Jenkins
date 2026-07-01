@@ -1,22 +1,24 @@
 ﻿using AutoMapper;
-using HealthAxis.Shared.Enums;
+using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
-using HealthAxis.API.Exceptions;
+using HealthAxis.Shared.Common;
+using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
+using HealthAxis.Shared.Enums;
 
 namespace HealthAxis.API.Services.Implementations
 {
     public class AppointmentService : IAppointmentService
     {
-        private readonly IRepository<Appointment> _appointmentRepository;
+        private readonly IAppointmentRepository _appointmentRepository;
         private readonly IRepository<Doctor> _doctorRepository;
         private readonly IPatientRepository _patientRepository;
         private readonly IMapper _mapper;
 
         public AppointmentService(
-            IRepository<Appointment> appointmentRepository,
+            IAppointmentRepository appointmentRepository,
             IRepository<Doctor> doctorRepository,
             IPatientRepository patientRepository,
             IMapper mapper)
@@ -37,8 +39,15 @@ namespace HealthAxis.API.Services.Implementations
                 appointments);
         }
 
+        // Get Appointment Report
+        public async Task<PagedResult<AppointmentReportDto>> GetAppointmentReportAsync(
+            PaginationRequest request)
+        {
+            return await _appointmentRepository.GetAppointmentReportAsync(request);
+        }
+
         // Add Appointment
-        public async Task<AppointmentDto> AddAsync(
+        public async Task<AppointmentDto> BookAppointmentAsync(
             CreateAppointmentDto dto,
             CancellationToken ct = default)
         {
@@ -213,5 +222,44 @@ namespace HealthAxis.API.Services.Implementations
             return _mapper.Map<AppointmentDto>(
                 deletedAppointment);
         }
+
+        public async Task<AppointmentDto> CancelAppointmentByPatientAsync(
+            int patientId,
+            int appointmentId,
+            CancelAppointmentDto dto,
+            CancellationToken ct = default)
+        {
+            var appointment = await _appointmentRepository.GetByIdAsync(
+                appointmentId,
+                ct);
+
+            if (appointment is null)
+            {
+                throw new NotFoundException("Appointment not found.");
+            }
+
+            if (appointment.PatientId != patientId)
+            {
+                throw new ValidationException(
+                    "This appointment does not belong to the patient.");
+            }
+
+            if (appointment.Status != AppointmentStatus.Pending)
+            {
+                throw new ValidationException(
+                    "Only pending appointments can be cancelled.");
+            }
+
+            appointment.Status = AppointmentStatus.Cancelled;
+            appointment.CancellationReason = dto.CancellationReason;
+
+            var updatedAppointment = await _appointmentRepository.UpdateAsync(
+                appointmentId,
+                appointment,
+                ct);
+
+            return _mapper.Map<AppointmentDto>(updatedAppointment);
+        }
+
     }
 }

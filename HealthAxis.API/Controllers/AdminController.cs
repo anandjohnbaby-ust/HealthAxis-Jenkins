@@ -1,8 +1,11 @@
-﻿using HealthAxis.API.Services.Interfaces;
+﻿using HealthAxis.API.Services.Implementations;
+using HealthAxis.API.Services.Interfaces;
 using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.DTOs.AuthDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
+using HealthAxis.Shared.DTOs.PatientDtos;
+using HealthAxis.Shared.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,12 +23,30 @@ namespace HealthAxis.API.Controllers
             _adminService = adminService;
         }
 
+        #region Doctors
+
         [HttpGet("doctors")]
-        public async Task<IActionResult> GetDoctors()
+        public async Task<ActionResult<PagedResult<DoctorDto>>> GetDoctors(
+            [FromQuery] PaginationRequest request,
+            [FromQuery] Specialisation? specialisation,
+            [FromQuery] string? search,
+            CancellationToken ct)
         {
-            var doctors = await _adminService.GetDoctors();
+            var doctors = await _adminService.GetDoctorsAsync(
+                request,
+                specialisation,
+                search,
+                ct);
 
             return Ok(doctors);
+        }
+
+        [HttpGet("doctors/{id:int}")]
+        public async Task<IActionResult> GetDoctorById(int id)
+        {
+            var doctor = await _adminService.GetDoctorById(id);
+
+            return Ok(doctor);
         }
 
         [HttpPost("doctors")]
@@ -35,7 +56,7 @@ namespace HealthAxis.API.Controllers
             var doctor = await _adminService.CreateDoctor(dto);
 
             return CreatedAtAction(
-                nameof(GetDoctors),
+                nameof(GetDoctorById),
                 new { id = doctor.DoctorId },
                 doctor);
         }
@@ -50,6 +71,43 @@ namespace HealthAxis.API.Controllers
             return Ok(doctor);
         }
 
+        #endregion
+
+        #region Patients
+
+        [HttpGet("patients")]
+        public async Task<ActionResult<PagedResult<PatientDto>>> GetPatients(
+            [FromQuery] PaginationRequest request,
+            [FromQuery] string? search,
+            CancellationToken ct)
+        {
+            var patients = await _adminService.GetPatientsAsync(
+                request,
+                search,
+                ct);
+
+            return Ok(patients);
+        }
+
+        [HttpPut("patients/{id:int}")]
+        public async Task<ActionResult<PatientDto>> UpdatePatient(
+            int id,
+            UpdatePatientDto dto,
+            CancellationToken ct)
+        {
+            var updatedPatient =
+                await _adminService.UpdatePatientAsync(
+                    id,
+                    dto,
+                    ct);
+
+            return Ok(updatedPatient);
+        }
+
+        #endregion
+
+        #region Appointment
+
         [HttpGet("reports/appointments")]
         public async Task<ActionResult<PagedResult<AppointmentReportDto>>> GetAppointmentReport(
             [FromQuery] PaginationRequest request)
@@ -58,17 +116,9 @@ namespace HealthAxis.API.Controllers
 
             return Ok(report);
         }
+        #endregion
 
-        [HttpGet("users")]
-        public async Task<IActionResult> GetUsers(
-            [FromQuery] string? role,
-            [FromQuery] PaginationRequest request)
-        {
-            var users = await _adminService.GetUsers(role, request);
-
-            return Ok(users);
-        }
-
+        #region DashBoard
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboard()
         {
@@ -76,5 +126,8 @@ namespace HealthAxis.API.Controllers
 
             return Ok(dashboard);
         }
+        #endregion
+
+
     }
 }

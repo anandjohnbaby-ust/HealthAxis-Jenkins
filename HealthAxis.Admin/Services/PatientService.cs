@@ -37,7 +37,7 @@ namespace HealthAxis.Admin.Services
         {
             await SetAuthorizationHeader();
 
-            var url = "api/patients";
+            var url = "api/admin/patients";
 
             var query = new List<string>
             {
@@ -55,27 +55,21 @@ namespace HealthAxis.Admin.Services
             return await _http.GetFromJsonAsync<PagedResult<PatientDto>>(url);
         }
 
-        public async Task<PatientDto?> GetPatientById(int id)
-        {
-            await SetAuthorizationHeader();
-
-            return await _http.GetFromJsonAsync<PatientDto>(
-                $"api/patients/{id}");
-        }
-
-        public async Task<PatientDto?> UpdatePatient(
+        public async Task<PatientDto> UpdatePatient(
             int id,
             UpdatePatientDto dto)
         {
             await SetAuthorizationHeader();
 
             var response = await _http.PutAsJsonAsync(
-                $"api/patients/{id}",
+                $"api/admin/patients/{id}",
                 dto);
 
             response.EnsureSuccessStatusCode();
 
-            return await response.Content.ReadFromJsonAsync<PatientDto>();
+            return (await response.Content.ReadFromJsonAsync<PatientDto>())!;
         }
+
+
     }
 }
