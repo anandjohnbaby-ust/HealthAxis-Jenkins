@@ -15,6 +15,8 @@ namespace HealthAxis.API.Services.Implementations
     public class PatientService : IPatientService
     {
 
+        private const string PatientNotFoundMessage = "Patient not found.";
+
         #region Dependency Injection
 
         private readonly IPatientRepository _patientRepository;
@@ -47,7 +49,7 @@ namespace HealthAxis.API.Services.Implementations
 
             if (patient == null)
             {
-                throw new NotFoundException("Patient not found.");
+                throw new NotFoundException(PatientNotFoundMessage);
             }
 
             return _mapper.Map<PatientDto>(patient);
@@ -84,7 +86,7 @@ namespace HealthAxis.API.Services.Implementations
 
             if (existingPatient is null)
             {
-                throw new NotFoundException("Patient not found.");
+                throw new NotFoundException(PatientNotFoundMessage);
             }
 
             _mapper.Map(dto, existingPatient);
@@ -99,7 +101,7 @@ namespace HealthAxis.API.Services.Implementations
         {
             var patient =
                 await _patientRepository
-                    .GetHealthRecordsByPatientId(patientId);
+                    .GetHealthRecordsByPatientId(patientId, ct);
 
             if (patient is null)
             {
@@ -138,7 +140,7 @@ namespace HealthAxis.API.Services.Implementations
 
             if (patient is null)
             {
-                throw new NotFoundException("Patient not found.");
+                throw new NotFoundException(PatientNotFoundMessage);
             }
 
             var appointments =
@@ -172,7 +174,7 @@ namespace HealthAxis.API.Services.Implementations
 
             if (dashboard is null)
             {
-                throw new NotFoundException("Patient not found.");
+                throw new NotFoundException(PatientNotFoundMessage);
             }
 
             return dashboard;

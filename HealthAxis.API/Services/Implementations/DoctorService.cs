@@ -19,17 +19,19 @@ namespace HealthAxis.API.Services.Implementations
 {
     public class DoctorService : IDoctorService 
     {
+
+        private const string DoctorNotFoundMessage = "Doctor not found.";
+        private const string DoctorProfileNotFoundMessage = "Doctor profile not found.";
+
         private readonly IDoctorRepository _doctorRepository;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
-        private readonly IHealthRecordRepository _healthRecordRepository;
         private readonly IAppointmentService _appointmentService;
         private readonly IHealthRecordService _healthRecordService;
 
         public DoctorService(
             IDoctorRepository repository,
-            IHealthRecordRepository healthRecordRepository,
             UserManager<ApplicationUser> userManager,
             ApplicationDbContext context,
             IMapper mapper,
@@ -37,7 +39,6 @@ namespace HealthAxis.API.Services.Implementations
             IHealthRecordService healthRecordService)
         {
             _doctorRepository = repository;
-            _healthRecordRepository = healthRecordRepository;
             _userManager = userManager;
             _context = context;
             _mapper = mapper;
@@ -51,7 +52,7 @@ namespace HealthAxis.API.Services.Implementations
             var doctor = await _doctorRepository.GetByIdAsync(id);
 
             if (doctor == null)
-                throw new NotFoundException("Doctor not found.");
+                throw new NotFoundException(DoctorNotFoundMessage);
 
             return _mapper.Map<DoctorDto>(doctor);
         }
@@ -178,12 +179,12 @@ namespace HealthAxis.API.Services.Implementations
         // Doctor portal
         public async Task<IEnumerable<AppointmentDto>> GetAppointmentsAsync(
             string userId,
-            CancellationToken ct)
+            CancellationToken ct = default)
         {
             var doctor = await _doctorRepository.GetByUserIdAsync(userId, ct);
 
             if (doctor == null)
-                throw new NotFoundException("Doctor not found.");
+                throw new NotFoundException(DoctorNotFoundMessage);
 
             var appointments = await _doctorRepository
                 .GetAppointmentsAsync(doctor.DoctorId, ct);
@@ -198,7 +199,7 @@ namespace HealthAxis.API.Services.Implementations
             var doctor = await _doctorRepository.GetByUserIdAsync(userId, ct);
 
             if (doctor == null)
-                throw new NotFoundException("Doctor not found.");
+                throw new NotFoundException(DoctorNotFoundMessage);
 
             var appointments = await _doctorRepository
                 .GetTodaysAppointmentsAsync(
@@ -216,7 +217,7 @@ namespace HealthAxis.API.Services.Implementations
             var doctor = await _doctorRepository.GetByUserIdAsync(userId, ct);
 
             if (doctor == null)
-                throw new NotFoundException("Doctor not found.");
+                throw new NotFoundException(DoctorNotFoundMessage);
 
             DateTime today = DateTime.Today;
 
@@ -278,7 +279,7 @@ namespace HealthAxis.API.Services.Implementations
             if (doctor is null)
             {
                 throw new NotFoundException(
-                    "Doctor profile not found.");
+                    DoctorProfileNotFoundMessage);
             }
 
             return _mapper.Map<DoctorDto>(doctor);
@@ -296,7 +297,7 @@ namespace HealthAxis.API.Services.Implementations
             if (doctor is null)
             {
                 throw new NotFoundException(
-                    "Doctor profile not found.");
+                    DoctorProfileNotFoundMessage);
             }
 
             _mapper.Map(dto, doctor);
@@ -318,7 +319,7 @@ namespace HealthAxis.API.Services.Implementations
                 ct);
 
             if (dashboard is null)
-                throw new NotFoundException("Doctor not found.");
+                throw new NotFoundException(DoctorNotFoundMessage);
 
             return dashboard;
         }

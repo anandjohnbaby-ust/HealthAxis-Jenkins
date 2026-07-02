@@ -36,8 +36,7 @@ namespace HealthAxis.API.Middlewares
                 Path = httpContext.Request.Path
             };
 
-            await httpContext.Response.WriteAsJsonAsync(response);
-
+            await httpContext.Response.WriteAsJsonAsync(response, cancellationToken);
             return true;
         }
     }

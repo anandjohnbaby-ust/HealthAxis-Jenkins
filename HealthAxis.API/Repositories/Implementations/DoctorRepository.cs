@@ -56,10 +56,10 @@ namespace HealthAxis.API.Repositories.Implementations
             {
                 search = search.Trim();
 
-                int.TryParse(search, out int doctorId);
+                bool isDoctorId = int.TryParse(search, out int doctorId);
 
                 query = query.Where(d =>
-                    (doctorId > 0 && d.DoctorId == doctorId) ||
+                    (isDoctorId && d.DoctorId == doctorId) ||
                     EF.Functions.Like(d.FullName, $"%{search}%"));
             }
 
@@ -166,7 +166,7 @@ namespace HealthAxis.API.Repositories.Implementations
                         a.ScheduledDate >= today &&
                         a.ScheduledDate < weekEnd),
 
-                    TotalAppointments = d.Appointments.Count(),
+                    TotalAppointments = d.Appointments.Count,
 
                     TodaySchedule = d.Appointments
                         .Where(a => a.ScheduledDate.Date == today)

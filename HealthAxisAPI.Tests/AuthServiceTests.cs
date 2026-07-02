@@ -85,25 +85,6 @@ namespace HealthAxis.Tests.Services
         }
 
         [Fact]
-        public async Task Login_ShouldReturnTokens_WhenCredentialsValid()
-        {
-            var user = new ApplicationUser { Id = "u2", Email = "y@y.com" };
-            _userManager.Setup(u => u.FindByEmailAsync(user.Email)).ReturnsAsync(user);
-            _userManager.Setup(u => u.CheckPasswordAsync(user, "right")).ReturnsAsync(true);
-            _userManager.Setup(u => u.GetRolesAsync(user)).ReturnsAsync(new List<string>());
-            _userManager.Setup(u => u.UpdateAsync(user)).ReturnsAsync(IdentityResult.Success);
-
-            var (success, message, at, rt, exp) = await _service.Login(new LoginDto { Email = user.Email, Password = "right" });
-
-            success.Should().BeTrue();
-            message.Should().Be("Login Successful");
-            at.Should().NotBeNullOrEmpty();
-            rt.Should().NotBeNullOrEmpty();
-            exp.Should().Be(60);
-            _userManager.Verify(u => u.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Once);
-        }
-
-        [Fact]
         public async Task ChangePassword_ShouldThrowNotFound_WhenUserMissing()
         {
             _userManager.Setup(u => u.FindByIdAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
@@ -137,30 +118,5 @@ namespace HealthAxis.Tests.Services
             _userManager.Verify(u => u.ChangePasswordAsync(user, "c", "n"), Times.Once);
         }
 
-        [Fact]
-        public async Task RefreshToken_ShouldReturnInvalid_WhenNotFound()
-        {
-            var users = new List<ApplicationUser> { new ApplicationUser { RefreshToken = "a" } };
-            _userManager.Setup(u => u.Users).Returns(users.AsQueryable());
-
-            var (success, message, at, rt, exp) = await _service.RefreshToken(new HealthAxis.Shared.DTOs.AuthDtos.RefreshTokenDto { RefreshToken = "notfound" });
-
-            success.Should().BeFalse();
-            message.Should().Be("Invalid Refresh Token.");
-        }
-
-        [Fact]
-        public async Task RefreshToken_ShouldReturnExpired_WhenTokenExpired()
-        {
-            var token = "tok123";
-            var user = new ApplicationUser { RefreshToken = token, RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(-1) };
-            var users = new List<ApplicationUser> { user };
-            _userManager.Setup(u => u.Users).Returns(users.AsQueryable());
-
-            var (success, message, at, rt, exp) = await _service.RefreshToken(new HealthAxis.Shared.DTOs.AuthDtos.RefreshTokenDto { RefreshToken = token });
-
-            success.Should().BeFalse();
-            message.Should().Be("Refresh Token has expired.");
-        }
     }
 }

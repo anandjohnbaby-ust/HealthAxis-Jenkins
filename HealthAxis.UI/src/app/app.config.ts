@@ -9,7 +9,6 @@ import { errorInterceptor } from './core/interceptors/error.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Angular 18+ zoneless change detection for maximum performance
     provideZonelessChangeDetection(),
     
     // Routing configured with modern view transitions and input binding

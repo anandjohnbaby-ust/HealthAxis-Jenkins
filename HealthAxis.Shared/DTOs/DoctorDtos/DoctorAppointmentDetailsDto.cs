@@ -2,11 +2,14 @@
 using HealthAxis.Shared.DTOs.HealthRecordDtos;
 using HealthAxis.Shared.DTOs.PatientDtos;
 
-public class DoctorAppointmentDetailsDto
+namespace HealthAxis.Shared.DTOs.DoctorDtos
 {
-    public AppointmentDto Appointment { get; set; } = default!;
+    public class DoctorAppointmentDetailsDto
+    {
+        public AppointmentDto Appointment { get; set; } = default!;
 
-    public PatientDto Patient { get; set; } = default!;
+        public PatientDto Patient { get; set; } = default!;
 
-    public List<HealthRecordDto> PreviousHealthRecords { get; set; } = [];
+        public List<HealthRecordDto> PreviousHealthRecords { get; set; } = [];
+    }
 }

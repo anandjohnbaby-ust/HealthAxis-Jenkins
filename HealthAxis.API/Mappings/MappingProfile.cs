@@ -56,7 +56,6 @@ namespace HealthAxis.API.Profiles
             // Health Record Mappings
             CreateMap<CreateHealthRecordDto,HealthRecord>();
 
-            //CreateMap<HealthRecord, HealthRecordDto>();
             CreateMap<HealthRecord, HealthRecordDto>()
             .ForMember(dest => dest.DoctorName,
                 opt => opt.MapFrom(src => src.Doctor.FullName));

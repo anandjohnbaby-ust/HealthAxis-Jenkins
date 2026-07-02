@@ -21,7 +21,6 @@ namespace HealthAxis.API.Services.Implementations
         private readonly IPatientService _patientService;
         private readonly IAppointmentService _appointmentService;
         private readonly IAdminRepository _adminRepository;
-        private readonly IMapper _mapper;
 
         
 
@@ -29,15 +28,13 @@ namespace HealthAxis.API.Services.Implementations
             IDoctorService doctorService,
             IPatientService patientService,
             IAppointmentService appointmentService,
-            IAdminRepository adminRepository,
-            IMapper mapper
+            IAdminRepository adminRepository
             )
         {
             _doctorService = doctorService;
             _patientService = patientService;
             _appointmentService = appointmentService;
             _adminRepository = adminRepository;
-            _mapper = mapper;
         }
 
         #region Doctor

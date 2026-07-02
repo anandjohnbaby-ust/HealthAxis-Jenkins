@@ -58,7 +58,6 @@ namespace HealthAxis.Tests.Services
 
             _service = new DoctorService(
                 _doctorRepository.Object,
-                _healthRecordRepository.Object,
                 _userManager.Object,
                 _context.Object,
                 _mapper.Object,

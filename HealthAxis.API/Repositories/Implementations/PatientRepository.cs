@@ -23,10 +23,10 @@ namespace HealthAxis.API.Repositories.Implementations
             {
                 search = search.Trim();
 
-                int.TryParse(search, out int patientId);
+                bool isPatientId = int.TryParse(search, out int patientId);
 
                 query = query.Where(p =>
-                    (patientId > 0 && p.PatientId == patientId) ||
+                    (isPatientId && p.PatientId == patientId) ||
                     EF.Functions.Like(p.FullName, $"%{search}%") ||
                     EF.Functions.Like(p.Email, $"%{search}%"));
             }
@@ -90,9 +90,9 @@ namespace HealthAxis.API.Repositories.Implementations
                 {
                     FullName = p.FullName,
 
-                    TotalAppointments = p.Appointments.Count(),
+                    TotalAppointments = p.Appointments.Count,
 
-                    TotalHealthRecords = p.HealthRecords.Count(),
+                    TotalHealthRecords = p.HealthRecords.Count,
 
                     NextAppointment = p.Appointments
                         .Where(a =>

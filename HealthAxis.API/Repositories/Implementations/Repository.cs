@@ -17,7 +17,7 @@ namespace HealthAxis.API.Repositories.Implementations
         public async Task<T?> AddAsync(T entity, CancellationToken ct = default)
         {
             await _context.Set<T>().AddAsync(entity, ct);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
             return entity;
         }
 

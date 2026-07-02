@@ -12,6 +12,5 @@ export const authGuard: CanActivateFn = () => {
     return true;
   }
 
-  // Best Practice: Return a UrlTree to redirect seamlessly
   return router.createUrlTree(['/' + APP_ROUTES.LOGIN]);
 };

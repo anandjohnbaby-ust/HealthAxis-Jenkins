@@ -39,8 +39,7 @@ namespace HealthAxis.API.Tests.Services
                 _doctorServiceMock.Object,
                 _patientServiceMock.Object,
                 _appointmentServiceMock.Object,
-                _adminRepositoryMock.Object,
-                _mapperMock.Object);
+                _adminRepositoryMock.Object);
         }
 
         #region Constructor
@@ -53,8 +52,7 @@ namespace HealthAxis.API.Tests.Services
                 _doctorServiceMock.Object,
                 _patientServiceMock.Object,
                 _appointmentServiceMock.Object,
-                _adminRepositoryMock.Object,
-                _mapperMock.Object);
+                _adminRepositoryMock.Object);
 
             // Assert
             Assert.NotNull(instance);
@@ -74,8 +72,7 @@ namespace HealthAxis.API.Tests.Services
                 null!,
                 _patientServiceMock.Object,
                 _appointmentServiceMock.Object,
-                _adminRepositoryMock.Object,
-                _mapperMock.Object));
+                _adminRepositoryMock.Object));
         }
 
         [Fact(Skip = "Enable once AdminService constructor validates arguments for null")]
@@ -85,8 +82,7 @@ namespace HealthAxis.API.Tests.Services
                 _doctorServiceMock.Object,
                 null!,
                 _appointmentServiceMock.Object,
-                _adminRepositoryMock.Object,
-                _mapperMock.Object));
+                _adminRepositoryMock.Object));
         }
 
         [Fact(Skip = "Enable once AdminService constructor validates arguments for null")]
@@ -96,8 +92,7 @@ namespace HealthAxis.API.Tests.Services
                 _doctorServiceMock.Object,
                 _patientServiceMock.Object,
                 null!,
-                _adminRepositoryMock.Object,
-                _mapperMock.Object));
+                _adminRepositoryMock.Object));
         }
 
         [Fact(Skip = "Enable once AdminService constructor validates arguments for null")]
@@ -107,8 +102,7 @@ namespace HealthAxis.API.Tests.Services
                 _doctorServiceMock.Object,
                 _patientServiceMock.Object,
                 _appointmentServiceMock.Object,
-                null!,
-                _mapperMock.Object));
+                null!));
         }
 
         [Fact(Skip = "Enable once AdminService constructor validates arguments for null")]
@@ -118,8 +112,7 @@ namespace HealthAxis.API.Tests.Services
                 _doctorServiceMock.Object,
                 _patientServiceMock.Object,
                 _appointmentServiceMock.Object,
-                _adminRepositoryMock.Object,
-                null!));
+                _adminRepositoryMock.Object));
         }
 
         #endregion

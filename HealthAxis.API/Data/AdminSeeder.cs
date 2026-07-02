@@ -37,8 +37,8 @@ namespace HealthAxis.API.Data
 
             if (!result.Succeeded)
             {
-                throw new Exception(string.Join(", ",
-                    result.Errors.Select(e => e.Description)));
+                throw new InvalidOperationException(
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
             }
 
             await userManager.AddToRoleAsync(admin, "Admin");
