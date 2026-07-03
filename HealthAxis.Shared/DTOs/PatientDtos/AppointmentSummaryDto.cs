@@ -12,7 +12,7 @@ namespace HealthAxis.Shared.DTOs.PatientDtos
 
         public DateOnly ScheduledDate { get; set; }
 
-        public string TimeSlot { get; set; } = string.Empty;
+        public TimeOnly TimeSlot { get; set; }
 
         public string Status { get; set; } = string.Empty;
     }

@@ -19,19 +19,18 @@ namespace HealthAxis.API.Repositories.Implementations
                 .ToListAsync(ct);
         }
 
-        public async Task<IEnumerable<HealthRecord>> GetPreviousHealthRecordsAsync(
+        public async Task<IEnumerable<HealthRecord>> GetPatientHealthRecordsAsync(
             int patientId,
-            DateTime appointmentDate,
             CancellationToken ct = default)
         {
             return await _context.HealthRecords
                 .AsNoTracking()
-                .Where(hr =>
-                    hr.PatientId == patientId &&
-                    hr.VisitDate < appointmentDate)
+                .Include(hr => hr.Doctor)
+                .Where(hr => hr.PatientId == patientId)
                 .OrderByDescending(hr => hr.VisitDate)
                 .ToListAsync(ct);
         }
+
     }
  }
 

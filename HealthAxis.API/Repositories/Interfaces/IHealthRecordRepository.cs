@@ -6,13 +6,12 @@ namespace HealthAxis.API.Repositories.Interfaces
     {
 
         Task<IEnumerable<HealthRecord>> GetByPatientIdAsync(
-                    int patientId,
-                    CancellationToken ct = default);
+            int patientId,
+            CancellationToken ct = default);
 
-        Task<IEnumerable<HealthRecord>> GetPreviousHealthRecordsAsync(
-                int patientId,
-                DateTime appointmentDate,
-                CancellationToken ct = default);
+        Task<IEnumerable<HealthRecord>> GetPatientHealthRecordsAsync(
+            int patientId,
+            CancellationToken ct = default);
     }
 }
 

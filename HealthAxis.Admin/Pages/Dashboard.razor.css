@@ -169,8 +169,8 @@
     color: var(--hx-primary);
 }
 
-/* Sonar: #a0a0a0 on white is ~2.3:1, below the 4.5:1 AA minimum.
-   #6b7280 gives ~4.8:1 while staying visually muted. */
+/* Sonar: #a0a0a0 on white background is ~2.3:1, below the 4.5:1 AA minimum.
+   #6b7280 gives ~4.8:1 while staying visually "muted/gray". */
 .text-inactive {
     color: #6b7280;
 }

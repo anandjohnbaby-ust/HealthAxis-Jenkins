@@ -7,8 +7,9 @@ using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Implementations;
 using HealthAxis.API.Services.Interfaces;
 using HealthAxis.Shared.Common;
-using HealthAxis.Shared.DTOs.DoctorDtos;
+using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
+using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.DTOs.HealthRecordDtos;
 using HealthAxis.Shared.Enums;
 using Microsoft.AspNetCore.Identity;
@@ -22,6 +23,7 @@ namespace HealthAxis.Tests.Services
     {
         private readonly Mock<IDoctorRepository> _doctorRepository;
         private readonly Mock<IHealthRecordRepository> _healthRecordRepository;
+        private readonly Mock<IAppointmentRepository> _appointmentRepository;
         private readonly Mock<UserManager<ApplicationUser>> _userManager;
         private readonly Mock<ApplicationDbContext> _context;
         private readonly Mock<IMapper> _mapper;
@@ -55,6 +57,7 @@ namespace HealthAxis.Tests.Services
             _appointmentService = new Mock<IAppointmentService>();
 
             _healthRecordService = new Mock<IHealthRecordService>();
+            _appointmentRepository = new Mock<IAppointmentRepository>();
 
             _service = new DoctorService(
                 _doctorRepository.Object,
@@ -62,7 +65,34 @@ namespace HealthAxis.Tests.Services
                 _context.Object,
                 _mapper.Object,
                 _appointmentService.Object,
-                _healthRecordService.Object);
+                _healthRecordService.Object,
+                _appointmentRepository.Object,
+                _healthRecordRepository.Object);
+        }
+
+        // CreateDoctor uses _context.Database.BeginTransactionAsync() and
+        // _context.Doctors.Add(...), which aren't practically mockable with
+        // Mock<ApplicationDbContext>. Those tests get a real EF Core InMemory
+        // context and a fresh DoctorService instance built from it.
+        private (DoctorService Service, ApplicationDbContext Context) CreateServiceWithInMemoryContext()
+        {
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options;
+
+            var context = new ApplicationDbContext(options);
+
+            var service = new DoctorService(
+                _doctorRepository.Object,
+                _userManager.Object,
+                context,
+                _mapper.Object,
+                _appointmentService.Object,
+                _healthRecordService.Object,
+                _appointmentRepository.Object,
+                _healthRecordRepository.Object);
+
+            return (service, context);
         }
 
         // --- GetDoctorById (existing tests kept) ---
@@ -139,13 +169,137 @@ namespace HealthAxis.Tests.Services
             await action.Should().ThrowAsync<Exception>().WithMessage("DB");
         }
 
+        // --- CreateDoctor ---
+        [Fact]
+        public async Task CreateDoctor_ShouldThrowBusinessRule_WhenEmailAlreadyExists()
+        {
+            var (service, context) = CreateServiceWithInMemoryContext();
+
+            var existing = new ApplicationUser { Id = "existing", Email = "dup@x.com" };
+            _userManager.Setup(u => u.FindByEmailAsync("dup@x.com")).ReturnsAsync(existing);
+
+            var dto = new CreateDoctorDto
+            {
+                Email = "dup@x.com",
+                Password = "Passw0rd!",
+                FullName = "Dr Dup",
+                Specialisation = Specialisation.Cardiology,
+                YearsOfExperience = 5,
+                ConsultationFee = 100
+            };
+
+            Func<Task> action = async () => await service.CreateDoctor(dto);
+
+            await action.Should().ThrowAsync<BusinessRuleException>().WithMessage("Email already exists.");
+            context.Doctors.Should().BeEmpty();
+
+            await context.DisposeAsync();
+        }
+
+        [Fact]
+        public async Task CreateDoctor_ShouldThrowBusinessRule_AndRollback_WhenUserCreationFails()
+        {
+            var (service, context) = CreateServiceWithInMemoryContext();
+
+            _userManager.Setup(u => u.FindByEmailAsync("bad@x.com")).ReturnsAsync((ApplicationUser)null);
+            _userManager
+                .Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
+                .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Weak password" }));
+
+            var dto = new CreateDoctorDto
+            {
+                Email = "bad@x.com",
+                Password = "weak",
+                FullName = "Dr Bad",
+                Specialisation = Specialisation.Cardiology,
+                YearsOfExperience = 2,
+                ConsultationFee = 50
+            };
+
+            Func<Task> action = async () => await service.CreateDoctor(dto);
+
+            await action.Should().ThrowAsync<BusinessRuleException>().WithMessage("Weak password");
+            context.Doctors.Should().BeEmpty();
+
+            await context.DisposeAsync();
+        }
+
+        [Fact]
+        public async Task CreateDoctor_ShouldSucceed_WhenValid()
+        {
+            var (service, context) = CreateServiceWithInMemoryContext();
+
+            _userManager.Setup(u => u.FindByEmailAsync("new@x.com")).ReturnsAsync((ApplicationUser)null);
+            _userManager
+                .Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
+                .ReturnsAsync(IdentityResult.Success)
+                .Callback<ApplicationUser, string>((u, p) => u.Id = "new-doctor-user-id");
+            _userManager
+                .Setup(u => u.AddToRoleAsync(It.IsAny<ApplicationUser>(), "Doctor"))
+                .ReturnsAsync(IdentityResult.Success);
+            _mapper
+                .Setup(m => m.Map<DoctorDto>(It.IsAny<Doctor>()))
+                .Returns((Doctor d) => new DoctorDto { DoctorId = d.DoctorId, FullName = d.FullName });
+
+            var dto = new CreateDoctorDto
+            {
+                Email = "new@x.com",
+                Password = "Passw0rd!",
+                FullName = "Dr New",
+                Specialisation = Specialisation.Neurology,
+                YearsOfExperience = 8,
+                ConsultationFee = 200
+            };
+
+            var result = await service.CreateDoctor(dto);
+
+            result.Should().NotBeNull();
+            result.FullName.Should().Be("Dr New");
+
+            context.Doctors.Should().ContainSingle(d => d.UserId == "new-doctor-user-id" && d.FullName == "Dr New" && d.IsActive);
+            _userManager.Verify(u => u.AddToRoleAsync(It.IsAny<ApplicationUser>(), "Doctor"), Times.Once);
+
+            await context.DisposeAsync();
+        }
+
+        [Fact]
+        public async Task CreateDoctor_ShouldRollbackAndRethrow_WhenExceptionOccursMidTransaction()
+        {
+            var (service, context) = CreateServiceWithInMemoryContext();
+
+            _userManager.Setup(u => u.FindByEmailAsync("crash@x.com")).ReturnsAsync((ApplicationUser)null);
+            _userManager
+                .Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
+                .ReturnsAsync(IdentityResult.Success);
+            _userManager
+                .Setup(u => u.AddToRoleAsync(It.IsAny<ApplicationUser>(), "Doctor"))
+                .ThrowsAsync(new Exception("role assignment failed"));
+
+            var dto = new CreateDoctorDto
+            {
+                Email = "crash@x.com",
+                Password = "Passw0rd!",
+                FullName = "Dr Crash",
+                Specialisation = Specialisation.Cardiology,
+                YearsOfExperience = 3,
+                ConsultationFee = 75
+            };
+
+            Func<Task> action = async () => await service.CreateDoctor(dto);
+
+            await action.Should().ThrowAsync<Exception>().WithMessage("role assignment failed");
+            context.Doctors.Should().BeEmpty();
+
+            await context.DisposeAsync();
+        }
+
         // --- UpdateDoctor ---
         [Fact]
         public async Task UpdateDoctor_ShouldThrowNotFound_WhenDoctorDoesNotExist()
         {
             _doctorRepository.Setup(r => r.GetByIdAsync(5)).ReturnsAsync((Doctor)null);
 
-            Func<Task> action = async () => await _service.UpdateDoctor(5, new HealthAxis.Shared.DTOs.AdminDtos.UpdateDoctorDto());
+            Func<Task> action = async () => await _service.UpdateDoctor(5, new HealthAxis.Shared.DTOs.DoctorDtos.UpdateDoctorDto());
             await action.Should().ThrowAsync<NotFoundException>();
         }
 
@@ -153,7 +307,7 @@ namespace HealthAxis.Tests.Services
         public async Task UpdateDoctor_ShouldMapAndCallRepository_WhenDoctorExists()
         {
             var doctor = new Doctor { DoctorId = 3, FullName = "Old" };
-            var dto = new HealthAxis.Shared.DTOs.AdminDtos.UpdateDoctorDto { FullName = "New", Specialisation = Specialisation.Cardiology };
+            var dto = new HealthAxis.Shared.DTOs.DoctorDtos.UpdateDoctorDto { FullName = "New", Specialisation = Specialisation.Cardiology };
 
             _doctorRepository.Setup(r => r.GetByIdAsync(3)).ReturnsAsync(doctor);
             _doctorRepository.Setup(r => r.UpdateAsync(3, It.IsAny<Doctor>())).ReturnsAsync(doctor);
@@ -164,6 +318,18 @@ namespace HealthAxis.Tests.Services
             _mapper.Verify(m => m.Map(dto, doctor), Times.Once);
             _doctorRepository.Verify(r => r.UpdateAsync(3, It.IsAny<Doctor>()), Times.Once);
             result.DoctorId.Should().Be(3);
+        }
+
+        [Fact]
+        public async Task UpdateDoctor_ShouldPropagateException_WhenRepositoryUpdateFails()
+        {
+            var doctor = new Doctor { DoctorId = 4, FullName = "Old" };
+            _doctorRepository.Setup(r => r.GetByIdAsync(4)).ReturnsAsync(doctor);
+            _doctorRepository.Setup(r => r.UpdateAsync(4, It.IsAny<Doctor>())).ThrowsAsync(new Exception("update failed"));
+
+            Func<Task> action = async () => await _service.UpdateDoctor(4, new HealthAxis.Shared.DTOs.DoctorDtos.UpdateDoctorDto());
+
+            await action.Should().ThrowAsync<Exception>().WithMessage("update failed");
         }
 
         // --- GetAvailableDoctorsAsync ---
@@ -232,6 +398,14 @@ namespace HealthAxis.Tests.Services
         }
 
         [Fact]
+        public async Task GetWeeklyAppointmentsAsync_ShouldThrow_WhenDoctorNotFound()
+        {
+            _doctorRepository.Setup(r => r.GetByUserIdAsync("u", It.IsAny<CancellationToken>())).ReturnsAsync((Doctor)null);
+            Func<Task> action = async () => await _service.GetWeeklyAppointmentsAsync("u", CancellationToken.None);
+            await action.Should().ThrowAsync<NotFoundException>().WithMessage("Doctor not found.");
+        }
+
+        [Fact]
         public async Task GetWeeklyAppointmentsAsync_ShouldReturnMapped_AndUseWeekRange()
         {
             var doctor = new Doctor { DoctorId = 9 };
@@ -264,6 +438,17 @@ namespace HealthAxis.Tests.Services
         }
 
         [Fact]
+        public async Task UpdateAppointmentStatusAsync_ShouldPropagateException()
+        {
+            var dto = new UpdateAppointmentStatusDto { Status = AppointmentStatus.Cancelled };
+            _appointmentService.Setup(a => a.UpdateStatusAsync(21, dto, It.IsAny<CancellationToken>())).ThrowsAsync(new NotFoundException("Appointment not found."));
+
+            Func<Task> action = async () => await _service.UpdateAppointmentStatusAsync(21, dto);
+
+            await action.Should().ThrowAsync<NotFoundException>().WithMessage("Appointment not found.");
+        }
+
+        [Fact]
         public async Task AddHealthRecordAsync_ForwardsToHealthRecordService()
         {
             var dto = new HealthAxis.Shared.DTOs.HealthRecordDtos.CreateHealthRecordDto();
@@ -276,6 +461,17 @@ namespace HealthAxis.Tests.Services
         }
 
         [Fact]
+        public async Task AddHealthRecordAsync_ShouldPropagateException()
+        {
+            var dto = new HealthAxis.Shared.DTOs.HealthRecordDtos.CreateHealthRecordDto();
+            _healthRecordService.Setup(h => h.AddAsync(dto, It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("save failed"));
+
+            Func<Task> action = async () => await _service.AddHealthRecordAsync(dto);
+
+            await action.Should().ThrowAsync<Exception>().WithMessage("save failed");
+        }
+
+        [Fact]
         public async Task GetHealthRecordByIdAsync_ForwardsToService()
         {
             var ret = new HealthAxis.Shared.DTOs.HealthRecordDtos.HealthRecordDto { RecordId = 7 };
@@ -284,6 +480,16 @@ namespace HealthAxis.Tests.Services
             var result = await _service.GetHealthRecordByIdAsync(7);
             result.Should().Be(ret);
             _healthRecordService.Verify(h => h.GetByRecordIdAsync(7, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetHealthRecordByIdAsync_ShouldPropagateException()
+        {
+            _healthRecordService.Setup(h => h.GetByRecordIdAsync(99, It.IsAny<CancellationToken>())).ThrowsAsync(new NotFoundException("Health record not found."));
+
+            Func<Task> action = async () => await _service.GetHealthRecordByIdAsync(99);
+
+            await action.Should().ThrowAsync<NotFoundException>().WithMessage("Health record not found.");
         }
 
         // --- GetDoctorByUserIdAsync & UpdateDoctorByUserIdAsync ---
@@ -311,7 +517,7 @@ namespace HealthAxis.Tests.Services
         public async Task UpdateDoctorByUserIdAsync_ShouldThrow_WhenNotFound()
         {
             _doctorRepository.Setup(r => r.GetByUserIdAsync("u", It.IsAny<CancellationToken>())).ReturnsAsync((Doctor)null);
-            Func<Task> action = async () => await _service.UpdateDoctorByUserIdAsync("u", new HealthAxis.Shared.DTOs.AdminDtos.UpdateDoctorDto());
+            Func<Task> action = async () => await _service.UpdateDoctorByUserIdAsync("u", new HealthAxis.Shared.DTOs.DoctorDtos.UpdateDoctorDto());
             await action.Should().ThrowAsync<NotFoundException>();
         }
 
@@ -319,7 +525,7 @@ namespace HealthAxis.Tests.Services
         public async Task UpdateDoctorByUserIdAsync_ShouldMapAndUpdate_WhenExists()
         {
             var doctor = new Doctor { DoctorId = 200 };
-            var dto = new HealthAxis.Shared.DTOs.AdminDtos.UpdateDoctorDto { FullName = "X", Specialisation = Specialisation.Dermatology };
+            var dto = new HealthAxis.Shared.DTOs.DoctorDtos.UpdateDoctorDto { FullName = "X", Specialisation = Specialisation.Dermatology };
             _doctorRepository.Setup(r => r.GetByUserIdAsync("u", It.IsAny<CancellationToken>())).ReturnsAsync(doctor);
             _doctorRepository.Setup(r => r.UpdateAsync(200, doctor, It.IsAny<CancellationToken>())).ReturnsAsync(doctor);
             _mapper.Setup(m => m.Map<DoctorDto>(doctor)).Returns(new DoctorDto { DoctorId = 200 });
@@ -347,6 +553,66 @@ namespace HealthAxis.Tests.Services
 
             var result = await _service.GetDashboardAsync(2);
             result.Should().Be(dash);
+        }
+
+        [Fact]
+        public async Task GetDashboardAsync_ShouldPropagateException()
+        {
+            _doctorRepository.Setup(r => r.GetDashboardAsync(3, It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("dashboard failed"));
+
+            Func<Task> action = async () => await _service.GetDashboardAsync(3);
+
+            await action.Should().ThrowAsync<Exception>().WithMessage("dashboard failed");
+        }
+
+        // --- GetPatientHealthHistoryAsync ---
+        [Fact]
+        public async Task GetPatientHealthHistoryAsync_ShouldThrowNotFound_WhenAppointmentMissing()
+        {
+            _appointmentRepository.Setup(r => r.GetByIdAsync(50, It.IsAny<CancellationToken>())).ReturnsAsync((Appointment)null);
+
+            Func<Task> action = async () => await _service.GetPatientHealthHistoryAsync(1, 50);
+
+            await action.Should().ThrowAsync<NotFoundException>().WithMessage("Appointment with ID 50 was not found.");
+        }
+
+        [Fact]
+        public async Task GetPatientHealthHistoryAsync_ShouldThrowBusinessRule_WhenAppointmentBelongsToDifferentPatient()
+        {
+            var appointment = new Appointment { AppointmentId = 51, PatientId = 999 };
+            _appointmentRepository.Setup(r => r.GetByIdAsync(51, It.IsAny<CancellationToken>())).ReturnsAsync(appointment);
+
+            Func<Task> action = async () => await _service.GetPatientHealthHistoryAsync(1, 51);
+
+            await action.Should().ThrowAsync<BusinessRuleException>()
+                .WithMessage("The appointment does not belong to the specified patient.");
+        }
+
+        [Fact]
+        public async Task GetPatientHealthHistoryAsync_ShouldReturnMapped_WhenValid()
+        {
+            var appointment = new Appointment { AppointmentId = 52, PatientId = 1 };
+            var records = new List<HealthAxis.API.Models.HealthRecord> { new HealthAxis.API.Models.HealthRecord { RecordId = 1 } };
+            var dtos = new List<HealthAxis.Shared.DTOs.HealthRecordDtos.HealthRecordDto> { new HealthAxis.Shared.DTOs.HealthRecordDtos.HealthRecordDto { RecordId = 1 } };
+
+            _appointmentRepository.Setup(r => r.GetByIdAsync(52, It.IsAny<CancellationToken>())).ReturnsAsync(appointment);
+            _healthRecordRepository.Setup(r => r.GetPatientHealthRecordsAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(records);
+            _mapper.Setup(m => m.Map<IEnumerable<HealthAxis.Shared.DTOs.HealthRecordDtos.HealthRecordDto>>(records)).Returns(dtos);
+
+            var result = await _service.GetPatientHealthHistoryAsync(1, 52);
+
+            result.Should().HaveCount(1);
+            _healthRecordRepository.Verify(r => r.GetPatientHealthRecordsAsync(1, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetPatientHealthHistoryAsync_ShouldPropagateException_WhenRepositoryFails()
+        {
+            _appointmentRepository.Setup(r => r.GetByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("lookup failed"));
+
+            Func<Task> action = async () => await _service.GetPatientHealthHistoryAsync(1, 53);
+
+            await action.Should().ThrowAsync<Exception>().WithMessage("lookup failed");
         }
     }
 }

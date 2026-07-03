@@ -14,6 +14,7 @@ using HealthAxis.Shared.DTOs.PatientDtos;
 using HealthAxis.Shared.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace HealthAxis.API.Services.Implementations
 {
@@ -29,6 +30,8 @@ namespace HealthAxis.API.Services.Implementations
         private readonly IMapper _mapper;
         private readonly IAppointmentService _appointmentService;
         private readonly IHealthRecordService _healthRecordService;
+        private readonly IAppointmentRepository _appointmentRepository;
+        private readonly IHealthRecordRepository _healthRecordRepository;
 
         public DoctorService(
             IDoctorRepository repository,
@@ -36,7 +39,9 @@ namespace HealthAxis.API.Services.Implementations
             ApplicationDbContext context,
             IMapper mapper,
             IAppointmentService appointmentService,
-            IHealthRecordService healthRecordService)
+            IHealthRecordService healthRecordService,
+            IAppointmentRepository appointmentRepository,
+            IHealthRecordRepository healthRecordRepository)
         {
             _doctorRepository = repository;
             _userManager = userManager;
@@ -44,6 +49,8 @@ namespace HealthAxis.API.Services.Implementations
             _mapper = mapper;
             _appointmentService = appointmentService;
             _healthRecordService = healthRecordService;
+            _appointmentRepository = appointmentRepository;
+            _healthRecordRepository = healthRecordRepository;
         }
 
         // Get the Doctor By ID
@@ -322,6 +329,36 @@ namespace HealthAxis.API.Services.Implementations
                 throw new NotFoundException(DoctorNotFoundMessage);
 
             return dashboard;
+        }
+
+
+        public async Task<IEnumerable<HealthRecordDto>> GetPatientHealthHistoryAsync(
+            int patientId,
+            int appointmentId,
+            CancellationToken ct = default)
+        {
+            var appointment = await _appointmentRepository.GetByIdAsync(
+                appointmentId,
+                ct);
+
+            if (appointment == null)
+            {
+                throw new NotFoundException(
+                    $"Appointment with ID {appointmentId} was not found.");
+            }
+
+            if (appointment.PatientId != patientId)
+            {
+                throw new BusinessRuleException(
+                    "The appointment does not belong to the specified patient.");
+            }
+
+            var records = await _healthRecordRepository
+                .GetPatientHealthRecordsAsync(
+                    patientId,
+                    ct);
+
+            return _mapper.Map<IEnumerable<HealthRecordDto>>(records);
         }
     }
 }

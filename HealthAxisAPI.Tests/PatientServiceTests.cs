@@ -53,6 +53,10 @@ namespace HealthAxis.Tests.Services
             return new PatientDto { PatientId = 1, FullName = "John" };
         }
 
+        // =====================================================================
+        // GetByIdAsync
+        // =====================================================================
+
         [Fact]
         public async Task GetByIdAsync_ShouldReturnMapped_WhenFound()
         {
@@ -91,6 +95,26 @@ namespace HealthAxis.Tests.Services
         }
 
         [Fact]
+        public async Task GetByIdAsync_ShouldForwardCancellationToken()
+        {
+            using var cts = new CancellationTokenSource();
+            var patient = new Patient { PatientId = 1 };
+
+            _patientRepository
+                .Setup(p => p.GetByIdAsync(1, cts.Token))
+                .ReturnsAsync(patient);
+            _mapper.Setup(m => m.Map<PatientDto>(patient)).Returns(new PatientDto { PatientId = 1 });
+
+            await _service.GetByIdAsync(1, cts.Token);
+
+            _patientRepository.Verify(p => p.GetByIdAsync(1, cts.Token), Times.Once);
+        }
+
+        // =====================================================================
+        // GetPatientsAsync
+        // =====================================================================
+
+        [Fact]
         public async Task GetPatientsAsync_ShouldReturnPagedMapped()
         {
             var req = new PaginationRequest { PageNumber = 1, PageSize = 10 };
@@ -117,6 +141,61 @@ namespace HealthAxis.Tests.Services
             Func<Task> action = async () => await _service.GetPatientsAsync(req, null);
             await action.Should().ThrowAsync<Exception>().WithMessage("fail");
         }
+
+        [Fact]
+        public async Task GetPatientsAsync_ShouldHandleNullSearch()
+        {
+            var req = new PaginationRequest { PageNumber = 1, PageSize = 5 };
+            var paged = new PagedResult<Patient>
+            {
+                Items = new List<Patient>(),
+                TotalCount = 0,
+                PageNumber = 1,
+                PageSize = 5
+            };
+
+            _patientRepository
+                .Setup(r => r.GetPatientsAsync(req, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(paged);
+            _mapper
+                .Setup(m => m.Map<IEnumerable<PatientDto>>(paged.Items))
+                .Returns(new List<PatientDto>());
+
+            var result = await _service.GetPatientsAsync(req, null);
+
+            result.Items.Should().BeEmpty();
+            result.TotalCount.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetPatientsAsync_ShouldReturnEmptyPage_WhenNoMatches()
+        {
+            var req = new PaginationRequest { PageNumber = 2, PageSize = 10 };
+            var paged = new PagedResult<Patient>
+            {
+                Items = new List<Patient>(),
+                TotalCount = 0,
+                PageNumber = 2,
+                PageSize = 10
+            };
+
+            _patientRepository
+                .Setup(r => r.GetPatientsAsync(req, "zzz", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(paged);
+            _mapper
+                .Setup(m => m.Map<IEnumerable<PatientDto>>(paged.Items))
+                .Returns(new List<PatientDto>());
+
+            var result = await _service.GetPatientsAsync(req, "zzz");
+
+            result.Items.Should().BeEmpty();
+            result.PageNumber.Should().Be(2);
+            result.PageSize.Should().Be(10);
+        }
+
+        // =====================================================================
+        // UpdateAsync
+        // =====================================================================
 
         [Fact]
         public async Task UpdateAsync_ShouldThrowNotFound_WhenMissing()
@@ -146,6 +225,39 @@ namespace HealthAxis.Tests.Services
         }
 
         [Fact]
+        public async Task UpdateAsync_ShouldPropagateException_WhenGetByIdFails()
+        {
+            _patientRepository
+                .Setup(p => p.GetByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("lookup failed"));
+
+            Func<Task> action = async () => await _service.UpdateAsync(1, new UpdatePatientDto());
+
+            await action.Should().ThrowAsync<Exception>().WithMessage("lookup failed");
+        }
+
+        [Fact]
+        public async Task UpdateAsync_ShouldPropagateException_WhenRepositoryUpdateFails()
+        {
+            var patient = new Patient { PatientId = 1 };
+
+            _patientRepository
+                .Setup(p => p.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(patient);
+            _patientRepository
+                .Setup(p => p.UpdateAsync(1, patient, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("update failed"));
+
+            Func<Task> action = async () => await _service.UpdateAsync(1, new UpdatePatientDto());
+
+            await action.Should().ThrowAsync<Exception>().WithMessage("update failed");
+        }
+
+        // =====================================================================
+        // GetHealthRecordsByPatientId
+        // =====================================================================
+
+        [Fact]
         public async Task GetHealthRecordsByPatientId_ShouldThrow_WhenPatientNotFound()
         {
             _patientRepository.Setup(p => p.GetHealthRecordsByPatientId(5)).ReturnsAsync((Patient?)null);
@@ -170,6 +282,37 @@ namespace HealthAxis.Tests.Services
         }
 
         [Fact]
+        public async Task GetHealthRecordsByPatientId_ShouldReturnEmpty_WhenPatientHasNoRecords()
+        {
+            var patient = new Patient { PatientId = 3, HealthRecords = new List<HealthRecord>() };
+
+            _patientRepository.Setup(p => p.GetHealthRecordsByPatientId(3)).ReturnsAsync(patient);
+            _mapper
+                .Setup(m => m.Map<IEnumerable<HealthRecordDto>>(patient.HealthRecords))
+                .Returns(new List<HealthRecordDto>());
+
+            var result = await _service.GetHealthRecordsByPatientId(3);
+
+            result.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetHealthRecordsByPatientId_ShouldPropagateRepositoryException()
+        {
+            _patientRepository
+                .Setup(p => p.GetHealthRecordsByPatientId(It.IsAny<int>()))
+                .ThrowsAsync(new Exception("db error"));
+
+            Func<Task> action = async () => await _service.GetHealthRecordsByPatientId(4);
+
+            await action.Should().ThrowAsync<Exception>().WithMessage("db error");
+        }
+
+        // =====================================================================
+        // BookAppointmentAsync
+        // =====================================================================
+
+        [Fact]
         public async Task BookAppointmentAsync_ForwardsToAppointmentService()
         {
             var dto = new CreateAppointmentDto { DoctorId = 1, PatientId = 2 };
@@ -184,6 +327,24 @@ namespace HealthAxis.Tests.Services
         }
 
         [Fact]
+        public async Task BookAppointmentAsync_ShouldPropagateException_FromAppointmentService()
+        {
+            var dto = new CreateAppointmentDto { DoctorId = 1, PatientId = 2 };
+
+            _appointmentService
+                .Setup(a => a.BookAppointmentAsync(dto, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("slot unavailable"));
+
+            Func<Task> action = async () => await _service.BookAppointmentAsync(dto);
+
+            await action.Should().ThrowAsync<Exception>().WithMessage("slot unavailable");
+        }
+
+        // =====================================================================
+        // GetAvailableDoctorsAsync
+        // =====================================================================
+
+        [Fact]
         public async Task GetAvailableDoctorsAsync_ForwardsToDoctorService()
         {
             var list = new List<DoctorDto> { new DoctorDto { DoctorId = 1 } };
@@ -193,6 +354,51 @@ namespace HealthAxis.Tests.Services
 
             result.Should().HaveCount(1);
         }
+
+        [Fact]
+        public async Task GetAvailableDoctorsAsync_ShouldForwardSpecialisationAndSearch()
+        {
+            var list = new List<DoctorDto> { new DoctorDto { DoctorId = 2 } };
+
+            _doctorService
+                .Setup(d => d.GetAvailableDoctorsAsync(Specialisation.Cardiology, "smith", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(list);
+
+            var result = await _service.GetAvailableDoctorsAsync(Specialisation.Cardiology, "smith");
+
+            result.Should().HaveCount(1);
+            _doctorService.Verify(
+                d => d.GetAvailableDoctorsAsync(Specialisation.Cardiology, "smith", It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task GetAvailableDoctorsAsync_ShouldReturnEmpty_WhenNoneAvailable()
+        {
+            _doctorService
+                .Setup(d => d.GetAvailableDoctorsAsync(It.IsAny<Specialisation?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<DoctorDto>());
+
+            var result = await _service.GetAvailableDoctorsAsync(Specialisation.Dermatology, "nomatch");
+
+            result.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetAvailableDoctorsAsync_ShouldPropagateException()
+        {
+            _doctorService
+                .Setup(d => d.GetAvailableDoctorsAsync(It.IsAny<Specialisation?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("doctor service down"));
+
+            Func<Task> action = async () => await _service.GetAvailableDoctorsAsync(null, null);
+
+            await action.Should().ThrowAsync<Exception>().WithMessage("doctor service down");
+        }
+
+        // =====================================================================
+        // GetAppointmentsByPatientIdAsync
+        // =====================================================================
 
         [Fact]
         public async Task GetAppointmentsByPatientIdAsync_ShouldThrow_WhenPatientMissing()
@@ -220,6 +426,43 @@ namespace HealthAxis.Tests.Services
         }
 
         [Fact]
+        public async Task GetAppointmentsByPatientIdAsync_ShouldReturnEmpty_WhenNoAppointments()
+        {
+            var patient = new Patient { PatientId = 9 };
+
+            _patientRepository.Setup(p => p.GetByIdAsync(9, It.IsAny<CancellationToken>())).ReturnsAsync(patient);
+            _patientRepository
+                .Setup(p => p.GetAppointmentsByPatientIdAsync(9, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Appointment>());
+            _mapper
+                .Setup(m => m.Map<IEnumerable<AppointmentDto>>(It.IsAny<IEnumerable<Appointment>>()))
+                .Returns(new List<AppointmentDto>());
+
+            var result = await _service.GetAppointmentsByPatientIdAsync(9);
+
+            result.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetAppointmentsByPatientIdAsync_ShouldPropagateException_WhenRepositoryFails()
+        {
+            var patient = new Patient { PatientId = 10 };
+
+            _patientRepository.Setup(p => p.GetByIdAsync(10, It.IsAny<CancellationToken>())).ReturnsAsync(patient);
+            _patientRepository
+                .Setup(p => p.GetAppointmentsByPatientIdAsync(10, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("appointments lookup failed"));
+
+            Func<Task> action = async () => await _service.GetAppointmentsByPatientIdAsync(10);
+
+            await action.Should().ThrowAsync<Exception>().WithMessage("appointments lookup failed");
+        }
+
+        // =====================================================================
+        // CancelAppointmentByPatientAsync
+        // =====================================================================
+
+        [Fact]
         public async Task CancelAppointmentByPatientAsync_ForwardsToAppointmentService()
         {
             var dto = new CancelAppointmentDto { CancellationReason = "s" };
@@ -232,6 +475,24 @@ namespace HealthAxis.Tests.Services
             result.Should().Be(ret);
             _appointmentService.Verify(a => a.CancelAppointmentByPatientAsync(2, 20, dto, It.IsAny<CancellationToken>()), Times.Once);
         }
+
+        [Fact]
+        public async Task CancelAppointmentByPatientAsync_ShouldPropagateException()
+        {
+            var dto = new CancelAppointmentDto { CancellationReason = "changed mind" };
+
+            _appointmentService
+                .Setup(a => a.CancelAppointmentByPatientAsync(2, 20, dto, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new NotFoundException("Appointment not found."));
+
+            Func<Task> action = async () => await _service.CancelAppointmentByPatientAsync(2, 20, dto);
+
+            await action.Should().ThrowAsync<NotFoundException>().WithMessage("Appointment not found.");
+        }
+
+        // =====================================================================
+        // GetDashboardAsync
+        // =====================================================================
 
         [Fact]
         public async Task GetDashboardAsync_ShouldThrow_WhenNull()
@@ -252,6 +513,33 @@ namespace HealthAxis.Tests.Services
             var result = await _service.GetDashboardAsync(2);
 
             result.Should().Be(dash);
+        }
+
+        [Fact]
+        public async Task GetDashboardAsync_ShouldPropagateException()
+        {
+            _patientRepository
+                .Setup(p => p.GetDashboardAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("dashboard aggregation failed"));
+
+            Func<Task> action = async () => await _service.GetDashboardAsync(1);
+
+            await action.Should().ThrowAsync<Exception>().WithMessage("dashboard aggregation failed");
+        }
+
+        [Fact]
+        public async Task GetDashboardAsync_ShouldForwardCancellationToken()
+        {
+            using var cts = new CancellationTokenSource();
+            var dash = new PatientDashboardDto();
+
+            _patientRepository
+                .Setup(p => p.GetDashboardAsync(3, cts.Token))
+                .ReturnsAsync(dash);
+
+            await _service.GetDashboardAsync(3, cts.Token);
+
+            _patientRepository.Verify(p => p.GetDashboardAsync(3, cts.Token), Times.Once);
         }
     }
 }

@@ -8,5 +8,11 @@ namespace HealthAxis.API.Repositories.Interfaces
     {
         Task<PagedResult<AppointmentReportDto>> GetAppointmentReportAsync(
             PaginationRequest request);
+
+        Task<bool> IsTimeSlotBookedAsync(
+            int doctorId,
+            DateTime scheduledDate,
+            TimeOnly timeSlot,
+            CancellationToken ct = default);
     }
 }

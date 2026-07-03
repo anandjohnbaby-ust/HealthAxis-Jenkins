@@ -1,6 +1,6 @@
 ﻿namespace HealthAxis.Shared.Utilities
 {
-    public class RegexPatterns
+    public static class RegexPatterns
     {
         public const string FullName = @"^[a-zA-Z\s]+$";
 

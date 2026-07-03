@@ -66,5 +66,10 @@ namespace HealthAxis.API.Services.Interfaces
         Task<DoctorDashboardDto> GetDashboardAsync(
             int doctorId,
             CancellationToken ct = default);
+
+        Task<IEnumerable<HealthRecordDto>> GetPatientHealthHistoryAsync(
+            int patientId,
+            int appointmentId,
+            CancellationToken ct = default);
     }
 }

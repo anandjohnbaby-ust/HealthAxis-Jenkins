@@ -30,9 +30,9 @@ namespace HealthAxis.API.Profiles
 
             CreateMap<Doctor, DoctorDto>()
                 .ForMember(
-                    dest => dest.UpcomingAppointmentCount,
-                    opt => opt.MapFrom(
-                        src => src.GetUpcomingAppointmentCount()));
+                    dest => dest.Email,
+                    opt => opt.MapFrom(src => src.User.Email));
+
 
             // Appointment Mappings
             CreateMap<CreateAppointmentDto, Appointment>();

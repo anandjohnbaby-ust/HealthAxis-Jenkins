@@ -1,10 +1,9 @@
-﻿using HealthAxis.API.Services.Interfaces;
+﻿using HealthAxis.API.Services.Implementations;
+using HealthAxis.API.Services.Interfaces;
 using HealthAxis.Shared.Common;
-using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.DTOs.HealthRecordDtos;
-using HealthAxis.Shared.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -138,6 +137,22 @@ namespace HealthAxis.API.Controllers
                 ct);
 
             return Ok(dashboard);
+        }
+
+        [HttpGet("patient/{patientId:int}/appointment/{appointmentId:int}")]
+        [Authorize(Roles = "Doctor")]
+        public async Task<ActionResult<IEnumerable<HealthRecordDto>>> GetPatientHealthHistory(
+            int patientId,
+            int appointmentId,
+            CancellationToken ct)
+        {
+            var records = await _doctorService
+                .GetPatientHealthHistoryAsync(
+                    patientId,
+                    appointmentId,
+                    ct);
+
+            return Ok(records);
         }
     }
 }

@@ -1,129 +1,79 @@
 <div class="container-fluid py-4">
-
   @if (loading()) {
-
     <div class="text-center py-5">
       <div class="spinner-border text-primary"></div>
     </div>
-
   } @else {
-
     <!-- Welcome -->
 
     <div class="mb-4">
+      <h2 class="fw-bold">Welcome, Dr. {{ dashboard()?.fullName }}</h2>
 
-      <h2 class="fw-bold">
-        Welcome, Dr. {{ dashboard()?.fullName }} 👋
-      </h2>
-
-      <p class="text-muted mb-0">
-        Here's an overview of your appointments and today's schedule.
-      </p>
-
+      <p class="text-muted mb-0">Here's an overview of your appointments and today's schedule.</p>
     </div>
 
     <!-- Summary Cards -->
 
     <div class="row g-4 mb-4">
-
       <div class="col-md-4">
-
         <div class="card shadow-sm border-0">
-
           <div class="card-body text-center">
-
-            <h6 class="text-muted">
-              Today's Appointments
-            </h6>
+            <h6 class="text-muted">Today's Appointments</h6>
 
             <h2 class="fw-bold text-primary">
               {{ dashboard()?.todayAppointments }}
             </h2>
-
           </div>
-
         </div>
-
       </div>
 
       <div class="col-md-4">
-
         <div class="card shadow-sm border-0">
-
           <div class="card-body text-center">
-
-            <h6 class="text-muted">
-              Weekly Appointments
-            </h6>
+            <h6 class="text-muted">Weekly Appointments</h6>
 
             <h2 class="fw-bold text-success">
               {{ dashboard()?.weeklyAppointments }}
             </h2>
-
           </div>
-
         </div>
-
       </div>
 
       <div class="col-md-4">
-
         <div class="card shadow-sm border-0">
-
           <div class="card-body text-center">
-
-            <h6 class="text-muted">
-              Total Appointments
-            </h6>
+            <h6 class="text-muted">Total Appointments</h6>
 
             <h2 class="fw-bold text-danger">
               {{ dashboard()?.totalAppointments }}
             </h2>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
 
     <!-- Today's Schedule -->
 
     <div class="card shadow-sm border-0">
-
       <div class="card-header bg-white">
-
-        <h5 class="mb-0">
-          Today's Schedule
-        </h5>
-
+        <h5 class="mb-0">Today's Schedule</h5>
       </div>
 
       <div class="card-body">
-
         @if (dashboard()?.todaySchedule?.length) {
-
           <div class="table-responsive">
-
             <table class="table table-hover align-middle">
-
               <thead>
-
                 <tr>
                   <th>Time</th>
                   <th>Patient</th>
                   <th>Status</th>
                 </tr>
-
               </thead>
 
               <tbody>
-
                 @for (appointment of dashboard()!.todaySchedule; track appointment.appointmentId) {
-
                   <tr>
-
                     <td>
                       {{ appointment.timeSlot }}
                     </td>
@@ -133,35 +83,27 @@
                     </td>
 
                     <td>
-                      {{ AppointmentStatus[appointment.status] }}
+                      <span
+                        class="badge"
+                        [class.bg-warning]="appointment.status === AppointmentStatus.Pending"
+                        [class.bg-success]="appointment.status === AppointmentStatus.Confirmed"
+                        [class.bg-danger]="appointment.status === AppointmentStatus.Cancelled"
+                        [class.bg-primary]="appointment.status === AppointmentStatus.Completed"
+                      >
+                        {{ AppointmentStatus[appointment.status] }}
+                      </span>
                     </td>
-
                   </tr>
-
                 }
-
               </tbody>
-
             </table>
-
           </div>
-
         } @else {
-
           <div class="text-center py-4">
-
-            <p class="text-muted mb-0">
-              No appointments scheduled for today.
-            </p>
-
+            <p class="text-muted mb-0">No appointments scheduled for today.</p>
           </div>
-
         }
-
       </div>
-
     </div>
-
   }
-
 </div>

@@ -16,6 +16,7 @@ import {
   UpdateAppointmentStatus,
   UpdateDoctorProfileRequest
 } from '../interfaces/doctor-domain.types';
+import { HealthRecord } from '../interfaces/patient-domain.types';
 
 @Injectable({
   providedIn: 'root'
@@ -130,6 +131,20 @@ getHealthRecordById(
 hasHealthRecord(appt: DoctorAppointmentDto): boolean {
 
   return appt.healthRecordId != null;
+
+}
+
+getPatientHealthHistory(
+  patientId: number,
+  appointmentId: number
+): Observable<HealthRecordDto[]> {
+
+  return this.http.get<HealthRecordDto[]>(
+    `${this.apiUrl}${API_ENDPOINTS.DOCTORS.PATIENT_HEALTH_HISTORY(
+      patientId,
+      appointmentId
+    )}`
+  );
 
 }
 

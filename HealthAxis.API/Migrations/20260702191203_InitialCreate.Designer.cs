@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HealthAxis.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260620063103_AddUserRelationshipToPatientAndDoctor")]
-    partial class AddUserRelationshipToPatientAndDoctor
+    [Migration("20260702191203_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -120,10 +120,8 @@ namespace HealthAxis.API.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<string>("TimeSlot")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<TimeOnly>("TimeSlot")
+                        .HasColumnType("time");
 
                     b.HasKey("AppointmentId");
 

@@ -3,25 +3,28 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components.WebAssembly.Http;
 
 namespace HealthAxis.Admin.Authentication
 {
     public class AuthMessageHandler : DelegatingHandler
     {
+        private const string TokenStorageKey = "token";
+
         private readonly IJSRuntime _js;
 
         public AuthMessageHandler(IJSRuntime js)
         {
             _js = js;
-            // InnerHandler will be set by the caller (Program.cs) for WASM
+            // InnerHandler is set by the caller (Program.cs) for WASM.
         }
 
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
         {
             try
             {
-                var token = await _js.InvokeAsync<string>("localStorage.getItem", "token");
+                var token = await _js.InvokeAsync<string>("localStorage.getItem", TokenStorageKey);
 
                 if (!string.IsNullOrWhiteSpace(token))
                 {
@@ -29,9 +32,9 @@ namespace HealthAxis.Admin.Authentication
                     request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 }
             }
-            catch
+            catch (JSException)
             {
-                // ignore errors reading token
+                // JS interop unavailable (e.g. prerendering) - proceed unauthenticated.
             }
 
             return await base.SendAsync(request, cancellationToken);

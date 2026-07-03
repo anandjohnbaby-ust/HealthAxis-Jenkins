@@ -7,9 +7,8 @@ import { DoctorLayoutComponent } from './layout/doctor-layout.component';
 import { authGuard } from '../../core/guards/auth.guard';
 import { roleGuard } from '../../core/guards/role.guard';
 import { Role } from '../../core/enums/role.enum';
-import { AppointmentsComponent } from './pages/appointments/appointments.component';
-import { TodayScheduleComponent } from './pages/today-schedule/today-schedule.component';
-import { WeeklyScheduleComponent } from './pages/weekly-schedule/weekly-schedule.component';
+
+import { SharedScheduleComponent } from './pages/shared-schedule/shared-schedule.component';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { ChangePasswordComponent } from './pages/change-password/change-password.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
@@ -31,15 +30,30 @@ export const DOCTOR_ROUTES: Routes = [
       },
       {
         path: 'today',
-        component: TodayScheduleComponent
+        component: SharedScheduleComponent,
+        data: {
+          mode: 'today',
+          title: "Today's Appointment",
+          emptyMessage: 'No appointments found.'
+        }
       },
       {
         path: 'week',
-        component: WeeklyScheduleComponent
+        component: SharedScheduleComponent,
+        data: {
+          mode: 'week',
+          title: 'Weekly Schedule',
+          emptyMessage: 'No appointments scheduled for this week.'
+        }
       },
       {
         path: 'appointments',
-        component: AppointmentsComponent
+        component: SharedScheduleComponent,
+        data: {
+          mode: 'all',
+          title: 'All Appointments',
+          emptyMessage: 'No appointments found.'
+        }
       },
       {
         path: 'profile',

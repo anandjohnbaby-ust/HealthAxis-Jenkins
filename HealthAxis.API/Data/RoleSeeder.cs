@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace HealthAxis.API.Data
 {
-    public class RoleSeeder
+    public static class RoleSeeder
     {
         public static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
         {
@@ -15,33 +15,6 @@ namespace HealthAxis.API.Data
                 {
                     await roleManager.CreateAsync(new IdentityRole(role));
                 }
-            }
-        }
-
-        public static async Task SeedAdminAsync(UserManager<IdentityUser> userManager)
-        {
-            const string email = "admin@healthaxis.com";
-            const string password = "Admin@123";
-
-            var admin = await userManager.FindByEmailAsync(email);
-
-            if (admin != null)
-            {
-                return;
-            }
-
-            admin = new IdentityUser
-            {
-                UserName = email,
-                Email = email,
-                EmailConfirmed = true
-            };
-
-            var result = await userManager.CreateAsync(admin, password);
-
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(admin, "Admin");
             }
         }
 

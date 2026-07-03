@@ -24,16 +24,15 @@ namespace HealthAxis.API.Models
             nameof(ValidateScheduledDate))]
         public DateTime ScheduledDate { get; set; }
 
-        [Required(ErrorMessage = ValidationMessages.TimeSlotRequired)]
-        [StringLength(
-            ValidationLimits.TimeSlotLength,
-            ErrorMessage = ValidationMessages.InvalidTimeSlot)]
-        public string TimeSlot { get; set; } = string.Empty;
+        //[Required(ErrorMessage = ValidationMessages.TimeSlotRequired)]
+        //[StringLength(
+        //    ValidationLimits.TimeSlotLength,
+        //    ErrorMessage = ValidationMessages.InvalidTimeSlot)]
+        public TimeOnly TimeSlot { get; set; } 
 
         [Required(
             ErrorMessage = ValidationMessages.AppointmentStatusRequired)]
-        public AppointmentStatus Status { get; set; }
-            = AppointmentStatus.Pending;
+        public AppointmentStatus Status { get; set; } = AppointmentStatus.Pending;
 
         [StringLength(
             ValidationLimits.CancellationReasonLength)]

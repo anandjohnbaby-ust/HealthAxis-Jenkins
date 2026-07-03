@@ -64,7 +64,6 @@ export interface DoctorDto {
 // =========================================================================
 // 3. APPOINTMENTS
 // =========================================================================
-
 /** Shape returned by GET /api/appointments */
 export interface Appointment {
   appointmentId: number;
@@ -72,7 +71,7 @@ export interface Appointment {
   doctorId: number;
   doctorName?: string;
   scheduledDate: string; // yyyy-MM-dd
-  timeSlot: string; // HH:mm
+  timeSlot: string;      // HH:mm:ss (TimeOnly from .NET)
   status: AppointmentStatus;
 }
 
@@ -81,7 +80,7 @@ export interface BookAppointmentRequest {
   patientId: number;
   doctorId: number;
   scheduledDate: string; // yyyy-MM-dd
-  timeSlot: string; // HH:mm
+  timeSlot: string;      // HH:mm:ss (TimeOnly)
 }
 
 export interface CancelAppointment {
@@ -111,7 +110,7 @@ export interface DashboardAppointment {
   appointmentId: number;
   doctorName: string;
   scheduledDate: string;
-  timeSlot: string;
+  timeSlot: string; // HH:mm:ss (TimeOnly)
   status: AppointmentStatus;
 }
 

@@ -65,13 +65,13 @@ export class ProfileComponent implements OnInit {
       ]
     ],
 
-    email: [
-      '',
-      [
-        Validators.required,
-        Validators.email
-      ]
-    ],
+    // email: [
+    //   '',
+    //   [
+    //     Validators.required,
+    //     Validators.email
+    //   ]
+    // ],
 
     specialisation: [
       null as Specialisation | null,
@@ -92,7 +92,8 @@ export class ProfileComponent implements OnInit {
         Validators.required,
         Validators.min(0)
       ]
-    ]
+    ],
+    isActive: [true]
 
   });
 
@@ -109,64 +110,63 @@ export class ProfileComponent implements OnInit {
   // ============================
   // Load Profile
   // ============================
+private loadProfile(): void {
 
-  private loadProfile(): void {
+  this.loading.set(true);
 
-    this.loading.set(true);
+  this.successMessage.set(null);
 
-    this.successMessage.set(null);
+  this.errorMessage.set(null);
 
-    this.errorMessage.set(null);
+  this.doctorService
+    .getMyProfile()
+    .subscribe({
 
-    this.doctorService
-      .getMyProfile()
-      .subscribe({
+      next: doctor => {
 
-        next: doctor => {
+        this.doctor = doctor;
 
-          this.doctor = doctor;
+        this.profileForm.patchValue({
 
-          this.profileForm.patchValue({
+          fullName: doctor.fullName,
 
-            fullName: doctor.fullName,
+          // email: doctor.email,
 
-            email: doctor.email,
+          specialisation: doctor.specialisation,
 
-            specialisation: doctor.specialisation,
+          yearsOfExperience: doctor.yearsOfExperience,
 
-            yearsOfExperience:
-              doctor.yearsOfExperience,
+          consultationFee: doctor.consultationFee,
 
-            consultationFee:
-              doctor.consultationFee
+          isActive: doctor.isActive
 
-          });
+        });
 
-          if (!this.editing()) {
+        if (!this.editing()) {
 
-            this.profileForm
-              .get('specialisation')
-              ?.disable();
-
-          }
-
-          this.loading.set(false);
-
-        },
-
-        error: () => {
-
-          this.errorMessage.set(
-            'Unable to load your profile.'
-          );
-
-          this.loading.set(false);
+          this.profileForm
+            .get('specialisation')
+            ?.disable();
 
         }
 
-      });
+        this.loading.set(false);
 
-  }
+      },
+
+      error: () => {
+
+        this.errorMessage.set(
+          'Unable to load your profile.'
+        );
+
+        this.loading.set(false);
+
+      }
+
+    });
+
+}
 
   // ============================
   // Edit Mode
@@ -202,37 +202,97 @@ export class ProfileComponent implements OnInit {
   // Save Profile
   // ============================
 
-  saveProfile(): void {
+//   saveProfile(): void {
     
-    // if (this.profileForm.invalid) {
+    
+//     if (this.profileForm.invalid) {
 
-    //   this.profileForm.markAllAsTouched();
+//       this.profileForm.markAllAsTouched();
 
-    //   return;
+//       return;
 
-    // }
+//     }
 
-    this.savingProfile.set(true);
+//     this.savingProfile.set(true);
 
-    this.successMessage.set(null);
+//     this.successMessage.set(null);
 
-    this.errorMessage.set(null);
+//     this.errorMessage.set(null);
 
-const dto = this.profileForm.getRawValue() as UpdateDoctorProfileRequest;
+// const dto = this.profileForm.getRawValue() as UpdateDoctorProfileRequest;
 
-    this.doctorService
-      .updateMyProfile(dto)
-      .subscribe({
+//     this.doctorService
+//       .updateMyProfile(dto)
+//       .subscribe({
 
-        next: doctor => {
+//         next: doctor => {
 
-          this.doctor = doctor;
+//           this.doctor = doctor;
 
-          this.successMessage.set(
-            'Profile updated successfully.'
-          );
+//           this.successMessage.set(
+//             'Profile updated successfully.'
+//           );
 
-          this.savingProfile.set(false);
+//           this.savingProfile.set(false);
+
+//           this.editing.set(false);
+
+//           this.profileForm
+//             .get('specialisation')
+//             ?.disable();
+
+//           this.loadProfile();
+
+//         },
+
+//         error: () => {
+
+//           this.errorMessage.set(
+//             'Unable to update profile.'
+//           );
+
+//           this.savingProfile.set(false);
+
+//         }
+
+//       });
+
+//   }
+saveProfile(): void {
+
+  if (this.profileForm.invalid) {
+
+    this.profileForm.markAllAsTouched();
+
+    return;
+
+  }
+
+  this.savingProfile.set(true);
+
+  this.successMessage.set(null);
+
+  this.errorMessage.set(null);
+
+  const dto =
+    this.profileForm.getRawValue() as UpdateDoctorProfileRequest;
+
+  this.doctorService
+    .updateMyProfile(dto)
+    .subscribe({
+
+      next: doctor => {
+
+        this.doctor = doctor;
+
+        this.successMessage.set(
+          'Profile updated successfully.'
+        );
+
+        this.savingProfile.set(false);
+
+        // Only exit edit mode if currently editing
+        if (this.editing()) {
 
           this.editing.set(false);
 
@@ -240,24 +300,25 @@ const dto = this.profileForm.getRawValue() as UpdateDoctorProfileRequest;
             .get('specialisation')
             ?.disable();
 
-          this.loadProfile();
-
-        },
-
-        error: () => {
-
-          this.errorMessage.set(
-            'Unable to update profile.'
-          );
-
-          this.savingProfile.set(false);
-
         }
 
-      });
+        this.loadProfile();
 
-  }
+      },
 
+      error: () => {
+
+        this.errorMessage.set(
+          'Unable to update profile.'
+        );
+
+        this.savingProfile.set(false);
+
+      }
+
+    });
+
+}
   // ============================
   // Change Password
   // ============================

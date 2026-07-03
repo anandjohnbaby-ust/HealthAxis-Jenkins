@@ -49,18 +49,17 @@ using System.ComponentModel.DataAnnotations;
             public virtual ICollection<HealthRecord> HealthRecords { get; set; }
                 = new List<HealthRecord>();
 
-            public bool IsAvailable(
-                DateTime scheduledDate,
-                string timeSlot)
-            {
+        public bool IsAvailable(
+            DateTime scheduledDate,
+            TimeOnly timeSlot)
+        {
+            return !Appointments.Any(a =>
+                a.ScheduledDate.Date == scheduledDate.Date &&
+                a.TimeSlot == timeSlot &&
+                a.Status != AppointmentStatus.Cancelled);
+        }
 
-                return !Appointments.Any(a =>
-                    a.ScheduledDate.Date == scheduledDate.Date &&
-                    a.TimeSlot == timeSlot &&
-                    a.Status != AppointmentStatus.Cancelled);
-            }
-
-            public int GetUpcomingAppointmentCount()
+        public int GetUpcomingAppointmentCount()
             {
 
                 return Appointments.Count(a =>

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -7,8 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace HealthAxis.API.Migrations
 {
     /// <inheritdoc />
-    [ExcludeFromCodeCoverage]
-    public partial class AddUserRelationshipToPatientAndDoctor : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -218,7 +216,7 @@ namespace HealthAxis.API.Migrations
                     PatientId = table.Column<int>(type: "int", nullable: false),
                     DoctorId = table.Column<int>(type: "int", nullable: false),
                     ScheduledDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    TimeSlot = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    TimeSlot = table.Column<TimeOnly>(type: "time", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     CancellationReason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },

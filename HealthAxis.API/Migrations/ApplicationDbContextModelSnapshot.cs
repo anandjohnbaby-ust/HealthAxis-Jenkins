@@ -117,10 +117,8 @@ namespace HealthAxis.API.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<string>("TimeSlot")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<TimeOnly>("TimeSlot")
+                        .HasColumnType("time");
 
                     b.HasKey("AppointmentId");
 

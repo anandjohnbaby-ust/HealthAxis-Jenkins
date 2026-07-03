@@ -65,10 +65,6 @@
     font-weight: 700;
 }
 
-.table thead th:first-child {
-    border-radius: 0;
-}
-
 .table tbody td {
     padding: 16px;
     border-bottom: 1px solid #d1d5db;
@@ -96,9 +92,17 @@
     color: #1D7874 !important;
 }
 
+/* Sonar: gray-on-beige here was borderline on contrast. Darkened text
+   from bootstrap's default #6c757d to #495057 to comfortably clear 4.5:1. */
 .bg-secondary {
     background: #EDEAE3 !important;
-    color: #6c757d !important;
+    color: #495057 !important;
+}
+
+.empty-icon {
+    color: #ced4da;
+    display: flex;
+    justify-content: center;
 }
 
 .btn-edit {
@@ -116,12 +120,6 @@
         background: var(--hx-primary);
         color: white;
     }
-
-.empty-icon {
-    color: #ced4da;
-    display: flex;
-    justify-content: center;
-}
 
 .modal-content {
     border-radius: 16px;

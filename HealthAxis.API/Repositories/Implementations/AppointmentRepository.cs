@@ -52,5 +52,19 @@ namespace HealthAxis.API.Repositories.Implementations
                 PageSize = request.PageSize
             };
         }
+
+        public async Task<bool> IsTimeSlotBookedAsync(
+            int doctorId,
+            DateTime scheduledDate,
+            TimeOnly timeSlot,
+            CancellationToken ct = default)
+        {
+            return await _context.Appointments.AnyAsync(a =>
+                a.DoctorId == doctorId &&
+                a.ScheduledDate.Date == scheduledDate.Date &&
+                a.TimeSlot == timeSlot &&
+                a.Status != AppointmentStatus.Cancelled,
+                ct);
+        }
     }
 }

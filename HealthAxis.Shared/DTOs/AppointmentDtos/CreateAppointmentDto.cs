@@ -15,10 +15,10 @@ namespace HealthAxis.Shared.DTOs.AppointmentDtos
         [DataType(DataType.Date)]
         public DateTime ScheduledDate { get; set; }
 
-        [Required(ErrorMessage = ValidationMessages.TimeSlotRequired)]
-        [StringLength(
-            ValidationLimits.TimeSlotLength,
-            ErrorMessage = ValidationMessages.InvalidTimeSlot)]
-        public string TimeSlot { get; set; } = string.Empty;
+        //[Required(ErrorMessage = ValidationMessages.TimeSlotRequired)]
+        //[StringLength(
+        //    ValidationLimits.TimeSlotLength,
+        //    ErrorMessage = ValidationMessages.InvalidTimeSlot)]
+        public TimeOnly TimeSlot { get; set; }
     }
 }

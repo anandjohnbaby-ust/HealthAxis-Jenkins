@@ -36,7 +36,7 @@
                     <InputSelect class="form-select"
                                  @bind-Value="selectedSpecialisation"
                                  @bind-Value:after="FilterDoctors">
-                        <option value="" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">All specialisations</option>
+                        <option value="">All specialisations</option>
                         @foreach (var spec in Enum.GetValues<Specialisation>())
                         {
                             <option value="@spec">@spec</option>
@@ -156,44 +156,45 @@
         </div>
         <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top">
 
-    <div class="text-muted small">
-        Showing
-        <strong>@(doctors.Count == 0 ? 0 : ((currentPage - 1) * PageSize) + 1)</strong>
-        -
-        <strong>@(((currentPage - 1) * PageSize) + doctors.Count)</strong>
-        of
-        <strong>@(pagedDoctors?.TotalCount ?? 0)</strong>
-        doctors
-    </div>
+            <div class="text-muted small">
+                Showing
+                <strong>@(doctors.Count == 0 ? 0 : ((currentPage - 1) * PageSize) + 1)</strong>
+                -
+                <strong>@(((currentPage - 1) * PageSize) + doctors.Count)</strong>
+                of
+                <strong>@(pagedDoctors?.TotalCount ?? 0)</strong>
+                doctors
+            </div>
 
-    <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2">
 
-        <button class="btn btn-outline-secondary btn-sm"
-                disabled="@(pagedDoctors?.HasPrevious != true)"
-                @onclick="PreviousPage">
-            Previous
-        </button>
-
-        @if (pagedDoctors != null)
-        {
-            @for (int i = 1; i <= pagedDoctors.TotalPages; i++)
-            {
-                <button class="btn @(i == currentPage ? "btn-primary" : "btn-outline-primary") btn-sm"
-                        @onclick="() => GoToPage(i)">
-                    @i
+                <button class="btn btn-outline-secondary btn-sm"
+                        disabled="@(pagedDoctors?.HasPrevious != true)"
+                        @onclick="PreviousPage">
+                    Previous
                 </button>
-            }
-        }
 
-        <button class="btn btn-outline-secondary btn-sm"
-                disabled="@(pagedDoctors?.HasNext != true)"
-                @onclick="NextPage">
-            Next
-        </button>
+                @if (pagedDoctors != null)
+                {
+                    @for (int i = 1; i <= pagedDoctors.TotalPages; i++)
+                    {
+                        var page = i;
+                        <button class="btn @(page == currentPage ? "btn-primary" : "btn-outline-primary") btn-sm"
+                                @onclick="() => GoToPage(page)">
+                            @(page)
+                        </button>
+                    }
+                }
 
-    </div>
+                <button class="btn btn-outline-secondary btn-sm"
+                        disabled="@(pagedDoctors?.HasNext != true)"
+                        @onclick="NextPage">
+                    Next
+                </button>
 
-</div>
+            </div>
+
+        </div>
     }
 
 </div>
@@ -326,13 +327,7 @@
     </div>
 }
 
-<style>
-
-
-
-</style>
-
-    @code {
+@code {
 
     private Specialisation? selectedSpecialisation;
     private string searchText = string.Empty;
@@ -395,9 +390,7 @@
         try
         {
             await DoctorService.CreateDoctor(newDoctor);
-
             await RefreshDoctors();
-
             showForm = false;
         }
         catch (Exception ex)
@@ -413,9 +406,7 @@
         try
         {
             await DoctorService.UpdateDoctor(editingDoctorId, editDoctor);
-
             await RefreshDoctors();
-
             showForm = false;
         }
         catch (Exception ex)
@@ -509,4 +500,3 @@
         await RefreshDoctors();
     }
 }
-

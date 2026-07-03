@@ -43,6 +43,7 @@ export interface DoctorProfile {
   specialisation: number;
   yearsOfExperience: number;
   consultationFee: number;
+  isActive: boolean;
 }
 
 export interface UpdateDoctorProfileRequest {
@@ -50,6 +51,7 @@ export interface UpdateDoctorProfileRequest {
   specialisation: number;
   yearsOfExperience: number;
   consultationFee: number;
+  isActive: boolean;
 }
 
 // ===============================

@@ -1,4 +1,5 @@
 ﻿@page "/patients"
+@attribute [Authorize]
 
 @using HealthAxis.Admin.Services
 @using HealthAxis.Shared.Common
@@ -106,44 +107,45 @@
         </div>
         <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top">
 
-    <div class="text-muted small">
-        Showing
-        <strong>@(patients.Count == 0 ? 0 : ((currentPage - 1) * pageSize) + 1)</strong>
-        -
-        <strong>@(((currentPage - 1) * pageSize) + patients.Count)</strong>
-        of
-        <strong>@(pagedPatients?.TotalCount ?? 0)</strong>
-        patients
-    </div>
+            <div class="text-muted small">
+                Showing
+                <strong>@(patients.Count == 0 ? 0 : ((currentPage - 1) * PageSize) + 1)</strong>
+                -
+                <strong>@(((currentPage - 1) * PageSize) + patients.Count)</strong>
+                of
+                <strong>@(pagedPatients?.TotalCount ?? 0)</strong>
+                patients
+            </div>
 
-    <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2">
 
-        <button class="btn btn-outline-secondary btn-sm"
-                disabled="@(pagedPatients?.HasPrevious != true)"
-                @onclick="PreviousPage">
-            Previous
-        </button>
-
-        @if (pagedPatients != null)
-        {
-            @for (int i = 1; i <= pagedPatients.TotalPages; i++)
-            {
-                <button class="btn @(i == currentPage ? "btn-primary" : "btn-outline-primary") btn-sm"
-                        @onclick="() => GoToPage(i)">
-                    @i
+                <button class="btn btn-outline-secondary btn-sm"
+                        disabled="@(pagedPatients?.HasPrevious != true)"
+                        @onclick="PreviousPage">
+                    Previous
                 </button>
-            }
-        }
 
-        <button class="btn btn-outline-secondary btn-sm"
-                disabled="@(pagedPatients?.HasNext != true)"
-                @onclick="NextPage">
-            Next
-        </button>
+                @if (pagedPatients != null)
+                {
+                    @for (int i = 1; i <= pagedPatients.TotalPages; i++)
+                    {
+                        var page = i;
+                        <button class="btn @(page == currentPage ? "btn-primary" : "btn-outline-primary") btn-sm"
+                                @onclick="() => GoToPage(page)">
+                            @(page)
+                        </button>
+                    }
+                }
 
-    </div>
+                <button class="btn btn-outline-secondary btn-sm"
+                        disabled="@(pagedPatients?.HasNext != true)"
+                        @onclick="NextPage">
+                    Next
+                </button>
 
-</div>
+            </div>
+
+        </div>
     }
 
 </div>
@@ -216,7 +218,10 @@
     private List<PatientDto> patients = [];
 
     private int currentPage = 1;
-    private int pageSize = 10;
+
+    // Sonar: "Make 'pageSize' readonly" - this field is never reassigned after construction.
+    private const int PageSize = 10;
+
     private bool showEditModal;
     private int editingPatientId;
     private string searchText = string.Empty;
@@ -231,7 +236,7 @@
     {
         pagedPatients = await PatientService.GetPatients(
             currentPage,
-            pageSize,
+            PageSize,
             searchText);
 
         patients = pagedPatients?.Items.ToList() ?? [];
@@ -269,7 +274,8 @@
         }
     }
 
-    private string GetGenderBadge(Gender gender)
+    // Sonar: "Make 'GetGenderBadge' a static method" - it doesn't use instance state.
+    private static string GetGenderBadge(Gender gender)
     {
         return gender switch
         {
@@ -283,7 +289,6 @@
     private async Task SearchPatients(ChangeEventArgs e)
     {
         searchText = e.Value?.ToString() ?? "";
-
         currentPage = 1;
 
         await LoadPatients();

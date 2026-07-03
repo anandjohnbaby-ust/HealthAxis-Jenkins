@@ -57,15 +57,16 @@ namespace HealthAxis.API.Services.Implementations
                     "Appointments cannot be booked for past dates.");
             }
 
-            if (dto.ScheduledDate.Date >
-                DateTime.Today.AddMonths(6))
+            if (dto.ScheduledDate.Date > DateTime.Today.AddMonths(6))
             {
                 throw new ValidationException(
                     "Appointments can only be booked up to 6 months in advance.");
             }
 
             var patient =
-                await _patientRepository.GetByIdAsync(dto.PatientId, ct);
+                await _patientRepository.GetByIdAsync(
+                    dto.PatientId,
+                    ct);
 
             if (patient is null)
             {
@@ -90,10 +91,28 @@ namespace HealthAxis.API.Services.Implementations
                     "Appointments cannot be booked with inactive doctors.");
             }
 
-            /////////////////////////////////////////////
-            // Do Validation for TimeSlot conflict also//
-            /////////////////////////////////////////////
-            
+            // Check whether the doctor already has an appointment
+            if (await _appointmentRepository.IsTimeSlotBookedAsync(
+                    dto.DoctorId,
+                    dto.ScheduledDate,
+                    dto.TimeSlot,
+                    ct))
+            {
+                throw new ValidationException(
+                    "The selected time slot is already booked for this doctor.");
+            }
+
+            // Check whether the patient already has an appointment
+            if (await _appointmentRepository.IsTimeSlotBookedAsync(
+                    dto.PatientId,
+                    dto.ScheduledDate,
+                    dto.TimeSlot,
+                    ct))
+            {
+                throw new ValidationException(
+                    "You already have another appointment at the selected time.");
+            }
+
             var appointment =
                 _mapper.Map<Appointment>(dto);
 
@@ -101,7 +120,9 @@ namespace HealthAxis.API.Services.Implementations
                 AppointmentStatus.Pending;
 
             var savedAppointment =
-                await _appointmentRepository.AddAsync(appointment, ct);
+                await _appointmentRepository.AddAsync(
+                    appointment,
+                    ct);
 
             return _mapper.Map<AppointmentDto>(
                 savedAppointment);

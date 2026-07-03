@@ -41,17 +41,5 @@ namespace HealthAxis.API.Controllers
 
             return Ok(healthRecord);
         }
-
-        [HttpGet("patient/{patientId:int}")]
-        [Authorize(Roles = "Patient,Doctor,Admin")]
-        public async Task<ActionResult<IEnumerable<HealthRecordDto>>> GetByPatientId(
-            int patientId,
-            CancellationToken ct)
-        {
-            var records = await _healthRecordService
-                .GetByPatientIdAsync(patientId, ct);
-
-            return Ok(records);
-        }
     }
 }

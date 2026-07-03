@@ -45,6 +45,18 @@ export class BookAppointmentComponent implements OnInit {
     scheduledDate: ['', [Validators.required, CustomValidators.notPastDate]],
     timeSlot: ['', [Validators.required]]
   });
+  
+  timeSlots = [
+    { value: '09:00:00', label: '09:00 AM - 10:00 AM' },
+    { value: '10:00:00', label: '10:00 AM - 11:00 AM' },
+    { value: '11:00:00', label: '11:00 AM - 12:00 PM' },
+    { value: '12:00:00', label: '12:00 PM - 01:00 PM' },
+    { value: '13:00:00', label: '01:00 PM - 02:00 PM' },
+    { value: '14:00:00', label: '02:00 PM - 03:00 PM' },
+    { value: '15:00:00', label: '03:00 PM - 04:00 PM' },
+    { value: '16:00:00', label: '04:00 PM - 05:00 PM' },
+    { value: '17:00:00', label: '05:00 PM - 06:00 PM' }
+  ];
 
   ngOnInit(): void {
     // 1. Listen for specialisation changes to reload doctors

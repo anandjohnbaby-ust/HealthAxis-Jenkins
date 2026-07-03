@@ -1,10 +1,12 @@
-﻿@inject NavigationManager Navigation
+﻿@using HealthAxis.Admin.Configuration
+@inject NavigationManager Navigation
+@inject AppSettings Settings
 
 @code {
 
     protected override void OnInitialized()
     {
-        Navigation.NavigateTo("http://localhost:4200/login", true);
+        Navigation.NavigateTo(Settings.AngularLoginUrl, true);
     }
 
 }

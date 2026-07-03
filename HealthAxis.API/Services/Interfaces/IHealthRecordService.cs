@@ -1,4 +1,5 @@
-﻿using HealthAxis.Shared.DTOs.HealthRecordDtos;
+﻿using HealthAxis.API.Models;
+using HealthAxis.Shared.DTOs.HealthRecordDtos;
 
 namespace HealthAxis.API.Services.Interfaces
 {
@@ -14,9 +15,6 @@ namespace HealthAxis.API.Services.Interfaces
             AddAsync(
                 CreateHealthRecordDto dto,
                 CancellationToken ct = default);
-        Task<IEnumerable<HealthRecordDto>> GetByPatientIdAsync(
-            int patientId,
-            CancellationToken ct = default);
 
     }
 }

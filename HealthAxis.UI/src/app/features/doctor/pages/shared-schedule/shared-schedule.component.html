@@ -1,0 +1,330 @@
+<div class="page container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="m-0">{{ pageTitle }}</h2>
+  </div>
+
+  @if (successMessage()) {
+    <div class="alert alert-success">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary"></div>
+    </div>
+  } @else if (appointments().length > 0) {
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-primary">
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Patient</th>
+            <th>Status</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (appt of appointments(); track appt.appointmentId) {
+            <tr>
+              <td>
+                {{ appt.scheduledDate | date: 'dd MMM yyyy' }}
+              </td>
+
+              <td>
+                {{ appt.timeSlot }}
+              </td>
+
+              <td>
+                {{ appt.patientName }}
+              </td>
+
+              <td>
+                <span
+                  class="badge"
+                  [class.bg-warning]="appt.status === AppointmentStatus.Pending"
+                  [class.bg-success]="appt.status === AppointmentStatus.Confirmed"
+                  [class.bg-danger]="appt.status === AppointmentStatus.Cancelled"
+                  [class.bg-primary]="appt.status === AppointmentStatus.Completed"
+                >
+                  {{ getStatus(appt.status) }}
+                </span>
+              </td>
+
+              <td class="text-center">
+
+  @if (canConfirm(appt)) {
+    <button
+      class="btn btn-success btn-sm me-2"
+      (click)="openConfirmDialog(appt)"
+      [disabled]="updating()">
+      Confirm
+    </button>
+  }
+
+  @if (canComplete(appt)) {
+    <button
+      class="btn btn-primary btn-sm me-2"
+      (click)="openCompleteDialog(appt)"
+      [disabled]="updating()">
+      Complete
+    </button>
+  }
+
+  @if (canCancel(appt)) {
+    <button
+      class="btn btn-danger btn-sm me-2"
+      (click)="openCancelDialog(appt)"
+      [disabled]="updating()">
+      Cancel
+    </button>
+  }
+
+  <!-- Show Patient History for Pending, Confirmed,
+       and Completed (before Health Record is added) -->
+
+  @if (
+    appt.status !== AppointmentStatus.Cancelled &&
+    (
+      appt.status !== AppointmentStatus.Completed ||
+      !appt.healthRecordId
+    )
+  ) {
+
+    <button
+      class="btn btn-outline-secondary btn-sm me-2"
+      (click)="viewPatientHealthRecords(
+        appt.patientId,
+        appt.appointmentId
+      )"
+      [disabled]="loadingHealthRecord()">
+
+      View Patient History
+
+    </button>
+
+  }
+
+  <!-- Completed appointment actions -->
+
+  @if (appt.status === AppointmentStatus.Completed) {
+
+    @if (!appt.healthRecordId) {
+
+      <button
+        class="btn btn-success btn-sm"
+        (click)="openHealthRecordDialog(appt)"
+        [disabled]="updating()">
+
+        + Add Health Record
+
+      </button>
+
+    }
+
+    @else {
+
+      <button
+        class="btn btn-outline-primary btn-sm"
+        (click)="viewHealthRecord(appt.healthRecordId!)"
+        [disabled]="loadingHealthRecord()">
+
+        View Health Record
+
+      </button>
+
+    }
+
+  }
+
+  @if (appt.status === AppointmentStatus.Cancelled) {
+
+    <span class="text-danger fw-semibold">
+
+      ✖ Cancelled
+
+    </span>
+
+  }
+
+</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div class="alert alert-info text-center">{{ emptyMessage }}</div>
+  }
+</div>
+
+<!-- ===========================
+     Reusable Modal
+=========================== -->
+
+@if (dialogOpen()) {
+  <div class="dialog-backdrop">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <h4>{{ dialogTitle() }}</h4>
+      </div>
+
+      <div class="dialog-body">
+        <p>{{ dialogMessage() }}</p>
+
+        @if (dialogAction() === 'cancel') {
+          <div class="mt-3">
+            <label class="form-label"> Cancellation Reason </label>
+
+            <textarea
+              class="form-control"
+              rows="4"
+              [ngModel]="cancellationReason()"
+              (ngModelChange)="cancellationReason.set($event)"
+              placeholder="Enter cancellation reason"
+            ></textarea>
+          </div>
+        }
+
+        @if (dialogAction() === 'healthRecord') {
+          <div class="mt-3">
+            <label class="form-label"> Diagnosis </label>
+
+            <textarea
+              class="form-control mb-3"
+              rows="3"
+              [ngModel]="diagnosis()"
+              (ngModelChange)="diagnosis.set($event)"
+              placeholder="Enter diagnosis"
+            ></textarea>
+
+            <label class="form-label"> Prescription </label>
+
+            <textarea
+              class="form-control mb-3"
+              rows="3"
+              [ngModel]="prescription()"
+              (ngModelChange)="prescription.set($event)"
+              placeholder="Enter prescription"
+            ></textarea>
+
+            <label class="form-label"> Notes </label>
+
+            <textarea
+              class="form-control"
+              rows="4"
+              [ngModel]="notes()"
+              (ngModelChange)="notes.set($event)"
+              placeholder="Additional notes (optional)"
+            ></textarea>
+          </div>
+        }
+
+        @if (dialogAction() === 'viewHealthRecord' && selectedHealthRecord()) {
+          <div class="mt-3">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Visit Date</label>
+              <div>{{ selectedHealthRecord()!.visitDate | date: 'dd MMM yyyy' }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Diagnosis</label>
+              <div class="border rounded p-2 bg-light">
+                {{ selectedHealthRecord()!.diagnosis }}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Prescription</label>
+              <div class="border rounded p-2 bg-light">
+                {{ selectedHealthRecord()!.prescription }}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Notes</label>
+              <div class="border rounded p-2 bg-light">
+                {{ selectedHealthRecord()!.notes || '-' }}
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (dialogAction() === 'viewPatientHistory') {
+          @if (patientHealthRecords().length > 0) {
+            <div class="mt-3">
+              @for (record of patientHealthRecords(); track record.recordId) {
+                <div class="card mb-3">
+                  <div class="card-body">
+                    <div class="mb-2">
+                      <strong>Visit Date:</strong>
+                      {{ record.visitDate | date: 'dd MMM yyyy' }}
+                    </div>
+
+                    <div class="mb-2">
+                      <strong>Diagnosis:</strong>
+                      {{ record.diagnosis }}
+                    </div>
+
+                    <div class="mb-2">
+                      <strong>Prescription:</strong>
+                      {{ record.prescription }}
+                    </div>
+
+                    <div>
+                      <strong>Notes:</strong>
+                      {{ record.notes || '-' }}
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="alert alert-info">No health records found.</div>
+          }
+        }
+      </div>
+
+      <div class="dialog-footer">
+        <button class="btn btn-secondary" (click)="closeDialog()">Close</button>
+
+        @if (dialogAction() !== 'viewHealthRecord' && dialogAction() !== 'viewPatientHistory') {
+          <button
+            class="btn"
+            [class.btn-success]="dialogAction() === 'confirm' || dialogAction() === 'healthRecord'"
+            [class.btn-primary]="dialogAction() === 'complete'"
+            [class.btn-danger]="dialogAction() === 'cancel'"
+            (click)="confirmAction()"
+            [disabled]="updating() || savingHealthRecord()"
+          >
+            @switch (dialogAction()) {
+              @case ('confirm') {
+                Confirm
+              }
+
+              @case ('complete') {
+                Complete
+              }
+
+              @case ('cancel') {
+                Cancel Appointment
+              }
+
+              @case ('healthRecord') {
+                Save Health Record
+              }
+            }
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

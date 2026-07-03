@@ -1,7 +1,9 @@
 ﻿@using HealthAxis.Admin.Authentication
+@using HealthAxis.Admin.Configuration
 @inject IJSRuntime JSRuntime
 @inject CustomAuthenticationStateProvider AuthProvider
 @inject NavigationManager NavigationManager
+@inject AppSettings Settings
 
 <AuthorizeView>
     <Authorized>
@@ -104,103 +106,6 @@
 
 </AuthorizeView>
 
-<style>
-
-    :root {
-        --hx-primary: #155E91;
-        --hx-primary-dark: #0E3A5C;
-        --hx-primary-light: #EAF2F8;
-        --hx-accent: #E2A33B;
-    }
-
-    .top-row {
-        background: var(--hx-primary-dark);
-        height: 3.75rem;
-    }
-
-    .navbar-brand {
-        display: flex;
-        align-items: center;
-        gap: .55rem;
-        font-weight: 700;
-        color: #fff;
-        letter-spacing: .01rem;
-    }
-
-    .brand-mark {
-        width: 30px;
-        height: 30px;
-        border-radius: 8px;
-        background: rgba(255,255,255,.12);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-    }
-
-    .nav-scrollable {
-        background: var(--hx-primary);
-        height: calc(100vh - 3.75rem);
-    }
-
-    .nav-item { margin: 2px 0; }
-
-    .nav-item .nav-link,
-    .logout-link {
-        display: flex;
-        align-items: center;
-        gap: .65rem;
-        color: rgba(255,255,255,.78);
-        font-weight: 500;
-        font-size: .95rem;
-        padding: .65rem .85rem;
-        border-radius: 10px;
-        transition: background .15s ease, color .15s ease;
-    }
-
-    .nav-icon {
-        flex-shrink: 0;
-        opacity: .9;
-    }
-
-    .nav-item .nav-link:hover,
-    .logout-link:hover {
-        background: rgba(255,255,255,.10);
-        color: #fff;
-    }
-
-    .nav-item .nav-link.active {
-        background: #fff;
-        color: var(--hx-primary);
-        font-weight: 700;
-    }
-
-    .nav-item .nav-link.active .nav-icon {
-        color: var(--hx-accent);
-        opacity: 1;
-    }
-
-    .nav-divider {
-        height: 1px;
-        background: rgba(255,255,255,.15);
-        margin: .6rem 1rem;
-    }
-
-    .logout-link { color: rgba(255,255,255,.7); }
-    .logout-link:hover { color: #fff; }
-
-    .sidebar-nav {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    }
-
-    .logout-container {
-        margin-top: auto;
-        padding-bottom: 1rem;
-    }
-</style>
-
 @code
 {
     private bool collapseNavMenu = true;
@@ -215,14 +120,14 @@
 
     private async Task Logout()
     {
-        // Remove the token stored by Blazor
         await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "token");
 
-        // Update the authentication state
         AuthProvider.NotifyUserLoggedOut();
 
-        // Redirect to the Angular login page
-    NavigationManager.NavigateTo("http://localhost:4200/logout", true);    }
+        // Redirect to the Angular login page - URL now sourced from configuration,
+        // not hardcoded (see appsettings.json / AppSettings).
+        NavigationManager.NavigateTo(Settings.AngularLogoutUrl, true);
+    }
 
     private void ReloadPage()
     {

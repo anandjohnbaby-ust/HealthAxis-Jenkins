@@ -51,7 +51,7 @@ namespace HealthAxis.API.Controllers
 
         [HttpPost("doctors")]
         public async Task<IActionResult> CreateDoctor(
-            Shared.DTOs.AdminDtos.CreateDoctorDto dto)
+            CreateDoctorDto dto)
         {
             var doctor = await _adminService.CreateDoctor(dto);
 

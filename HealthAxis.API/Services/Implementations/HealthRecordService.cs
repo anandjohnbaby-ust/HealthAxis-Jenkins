@@ -1,10 +1,11 @@
 ﻿using AutoMapper;
-using HealthAxis.Shared.DTOs.HealthRecordDtos;
-using HealthAxis.Shared.Enums;
 using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
+using HealthAxis.Shared.DTOs.HealthRecordDtos;
+using HealthAxis.Shared.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace HealthAxis.API.Services.Implementations
 {
@@ -114,23 +115,5 @@ namespace HealthAxis.API.Services.Implementations
                 savedRecord);
         }
 
-        public async Task<IEnumerable<HealthRecordDto>> GetByPatientIdAsync(
-            int patientId,
-            CancellationToken ct = default)
-        {
-            var records =
-                await _healthRecordRepository.GetByPatientIdAsync(
-                    patientId,
-                    ct);
-
-            if (!records.Any())
-            {
-                throw new NotFoundException(
-                    $"No health records found for patient with ID {patientId}.");
-            }
-
-            return _mapper.Map<IEnumerable<HealthRecordDto>>(
-                records);
-        }
     }
 }

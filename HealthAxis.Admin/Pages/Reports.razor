@@ -100,124 +100,48 @@
         </div>
         <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top">
 
-    <div class="text-muted small">
-        Showing
-        <strong>@(reports.Count == 0 ? 0 : ((currentPage - 1) * pageSize) + 1)</strong>
-        -
-        <strong>@(((currentPage - 1) * pageSize) + reports.Count)</strong>
-        of
-        <strong>@(pagedReports?.TotalCount ?? 0)</strong>
-        report entries
-    </div>
+            <div class="text-muted small">
+                Showing
+                <strong>@(reports.Count == 0 ? 0 : ((currentPage - 1) * PageSize) + 1)</strong>
+                -
+                <strong>@(((currentPage - 1) * PageSize) + reports.Count)</strong>
+                of
+                <strong>@(pagedReports?.TotalCount ?? 0)</strong>
+                report entries
+            </div>
 
-    <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2">
 
-        <button class="btn btn-outline-secondary btn-sm"
-                disabled="@(pagedReports?.HasPrevious != true)"
-                @onclick="PreviousPage">
-            Previous
-        </button>
-
-        @if (pagedReports != null)
-        {
-            @for (int i = 1; i <= pagedReports.TotalPages; i++)
-            {
-                <button class="btn @(i == currentPage ? "btn-primary" : "btn-outline-primary") btn-sm"
-                        @onclick="() => GoToPage(i)">
-                    @i
+                <button class="btn btn-outline-secondary btn-sm"
+                        disabled="@(pagedReports?.HasPrevious != true)"
+                        @onclick="PreviousPage">
+                    Previous
                 </button>
-            }
-        }
 
-        <button class="btn btn-outline-secondary btn-sm"
-                disabled="@(pagedReports?.HasNext != true)"
-                @onclick="NextPage">
-            Next
-        </button>
+                @if (pagedReports != null)
+                {
+                    @for (int i = 1; i <= pagedReports.TotalPages; i++)
+                    {
+                        var page = i;
+                        <button class="btn @(page == currentPage ? "btn-primary" : "btn-outline-primary") btn-sm"
+                                @onclick="() => GoToPage(page)">
+                            @(page)
+                        </button>
+                    }
+                }
 
-    </div>
+                <button class="btn btn-outline-secondary btn-sm"
+                        disabled="@(pagedReports?.HasNext != true)"
+                        @onclick="NextPage">
+                    Next
+                </button>
 
-</div>
+            </div>
+
+        </div>
     }
 
 </div>
-
-<style>
-
-    :root {
-        --hx-primary: #155E91;
-        --hx-primary-dark: #0E3A5C;
-        --hx-primary-light: #EAF2F8;
-        --hx-bg: #FAFBFC;
-        --hx-text: #1E293B;
-        --hx-accent: #E2A33B;
-        --hx-border: #E2E8F0;
-        --hx-danger: #C0392B;
-    }
-
-    .page-header {
-        background: white;
-        padding: 24px 30px;
-        border-radius: 16px;
-        box-shadow: 0 6px 18px rgba(21, 94, 145, 0.07);
-    }
-
-    .header-icon {
-        width: 46px;
-        height: 46px;
-        min-width: 46px;
-        border-radius: 12px;
-        background: var(--hx-primary-light);
-        color: var(--hx-primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .page-header h2 { color: var(--hx-text); }
-
-    .table thead th {
-        font-size: .78rem;
-        text-transform: uppercase;
-        letter-spacing: .06rem;
-        color: #6c757d;
-        padding: 16px;
-        background: var(--hx-primary-light);
-        border-bottom: none;
-        font-weight: 700;
-    }
-
-    .table tbody td {
-        padding: 16px;
-        border-bottom-color: var(--hx-border);
-    }
-
-    .table tbody tr:hover { background: #FBFAF7; }
-
-    .badge {
-        padding: .45rem .8rem;
-        font-size: .8rem;
-        font-weight: 700;
-        border-radius: 50rem;
-        min-width: 2.4rem;
-        display: inline-block;
-        text-align: center;
-    }
-
-    .badge-pending { background: #FBF1E1; color: var(--hx-accent); }
-    .badge-confirmed { background: #EAF2F8; color: var(--hx-primary); }
-    .badge-cancelled { background: #FBEAE8; color: var(--hx-danger); }
-    .badge-completed { background: #E1F0EC; color: #1D7874; }
-
-    .total-value {
-        font-weight: 700;
-        color: var(--hx-text);
-        font-size: 1rem;
-    }
-
-    .empty-icon { color: #ced4da; display: flex; justify-content: center; }
-
-</style>
 
 @code {
 
@@ -225,7 +149,9 @@
     private List<AppointmentReportDto> reports = [];
 
     private int currentPage = 1;
-    private int pageSize = 10;
+
+    // Sonar: "Make 'pageSize' readonly" - never reassigned after construction.
+    private const int PageSize = 10;
 
     protected override async Task OnInitializedAsync()
     {
@@ -236,10 +162,7 @@
     {
         try
         {
-            pagedReports = await AdminService.GetAppointmentReportAsync(
-                currentPage,
-                pageSize);
-
+            pagedReports = await AdminService.GetAppointmentReportAsync(currentPage, PageSize);
             reports = pagedReports?.Items.ToList() ?? [];
         }
         catch (System.Net.Http.HttpRequestException ex)
@@ -281,5 +204,4 @@
         currentPage = page;
         await LoadReports();
     }
-
 }

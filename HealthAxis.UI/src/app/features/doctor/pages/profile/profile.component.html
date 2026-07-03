@@ -1,55 +1,34 @@
 <!-- src/app/features/doctor/pages/profile/profile.component.html -->
 
 <div class="page">
-
   <h1>My Profile</h1>
 
   @if (loading()) {
-
     <p>Loading profile...</p>
-
   } @else {
-
     @if (successMessage()) {
-
       <div class="alert alert--success">
         {{ successMessage() }}
       </div>
-
     }
 
     @if (errorMessage()) {
-
       <div class="alert alert--error">
         {{ errorMessage() }}
       </div>
-
     }
 
     <section class="card">
-
       <h2>Professional Information</h2>
 
-      <form
-        [formGroup]="profileForm"
-        (ngSubmit)="saveProfile()">
-
+      <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
         <div class="form-grid">
-
           <!-- Full Name -->
 
           <div class="field">
+            <label for="fullName"> Full Name </label>
 
-            <label for="fullName">
-              Full Name
-            </label>
-
-            <input
-              id="fullName"
-              type="text"
-              formControlName="fullName"
-              [readonly]="!editing()">
-
+            <input id="fullName" type="text" formControlName="fullName" [readonly]="!editing()" />
           </div>
 
           <!-- Email
@@ -72,144 +51,99 @@
           <!-- Specialisation -->
 
           <div class="field">
-
-            <label for="specialisation">
-              Specialisation
-            </label>
+            <label for="specialisation"> Specialisation </label>
 
             @if (!editing()) {
-
               <input
                 type="text"
                 class="readonly-field"
                 [value]="
                   specialisationOptions.find(
-                    s => s.value === profileForm.get('specialisation')?.value
+                    (s) => s.value === profileForm.get('specialisation')?.value
                   )?.label
                 "
-                readonly>
+                readonly
+              />
 
-            }
-
-            @else {
-
-              <select
-                id="specialisation"
-                formControlName="specialisation">
-
+            } @else {
+              <select id="specialisation" formControlName="specialisation">
                 @for (item of specialisationOptions; track item.value) {
-
-                  <option
-                    [value]="item.value">
-
+                  <option [value]="item.value">
                     {{ item.label }}
-
                   </option>
-
                 }
-
               </select>
-
             }
-
           </div>
 
           <!-- Experience -->
 
           <div class="field">
-
-            <label for="yearsOfExperience">
-              Years of Experience
-            </label>
+            <label for="yearsOfExperience"> Years of Experience </label>
 
             <input
               id="yearsOfExperience"
               type="number"
               formControlName="yearsOfExperience"
-              [readonly]="!editing()">
-
+              [readonly]="!editing()"
+            />
           </div>
 
           <!-- Consultation Fee -->
 
           <div class="field">
-
-            <label for="consultationFee">
-              Consultation Fee
-            </label>
+            <label for="consultationFee"> Consultation Fee </label>
 
             <input
               id="consultationFee"
               type="number"
               formControlName="consultationFee"
-              [readonly]="!editing()">
-
+              [readonly]="!editing()"
+            />
           </div>
+          <!-- Availability -->
 
+          <div class="field">
+            <label for="isActive"> Availability </label>
+
+            <label class="switch">
+              <input type="checkbox" formControlName="isActive" (change)="saveProfile()" />
+
+              <span class="slider round"></span>
+            </label>
+
+            <small class="status-text">
+              {{ profileForm.get('isActive')?.value ? 'Available' : 'Unavailable' }}
+            </small>
+          </div>
         </div>
 
         <div class="actions">
-
           @if (!editing()) {
-
-            <button
-              type="button"
-              class="btn btn--primary"
-              (click)="startEditing()">
-
+            <button type="button" class="btn btn--primary" (click)="startEditing()">
               Edit Profile
-
             </button>
 
-            <button
-              type="button"
-              class="btn btn--secondary"
-              (click)="goToChangePassword()">
-
+            <button type="button" class="btn btn--secondary" (click)="goToChangePassword()">
               Change Password
-
             </button>
 
-          }
-
-          @else {
-
-            <button
-              class="btn btn--primary"
-              type="submit"
-              [disabled]="savingProfile()">
-
+          } @else {
+            <button class="btn btn--primary" type="submit" [disabled]="savingProfile()">
               @if (savingProfile()) {
-
                 Saving...
 
-              }
-
-              @else {
-
+              } @else {
                 Save Changes
-
               }
-
             </button>
 
-            <button
-              type="button"
-              class="btn btn--secondary"
-              (click)="cancelEditing()">
-
+            <button type="button" class="btn btn--secondary" (click)="cancelEditing()">
               Cancel
-
             </button>
-
           }
-
         </div>
-
       </form>
-
     </section>
-
   }
-
 </div>
