@@ -2,7 +2,7 @@
   <Folder Name="/Solution Items/">
     <File Path=".gitignore" />
   </Folder>
-  <Project Path="HealthAxis.Admin/HealthAxis.Admin.csproj" Id="63a0bc6e-c4a2-4429-b2f5-11563a10554b" />
+  <Project Path="HealthAxis.Admin/HealthAxis.Admin.csproj" Id="b987f194-b311-4c86-8c71-68dbb8c0a269" />
   <Project Path="HealthAxis.API/HealthAxis.API.csproj" />
   <Project Path="HealthAxis.Shared/HealthAxis.Shared.csproj" Id="e5e9add0-3fb5-4271-8174-4b8768ed3da6" />
   <Project Path="HealthAxisAPI.Tests/HealthAxisAPI.Tests.csproj" Id="f6e867ed-e1d5-4baf-9217-5f112b5dd02f" />

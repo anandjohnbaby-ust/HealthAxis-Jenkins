@@ -1,11 +1,13 @@
-using HealthAxis.API.Models;
 using HealthAxis.API.Data;
+using HealthAxis.API.Messaging;
 using HealthAxis.API.Middlewares;
+using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Implementations;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Implementation;
 using HealthAxis.API.Services.Implementations;
 using HealthAxis.API.Services.Interfaces;
+using HealthAxis.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -190,14 +192,21 @@ builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IHealthRecordRepository, HealthRecordRepository>();
 builder.Services.AddScoped<IHealthRecordService, HealthRecordService>();
 
+builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
-builder.Services.AddScoped<IAdminRepository, AdminRepository>();
+builder.Services.AddHostedService<HeartbeatService>();
 
+builder.Services.AddHostedService<HeartbeatConsumer>();
+
+
+builder.Services.AddSingleton<RabbitMQPublisher>();
+
+builder.Services.AddHostedService<AppointmentEventConsumer>();
 //----------------------------------------------------------
 // AutoMapper
 //----------------------------------------------------------

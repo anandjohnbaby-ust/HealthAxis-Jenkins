@@ -7,9 +7,10 @@ namespace HealthAxis.Admin.Authentication
 {
     public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     {
-        private const string TokenStorageKey = "token";
-
         private readonly IJSRuntime _js;
+
+        private ClaimsPrincipal _currentUser =
+            new(new ClaimsIdentity());
 
         public CustomAuthenticationStateProvider(IJSRuntime js)
         {
@@ -18,38 +19,44 @@ namespace HealthAxis.Admin.Authentication
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var token = await _js.InvokeAsync<string>("localStorage.getItem", TokenStorageKey);
+            Console.WriteLine("GetAuthenticationStateAsync CALLED");
+
+            var token = await _js.InvokeAsync<string>("localStorage.getItem", "token");
+
+            Console.WriteLine("TOKEN = " + token);
 
             if (string.IsNullOrWhiteSpace(token))
             {
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+                Console.WriteLine("NO TOKEN");
+
+                return new AuthenticationState(
+                    new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
-            var claims = ParseClaimsFromJwt(token);
+            var claims = ParseClaimsFromJwt(token).ToList();
+
+            Console.WriteLine("CLAIMS = " + claims.Count);
+
+            foreach (var c in claims)
+            {
+                Console.WriteLine($"{c.Type} = {c.Value}");
+            }
+
             var identity = new ClaimsIdentity(claims, "jwt");
+
+            Console.WriteLine("Authenticated = " + identity.IsAuthenticated);
 
             return new AuthenticationState(new ClaimsPrincipal(identity));
         }
 
-        public void NotifyUserLoggedIn(string token)
+        private static AuthenticationState Anonymous()
         {
-            var claims = ParseClaimsFromJwt(token);
-            var identity = new ClaimsIdentity(claims, "jwt");
-            var currentUser = new ClaimsPrincipal(identity);
-
-            NotifyAuthenticationStateChanged(
-                Task.FromResult(new AuthenticationState(currentUser)));
+            return new AuthenticationState(
+                new ClaimsPrincipal(
+                    new ClaimsIdentity()));
         }
 
-        public void NotifyUserLoggedOut()
-        {
-            var currentUser = new ClaimsPrincipal(new ClaimsIdentity());
-
-            NotifyAuthenticationStateChanged(
-                Task.FromResult(new AuthenticationState(currentUser)));
-        }
-
-        private static List<Claim> ParseClaimsFromJwt(string jwt)
+        private static IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
         {
             var claims = new List<Claim>();
 
@@ -68,12 +75,12 @@ namespace HealthAxis.Admin.Authentication
                 }
 
                 var jsonBytes = Convert.FromBase64String(payload);
-                var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(jsonBytes);
+
+                var keyValuePairs =
+                    JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(jsonBytes);
 
                 if (keyValuePairs is null)
-                {
                     return claims;
-                }
 
                 foreach (var kvp in keyValuePairs)
                 {
@@ -90,16 +97,38 @@ namespace HealthAxis.Admin.Authentication
                     }
                 }
             }
-            catch (FormatException)
+            catch
             {
-                // Malformed base64 payload - treat as unauthenticated.
-            }
-            catch (JsonException)
-            {
-                // Malformed JWT payload - treat as unauthenticated.
+                // Invalid JWT
             }
 
             return claims;
+        }
+
+        public void NotifyUserLoggedIn(string token)
+        {
+            var claims = ParseClaimsFromJwt(token);
+
+            var identity = new ClaimsIdentity(
+                claims,
+                authenticationType: "jwt");
+
+            _currentUser = new ClaimsPrincipal(identity);
+
+            NotifyAuthenticationStateChanged(
+                Task.FromResult(
+                    new AuthenticationState(_currentUser)));
+        }
+
+        public void NotifyUserLoggedOut()
+        {
+            _currentUser =
+                new ClaimsPrincipal(
+                    new ClaimsIdentity());
+
+            NotifyAuthenticationStateChanged(
+                Task.FromResult(
+                    new AuthenticationState(_currentUser)));
         }
     }
 }

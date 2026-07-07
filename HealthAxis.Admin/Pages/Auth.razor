@@ -1,13 +1,11 @@
 ﻿@page "/auth"
 
 @using HealthAxis.Admin.Authentication
-@using HealthAxis.Admin.Configuration
 @using Microsoft.AspNetCore.Components.Authorization
 
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject AuthenticationStateProvider AuthStateProvider
-@inject AppSettings Settings
 
 <h4>Signing in...</h4>
 
@@ -37,11 +35,14 @@
 
         if (string.IsNullOrWhiteSpace(token))
         {
-            Navigation.NavigateTo(Settings.AngularLoginUrl, true);
+            Navigation.NavigateTo("http://localhost:4200/login", true);
             return;
         }
 
-        await JS.InvokeVoidAsync("localStorage.setItem", "token", token);
+        await JS.InvokeVoidAsync(
+            "localStorage.setItem",
+            "token",
+            token);
 
         if (AuthStateProvider is CustomAuthenticationStateProvider provider)
         {

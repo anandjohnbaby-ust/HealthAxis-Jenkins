@@ -112,13 +112,13 @@ export class PatientService {
   }
 
   // =========================================================================
-// 5. DASHBOARD
-// =========================================================================
+  // 5. DASHBOARD
+  // =========================================================================
 
-/** GET /api/patients/dashboard */
-getDashboard(): Observable<PatientDashboard> {
-  return this.http.get<PatientDashboard>(
-    `${this.baseUrl}${API_ENDPOINTS.PATIENTS.DASHBOARD}`
-  );
-}
+  /** GET /api/patients/dashboard */
+  getDashboard(): Observable<PatientDashboard> {
+    return this.http.get<PatientDashboard>(
+      `${this.baseUrl}${API_ENDPOINTS.PATIENTS.DASHBOARD}`
+    );
+  }
 }

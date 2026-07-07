@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using HealthAxis.API.Events;
 using HealthAxis.API.Exceptions;
+using HealthAxis.API.Messaging;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
@@ -16,17 +18,20 @@ namespace HealthAxis.API.Services.Implementations
         private readonly IRepository<Doctor> _doctorRepository;
         private readonly IPatientRepository _patientRepository;
         private readonly IMapper _mapper;
+        private readonly RabbitMQPublisher _publisher;
 
         public AppointmentService(
             IAppointmentRepository appointmentRepository,
             IRepository<Doctor> doctorRepository,
             IPatientRepository patientRepository,
-            IMapper mapper)
+            IMapper mapper,
+            RabbitMQPublisher publisher)
         {
             _appointmentRepository = appointmentRepository;
             _doctorRepository = doctorRepository;
             _patientRepository = patientRepository;
             _mapper = mapper;
+            _publisher = publisher;
         }
 
         public async Task<IEnumerable<AppointmentDto>> GetAllAsync(
@@ -124,6 +129,15 @@ namespace HealthAxis.API.Services.Implementations
                     appointment,
                     ct);
 
+            await _publisher.PublishAsync(new AppointmentEvent
+            {
+                EventType = "AppointmentCreated",
+                AppointmentId = savedAppointment.AppointmentId,
+                PatientId = savedAppointment.PatientId,
+                DoctorId = savedAppointment.DoctorId,
+                OccurredAt = DateTime.UtcNow
+            });
+
             return _mapper.Map<AppointmentDto>(
                 savedAppointment);
         }
@@ -202,6 +216,15 @@ namespace HealthAxis.API.Services.Implementations
             var updatedAppointment =
                 await _appointmentRepository.UpdateAsync(id, appointment, ct);
 
+            await _publisher.PublishAsync(new AppointmentEvent
+            {
+                EventType = appointment.Status.ToString(),
+                AppointmentId = updatedAppointment.AppointmentId,
+                PatientId = updatedAppointment.PatientId,
+                DoctorId = updatedAppointment.DoctorId,
+                OccurredAt = DateTime.UtcNow
+            });
+
             return _mapper.Map<AppointmentDto>(
                 updatedAppointment);
         }
@@ -239,6 +262,15 @@ namespace HealthAxis.API.Services.Implementations
 
             var deletedAppointment =
                 await _appointmentRepository.DeleteAsync(id, ct);
+
+            await _publisher.PublishAsync(new AppointmentEvent
+            {
+                EventType = "AppointmentDeleted",
+                AppointmentId = deletedAppointment.AppointmentId,
+                PatientId = deletedAppointment.PatientId,
+                DoctorId = deletedAppointment.DoctorId,
+                OccurredAt = DateTime.UtcNow
+            });
 
             return _mapper.Map<AppointmentDto>(
                 deletedAppointment);
@@ -278,6 +310,15 @@ namespace HealthAxis.API.Services.Implementations
                 appointmentId,
                 appointment,
                 ct);
+
+            await _publisher.PublishAsync(new AppointmentEvent
+            {
+                EventType = "PatientCancelled",
+                AppointmentId = updatedAppointment.AppointmentId,
+                PatientId = updatedAppointment.PatientId,
+                DoctorId = updatedAppointment.DoctorId,
+                OccurredAt = DateTime.UtcNow
+            });
 
             return _mapper.Map<AppointmentDto>(updatedAppointment);
         }

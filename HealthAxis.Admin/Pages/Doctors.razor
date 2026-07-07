@@ -36,7 +36,7 @@
                     <InputSelect class="form-select"
                                  @bind-Value="selectedSpecialisation"
                                  @bind-Value:after="FilterDoctors">
-                        <option value="">All specialisations</option>
+                        <option value="" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">All specialisations</option>
                         @foreach (var spec in Enum.GetValues<Specialisation>())
                         {
                             <option value="@spec">@spec</option>
@@ -178,10 +178,9 @@
                 {
                     @for (int i = 1; i <= pagedDoctors.TotalPages; i++)
                     {
-                        var page = i;
-                        <button class="btn @(page == currentPage ? "btn-primary" : "btn-outline-primary") btn-sm"
-                                @onclick="() => GoToPage(page)">
-                            @(page)
+                        <button class="btn @(i == currentPage ? "btn-primary" : "btn-outline-primary") btn-sm"
+                                @onclick="() => GoToPage(i)">
+                            @i
                         </button>
                     }
                 }
@@ -327,6 +326,12 @@
     </div>
 }
 
+<style>
+
+
+
+</style>
+
 @code {
 
     private Specialisation? selectedSpecialisation;
@@ -390,7 +395,9 @@
         try
         {
             await DoctorService.CreateDoctor(newDoctor);
+
             await RefreshDoctors();
+
             showForm = false;
         }
         catch (Exception ex)
@@ -406,7 +413,9 @@
         try
         {
             await DoctorService.UpdateDoctor(editingDoctorId, editDoctor);
+
             await RefreshDoctors();
+
             showForm = false;
         }
         catch (Exception ex)

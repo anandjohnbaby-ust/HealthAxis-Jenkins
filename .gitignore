@@ -81,3 +81,5 @@ desktop.ini
 tmp/
 temp/
 *.tmp
+
+HealthAxis.Admin/wwwroot/lib/

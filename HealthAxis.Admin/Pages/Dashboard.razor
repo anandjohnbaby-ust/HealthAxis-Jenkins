@@ -92,6 +92,96 @@ else
     </div>
 }
 
+<style>
+
+    :root {
+        --hx-primary: #155E91;
+        --hx-primary-dark: #0E3A5C;
+        --hx-primary-light: #EAF2F8;
+        --hx-bg: #FAFBFC;
+        --hx-text: #1E293B;
+        --hx-accent: #E2A33B;
+        --hx-border: #E2E8F0;
+    }
+
+    .dashboard-header {
+        background: #ffffff;
+        padding: 24px 30px;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(21, 94, 145, 0.07);
+    }
+
+    .dashboard-header h2 { color: var(--hx-text); }
+
+    .dashboard-card {
+        background: #fff;
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(21, 94, 145, 0.07);
+        transition: transform .25s ease, box-shadow .25s ease;
+        overflow: hidden;
+        position: relative;
+        height: 100%;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 14px 32px rgba(21, 94, 145, 0.14);
+    }
+
+    .dashboard-card::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 5px;
+        height: 100%;
+        background: var(--hx-primary);
+    }
+
+    .dashboard-card.users::before { background: var(--hx-primary); }
+    .dashboard-card.doctors::before { background: #1D7874; }
+    .dashboard-card.patients::before { background: #3B82C4; }
+    .dashboard-card.appointments::before { background: var(--hx-accent); }
+
+    .dashboard-card .card-body {
+        padding: 26px 28px;
+    }
+
+    .card-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+        background: var(--hx-primary-light);
+        color: var(--hx-primary);
+    }
+
+    .dashboard-card.doctors .card-icon { background: #E6F3F1; color: #1D7874; }
+    .dashboard-card.patients .card-icon { background: #E9F0F9; color: #3B82C4; }
+    .dashboard-card.appointments .card-icon { background: #FBF1E1; color: var(--hx-accent); }
+
+    .card-title {
+        font-size: .75rem;
+        letter-spacing: .08rem;
+        text-transform: uppercase;
+        color: #64748B;
+        font-weight: 700;
+    }
+
+    .card-value {
+        font-size: 2.4rem;
+        font-weight: 700;
+        color: var(--hx-text);
+        margin: 8px 0 0;
+        line-height: 1;
+    }
+
+</style>
+
 @code
 {
     private DashboardDto? dashboard;

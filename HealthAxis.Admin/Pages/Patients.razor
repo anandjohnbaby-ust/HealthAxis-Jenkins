@@ -1,5 +1,4 @@
 ﻿@page "/patients"
-@attribute [Authorize]
 
 @using HealthAxis.Admin.Services
 @using HealthAxis.Shared.Common
@@ -109,9 +108,9 @@
 
             <div class="text-muted small">
                 Showing
-                <strong>@(patients.Count == 0 ? 0 : ((currentPage - 1) * PageSize) + 1)</strong>
+                <strong>@(patients.Count == 0 ? 0 : ((currentPage - 1) * pageSize) + 1)</strong>
                 -
-                <strong>@(((currentPage - 1) * PageSize) + patients.Count)</strong>
+                <strong>@(((currentPage - 1) * pageSize) + patients.Count)</strong>
                 of
                 <strong>@(pagedPatients?.TotalCount ?? 0)</strong>
                 patients
@@ -129,10 +128,9 @@
                 {
                     @for (int i = 1; i <= pagedPatients.TotalPages; i++)
                     {
-                        var page = i;
-                        <button class="btn @(page == currentPage ? "btn-primary" : "btn-outline-primary") btn-sm"
-                                @onclick="() => GoToPage(page)">
-                            @(page)
+                        <button class="btn @(i == currentPage ? "btn-primary" : "btn-outline-primary") btn-sm"
+                                @onclick="() => GoToPage(i)">
+                            @i
                         </button>
                     }
                 }
@@ -218,10 +216,7 @@
     private List<PatientDto> patients = [];
 
     private int currentPage = 1;
-
-    // Sonar: "Make 'pageSize' readonly" - this field is never reassigned after construction.
-    private const int PageSize = 10;
-
+    private int pageSize = 10;
     private bool showEditModal;
     private int editingPatientId;
     private string searchText = string.Empty;
@@ -236,7 +231,7 @@
     {
         pagedPatients = await PatientService.GetPatients(
             currentPage,
-            PageSize,
+            pageSize,
             searchText);
 
         patients = pagedPatients?.Items.ToList() ?? [];
@@ -274,8 +269,7 @@
         }
     }
 
-    // Sonar: "Make 'GetGenderBadge' a static method" - it doesn't use instance state.
-    private static string GetGenderBadge(Gender gender)
+    private string GetGenderBadge(Gender gender)
     {
         return gender switch
         {
@@ -289,6 +283,7 @@
     private async Task SearchPatients(ChangeEventArgs e)
     {
         searchText = e.Value?.ToString() ?? "";
+
         currentPage = 1;
 
         await LoadPatients();
