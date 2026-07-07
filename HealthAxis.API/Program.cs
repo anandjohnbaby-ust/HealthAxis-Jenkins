@@ -15,8 +15,24 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Security.Claims;
 using System.Text;
+using Serilog;
+using Serilog.Events;
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+//----------------------------------------------------------
+// Serilog
+//----------------------------------------------------------
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithMachineName()
+    .Enrich.WithThreadId()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 //----------------------------------------------------------
 // Controllers
@@ -132,27 +148,36 @@ builder.Services
         {
             OnMessageReceived = context =>
             {
-                Console.WriteLine($"Authorization Header: {context.Request.Headers.Authorization}");
+                Log.Information(
+                    "Authorization Header: {Authorization}",
+                    context.Request.Headers.Authorization.ToString());
+
                 return Task.CompletedTask;
             },
 
             OnTokenValidated = context =>
             {
-                Console.WriteLine("✅ TOKEN VALIDATED");
+                Log.Information("JWT Token Validated Successfully.");
+
                 return Task.CompletedTask;
             },
 
             OnAuthenticationFailed = context =>
             {
-                Console.WriteLine("❌ AUTH FAILED");
-                Console.WriteLine(context.Exception.ToString());
+                Log.Error(
+                    context.Exception,
+                    "JWT Authentication Failed.");
+
                 return Task.CompletedTask;
             },
 
             OnChallenge = context =>
             {
-                Console.WriteLine($"Challenge Error: {context.Error}");
-                Console.WriteLine($"Description: {context.ErrorDescription}");
+                Log.Warning(
+                    "JWT Challenge. Error: {Error} Description: {Description}",
+                    context.Error,
+                    context.ErrorDescription);
+
                 return Task.CompletedTask;
             }
         };
@@ -279,4 +304,17 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-await app.RunAsync();
+try
+{
+    Log.Information("Starting HealthAxis API...");
+
+    await app.RunAsync();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "HealthAxis API terminated unexpectedly.");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
