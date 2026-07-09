@@ -2,7 +2,6 @@
 using HealthAxis.API.Data;
 using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
-using HealthAxis.API.Repositories.Implementations;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
 using HealthAxis.Shared.Common;
@@ -10,11 +9,10 @@ using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.DTOs.HealthRecordDtos;
-using HealthAxis.Shared.DTOs.PatientDtos;
 using HealthAxis.Shared.Enums;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace HealthAxis.API.Services.Implementations
 {
@@ -24,33 +22,30 @@ namespace HealthAxis.API.Services.Implementations
         private const string DoctorNotFoundMessage = "Doctor not found.";
         private const string DoctorProfileNotFoundMessage = "Doctor profile not found.";
 
+        private readonly IDistributedCache _cache;
+        private readonly ILogger<DoctorService> _logger;
         private readonly IDoctorRepository _doctorRepository;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
-        private readonly IAppointmentService _appointmentService;
-        private readonly IHealthRecordService _healthRecordService;
         private readonly IAppointmentRepository _appointmentRepository;
         private readonly IHealthRecordRepository _healthRecordRepository;
 
         public DoctorService(
             IDoctorRepository repository,
             UserManager<ApplicationUser> userManager,
-            ApplicationDbContext context,
             IMapper mapper,
-            IAppointmentService appointmentService,
-            IHealthRecordService healthRecordService,
             IAppointmentRepository appointmentRepository,
-            IHealthRecordRepository healthRecordRepository)
+            IHealthRecordRepository healthRecordRepository,
+            IDistributedCache cache,
+            ILogger<DoctorService> logger)
         {
             _doctorRepository = repository;
             _userManager = userManager;
-            _context = context;
             _mapper = mapper;
-            _appointmentService = appointmentService;
-            _healthRecordService = healthRecordService;
             _appointmentRepository = appointmentRepository;
             _healthRecordRepository = healthRecordRepository;
+            _cache = cache;
+            _logger = logger;
         }
 
         // Get the Doctor By ID
@@ -89,61 +84,36 @@ namespace HealthAxis.API.Services.Implementations
         // Create Doctor
         public async Task<DoctorDto> CreateDoctor(CreateDoctorDto dto)
         {
-            var existingUser =
-                await _userManager.FindByEmailAsync(dto.Email);
+            if (await _userManager.FindByEmailAsync(dto.Email) != null)
+                throw new BusinessRuleException("Email already exists.");
 
-            if (existingUser != null)
+            var user = new ApplicationUser
             {
+                UserName = dto.Email,
+                Email = dto.Email
+            };
+
+            var result = await _userManager.CreateAsync(user, dto.Password);
+
+            if (!result.Succeeded)
                 throw new BusinessRuleException(
-                    "Email already exists.");
-            }
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
 
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync();
+            await _userManager.AddToRoleAsync(user, "Doctor");
 
-            try
+            var doctor = new Doctor
             {
-                var user = new ApplicationUser
-                {
-                    UserName = dto.Email,
-                    Email = dto.Email
-                };
+                UserId = user.Id,
+                FullName = dto.FullName,
+                Specialisation = dto.Specialisation,
+                YearsOfExperience = dto.YearsOfExperience,
+                ConsultationFee = dto.ConsultationFee,
+                IsActive = true
+            };
 
-                var result =
-                    await _userManager.CreateAsync(user, dto.Password);
+            await _doctorRepository.CreateDoctorAsync(doctor);
 
-                if (!result.Succeeded)
-                {
-                    throw new BusinessRuleException(
-                        string.Join(", ",
-                            result.Errors.Select(e => e.Description)));
-                }
-
-                await _userManager.AddToRoleAsync(user, "Doctor");
-
-                var doctor = new Doctor
-                {
-                    UserId = user.Id,
-                    FullName = dto.FullName,
-                    Specialisation = dto.Specialisation,
-                    YearsOfExperience = dto.YearsOfExperience,
-                    ConsultationFee = dto.ConsultationFee,
-                    IsActive = true
-                };
-
-                _context.Doctors.Add(doctor);
-
-                await _context.SaveChangesAsync();
-
-                await transaction.CommitAsync();
-
-                return _mapper.Map<DoctorDto>(doctor);
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
+            return _mapper.Map<DoctorDto>(doctor);
         }
 
         // Update Doctor
@@ -243,36 +213,6 @@ namespace HealthAxis.API.Services.Implementations
                     ct);
 
             return _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
-        }
-
-        public async Task<AppointmentDto> UpdateAppointmentStatusAsync(
-            int appointmentId,
-            UpdateAppointmentStatusDto dto,
-            CancellationToken ct = default)
-        {
-            return await _appointmentService.UpdateStatusAsync(
-                appointmentId,
-                dto,
-                ct);
-        }
-
-
-        public async Task<HealthRecordDto> AddHealthRecordAsync(
-            CreateHealthRecordDto dto,
-            CancellationToken ct = default)
-        {
-            return await _healthRecordService.AddAsync(
-                dto,
-                ct);
-        }
-
-        public async Task<HealthRecordDto> GetHealthRecordByIdAsync(
-            int id,
-            CancellationToken ct = default)
-        {
-            return await _healthRecordService.GetByRecordIdAsync(
-                id,
-                ct);
         }
 
         public async Task<DoctorDto> GetDoctorByUserIdAsync(

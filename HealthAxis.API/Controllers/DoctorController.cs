@@ -16,18 +16,25 @@ namespace HealthAxis.API.Controllers
     public class DoctorsController : ControllerBase
     {
         private readonly IDoctorService _doctorService;
+        private readonly IAppointmentService _appointmentService;
+        private readonly IHealthRecordService _healthRecordService;
 
-        public DoctorsController(IDoctorService doctorService)
+        public DoctorsController(
+            IDoctorService doctorService,
+            IAppointmentService appointmentService,
+            IHealthRecordService healthRecordService)
         {
             _doctorService = doctorService;
+            _appointmentService = appointmentService;
+            _healthRecordService = healthRecordService;
         }
 
-        [AllowAnonymous]
-        [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetDoctor(int id)
-        {
-            return Ok(await _doctorService.GetDoctorById(id));
-        }
+        //[AllowAnonymous]
+        //[HttpGet("{id:int}")]
+        //public async Task<IActionResult> GetDoctor(int id)
+        //{
+        //    return Ok(await _doctorService.GetDoctorById(id));
+        //}
 
         [Authorize(Roles = "Doctor")]
         [HttpGet("me")]
@@ -94,7 +101,7 @@ namespace HealthAxis.API.Controllers
             [FromBody] UpdateAppointmentStatusDto dto,
             CancellationToken ct)
         {
-            var appointment = await _doctorService.UpdateAppointmentStatusAsync(
+            var appointment = await _appointmentService.UpdateStatusAsync(
                 appointmentId,
                 dto,
                 ct);
@@ -107,7 +114,7 @@ namespace HealthAxis.API.Controllers
             CreateHealthRecordDto dto,
             CancellationToken ct)
         {
-            var record = await _doctorService.AddHealthRecordAsync(
+            var record = await _healthRecordService.AddAsync(
                 dto,
                 ct);
 
@@ -119,7 +126,7 @@ namespace HealthAxis.API.Controllers
             int id,
             CancellationToken ct)
         {
-            var healthRecord = await _doctorService.GetHealthRecordByIdAsync(
+            var healthRecord = await _healthRecordService.GetByRecordIdAsync(
                 id,
                 ct);
 

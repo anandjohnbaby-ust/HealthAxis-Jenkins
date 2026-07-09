@@ -11,6 +11,18 @@ namespace HealthAxis.API.Repositories.Implementations
     {
         public DoctorRepository(ApplicationDbContext context) : base(context) { }
 
+
+        public async Task<Doctor> CreateDoctorAsync(
+            Doctor doctor,
+            CancellationToken ct = default)
+        {
+            await _context.Doctors.AddAsync(doctor, ct);
+
+            await _context.SaveChangesAsync(ct);
+
+            return doctor;
+        }
+
         public async Task<IEnumerable<Doctor>> GetAvailableDoctorsAsync(
             Specialisation? specialisation,
             string? search,

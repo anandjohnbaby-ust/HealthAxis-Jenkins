@@ -8,7 +8,7 @@ import { API_ENDPOINTS } from '../constants/api-endpoints.constants';
 
 // Patient Interfaces
 import { Specialisation } from '../enums/specialisation.enum';
-import { Appointment, BookAppointmentRequest, CancelAppointment, DoctorDto, HealthRecord, Patient, PatientDashboard, UpdatePatientRequest } from '../interfaces/patient-domain.types';
+import { Appointment, BookAppointmentRequest, CancelAppointment, DoctorDto, HealthRecord, Patient, PatientDashboard, TimeSlot, UpdatePatientRequest } from '../interfaces/patient-domain.types';
 
 // Health Record Interfaces
 
@@ -119,6 +119,21 @@ export class PatientService {
   getDashboard(): Observable<PatientDashboard> {
     return this.http.get<PatientDashboard>(
       `${this.baseUrl}${API_ENDPOINTS.PATIENTS.DASHBOARD}`
+    );
+  }
+
+  getAvailableTimeSlots(
+    doctorId: number,
+    date: string
+  ): Observable<TimeSlot[]> {
+
+    const params = new HttpParams()
+      .set('doctorId', doctorId)
+      .set('date', date);
+
+    return this.http.get<TimeSlot[]>(
+      `${this.baseUrl}${API_ENDPOINTS.APPOINTMENTS.AVAILABLE_TIME_SLOTS}`,
+      { params }
     );
   }
 }

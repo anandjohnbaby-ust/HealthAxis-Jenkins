@@ -8,6 +8,10 @@ namespace HealthAxis.API.Repositories.Interfaces
     public interface IDoctorRepository : IRepository<Doctor>
     {
 
+        Task<Doctor> CreateDoctorAsync(
+            Doctor doctor,
+            CancellationToken ct = default);
+
         Task<IEnumerable<Doctor>> GetAvailableDoctorsAsync(
             Specialisation? specialisation,
             string? search,

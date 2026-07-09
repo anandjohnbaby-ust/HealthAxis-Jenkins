@@ -96,6 +96,8 @@ export const API_ENDPOINTS = {
   APPOINTMENTS: {
     BASE: '/appointments',
 
+    AVAILABLE_TIME_SLOTS: '/patients/available-slots',
+    
     UPDATE_STATUS: (id: number | string) =>
       `/appointments/${id}/status`,
 

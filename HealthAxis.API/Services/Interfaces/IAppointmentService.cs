@@ -31,6 +31,11 @@ namespace HealthAxis.API.Services.Interfaces
                     CancelAppointmentDto dto,
                     CancellationToken ct = default);
 
+        Task<List<TimeSlotDto>> GetAvailableSlotsAsync(
+            int doctorId,
+            DateTime date,
+            CancellationToken ct = default);
+
 
     }
 }

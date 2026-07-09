@@ -1,17 +1,10 @@
-﻿using AutoMapper;
-using HealthAxis.API.Data;
-using HealthAxis.API.Exceptions;
-using HealthAxis.API.Models;
-using HealthAxis.API.Repositories.Implementations;
-using HealthAxis.API.Repositories.Interfaces;
+﻿using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
 using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AdminDtos;
-using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.DTOs.PatientDtos;
 using HealthAxis.Shared.Enums;
-using Microsoft.AspNetCore.Identity;
 
 namespace HealthAxis.API.Services.Implementations
 {
@@ -23,7 +16,6 @@ namespace HealthAxis.API.Services.Implementations
         private readonly IAdminRepository _adminRepository;
 
         
-
         public AdminService(
             IDoctorService doctorService,
             IPatientService patientService,

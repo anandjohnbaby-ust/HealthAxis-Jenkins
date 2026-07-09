@@ -14,5 +14,10 @@ namespace HealthAxis.API.Repositories.Interfaces
             DateTime scheduledDate,
             TimeOnly timeSlot,
             CancellationToken ct = default);
+
+        Task<List<TimeOnly>> GetBookedTimeSlotsAsync(
+            int doctorId,
+            DateTime date,
+            CancellationToken ct = default);
     }
 }

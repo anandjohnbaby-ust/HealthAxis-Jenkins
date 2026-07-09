@@ -1,8 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
 using HealthAxis.API.Events;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -80,16 +78,7 @@ public class HeartbeatConsumer : BackgroundService
                 if (heartbeat != null)
                 {
                     _logger.LogInformation(
-                        """
-                        =============================
-                        HEARTBEAT RECEIVED
-                        =============================
-                        Service : {Service}
-                        Status  : {Status}
-                        Machine : {Machine}
-                        Time    : {Time}
-                        =============================
-                        """,
+                        "HEARTBEAT RECEIVED | Service: {Service} | Status: {Status} | Machine: {Machine} | Time: {Time}",
                         heartbeat.ServiceName,
                         heartbeat.Status,
                         heartbeat.MachineName,

@@ -2,21 +2,21 @@ using HealthAxis.API.Data;
 using HealthAxis.API.Messaging;
 using HealthAxis.API.Middlewares;
 using HealthAxis.API.Models;
+using HealthAxis.API.Options;
 using HealthAxis.API.Repositories.Implementations;
 using HealthAxis.API.Repositories.Interfaces;
+using HealthAxis.API.Services;
 using HealthAxis.API.Services.Implementation;
 using HealthAxis.API.Services.Implementations;
 using HealthAxis.API.Services.Interfaces;
-using HealthAxis.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Serilog;
 using System.Security.Claims;
 using System.Text;
-using Serilog;
-using Serilog.Events;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -232,6 +232,23 @@ builder.Services.AddHostedService<HeartbeatConsumer>();
 builder.Services.AddSingleton<RabbitMQPublisher>();
 
 builder.Services.AddHostedService<AppointmentEventConsumer>();
+
+//----------------------------------------------------------
+// Redis Configurations
+//----------------------------------------------------------
+
+builder.Services.Configure<GarnetOptions>(
+    builder.Configuration.GetSection("Garnet"));
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration =
+        builder.Configuration["Garnet:ConnectionString"];
+
+    options.InstanceName =
+        builder.Configuration["Garnet:InstanceName"];
+});
+
 //----------------------------------------------------------
 // AutoMapper
 //----------------------------------------------------------
@@ -243,18 +260,15 @@ builder.Services.AddAutoMapper(
 //----------------------------------------------------------
 // CORS
 //----------------------------------------------------------
-// During development allow the admin SPA to call the API. Be cautious with AllowAnyOrigin in production.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAdmin",
         policy => policy
-            // Allow common local dev origins (include http and https ports)
             .WithOrigins("https://localhost:7197", "http://localhost:5036", "https://localhost:7207")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials());
 
-    // Fallback permissive policy for development if origin mismatches during local testing
     options.AddPolicy("AllowAllDev",
         p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
@@ -287,10 +301,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Apply CORS before authentication/authorization
 if (app.Environment.IsDevelopment())
 {
-    // Use permissive policy during development to avoid CORS issues while testing from different local ports
     app.UseCors("AllowAllDev");
 }
 else

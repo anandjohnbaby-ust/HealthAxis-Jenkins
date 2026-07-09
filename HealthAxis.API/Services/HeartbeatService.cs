@@ -1,8 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
 using HealthAxis.API.Events;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
 namespace HealthAxis.API.Services

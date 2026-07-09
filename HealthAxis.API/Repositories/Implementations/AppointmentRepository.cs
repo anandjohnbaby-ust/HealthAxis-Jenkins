@@ -5,12 +5,24 @@ using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 namespace HealthAxis.API.Repositories.Implementations
 {
     public class AppointmentRepository : Repository<Appointment>, IAppointmentRepository
     {
-        public AppointmentRepository(ApplicationDbContext context) : base(context)
-        { }
+        private readonly IDistributedCache _cache;
+        private readonly ILogger<AppointmentRepository> _logger;
+
+        public AppointmentRepository(
+            ApplicationDbContext context,
+            IDistributedCache cache,
+            ILogger<AppointmentRepository> logger)
+            : base(context)
+        {
+            _cache = cache;
+            _logger = logger;
+        }
+
         public async Task<PagedResult<AppointmentReportDto>> GetAppointmentReportAsync(
             PaginationRequest request)
         {
@@ -66,5 +78,20 @@ namespace HealthAxis.API.Repositories.Implementations
                 a.Status != AppointmentStatus.Cancelled,
                 ct);
         }
+
+        public async Task<List<TimeOnly>> GetBookedTimeSlotsAsync(
+            int doctorId,
+            DateTime date,
+            CancellationToken ct = default)
+        {
+            return await _context.Appointments
+                .Where(a =>
+                    a.DoctorId == doctorId &&
+                    a.ScheduledDate.Date == date.Date &&
+                    a.Status != AppointmentStatus.Cancelled)
+                .Select(a => a.TimeSlot)
+                .ToListAsync(ct);
+        }
+
     }
 }

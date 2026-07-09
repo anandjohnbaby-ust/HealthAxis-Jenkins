@@ -1,14 +1,11 @@
 ﻿using AutoMapper;
 using HealthAxis.API.Exceptions;
-using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
 using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
-using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.DTOs.HealthRecordDtos;
 using HealthAxis.Shared.DTOs.PatientDtos;
-using HealthAxis.Shared.Enums;
 
 namespace HealthAxis.API.Services.Implementations
 {
@@ -20,22 +17,13 @@ namespace HealthAxis.API.Services.Implementations
         #region Dependency Injection
 
         private readonly IPatientRepository _patientRepository;
-        private readonly IAppointmentService _appointmentService;
-        private readonly IDoctorService _doctorService;
         private readonly IMapper _mapper;
 
         public PatientService(
             IPatientRepository patientRepository,
-            IAppointmentService appointmentService,
-            IDoctorService doctorService,
             IMapper mapper)
         {
-            _patientRepository =
-                patientRepository;
-
-            _appointmentService = appointmentService;
-
-            _doctorService = doctorService;
+            _patientRepository = patientRepository;
 
             _mapper = mapper;
         }
@@ -113,25 +101,6 @@ namespace HealthAxis.API.Services.Implementations
                 (patient.HealthRecords);
         }
 
-
-        public async Task<AppointmentDto> BookAppointmentAsync(
-            CreateAppointmentDto dto,
-            CancellationToken ct = default)
-        {
-            return await _appointmentService.BookAppointmentAsync(dto, ct);
-        }
-
-        public async Task<IEnumerable<DoctorDto>> GetAvailableDoctorsAsync(
-            Specialisation? specialisation,
-            string? search,
-            CancellationToken ct = default)
-        {
-            return await _doctorService.GetAvailableDoctorsAsync(
-                specialisation,
-                search,
-                ct);
-        }
-
         public async Task<IEnumerable<AppointmentDto>> GetAppointmentsByPatientIdAsync(
             int patientId,
             CancellationToken ct = default)
@@ -149,19 +118,6 @@ namespace HealthAxis.API.Services.Implementations
                     ct);
 
             return _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
-        }
-
-        public async Task<AppointmentDto> CancelAppointmentByPatientAsync(
-            int patientId,
-            int appointmentId,
-            CancelAppointmentDto dto,
-            CancellationToken ct = default)
-        {
-            return await _appointmentService.CancelAppointmentByPatientAsync(
-                patientId,
-                appointmentId,
-                dto,
-                ct);
         }
 
         public async Task<PatientDashboardDto> GetDashboardAsync(

@@ -28,7 +28,6 @@ namespace HealthAxis.API.Services.Interfaces
             string? search,
             CancellationToken ct = default);
 
-        // Doctor Portal
         Task<IEnumerable<AppointmentDto>> GetAppointmentsAsync(
             string userId,
             CancellationToken ct = default);
@@ -39,19 +38,6 @@ namespace HealthAxis.API.Services.Interfaces
 
         Task<IEnumerable<AppointmentDto>> GetWeeklyAppointmentsAsync(
             string userId,
-            CancellationToken ct = default);
-
-        Task<AppointmentDto> UpdateAppointmentStatusAsync(
-            int appointmentId,
-            UpdateAppointmentStatusDto dto,
-            CancellationToken ct = default);
-
-        Task<HealthRecordDto> AddHealthRecordAsync(
-            CreateHealthRecordDto dto,
-            CancellationToken ct = default);
-
-        Task<HealthRecordDto> GetHealthRecordByIdAsync(
-            int id,
             CancellationToken ct = default);
 
         Task<DoctorDto> GetDoctorByUserIdAsync(

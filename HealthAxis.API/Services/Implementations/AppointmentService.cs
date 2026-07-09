@@ -9,6 +9,8 @@ using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.Enums;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace HealthAxis.API.Services.Implementations
 {
@@ -19,19 +21,38 @@ namespace HealthAxis.API.Services.Implementations
         private readonly IPatientRepository _patientRepository;
         private readonly IMapper _mapper;
         private readonly RabbitMQPublisher _publisher;
+        private readonly IDistributedCache _cache;
+        private readonly ILogger<AppointmentService> _logger;
+
+        private static readonly List<TimeSlotDto> AllTimeSlots =
+        [
+            new() { Value = "09:00:00", Label = "09:00 AM - 10:00 AM" },
+            new() { Value = "10:00:00", Label = "10:00 AM - 11:00 AM" },
+            new() { Value = "11:00:00", Label = "11:00 AM - 12:00 PM" },
+            new() { Value = "12:00:00", Label = "12:00 PM - 01:00 PM" },
+            new() { Value = "13:00:00", Label = "01:00 PM - 02:00 PM" },
+            new() { Value = "14:00:00", Label = "02:00 PM - 03:00 PM" },
+            new() { Value = "15:00:00", Label = "03:00 PM - 04:00 PM" },
+            new() { Value = "16:00:00", Label = "04:00 PM - 05:00 PM" },
+            new() { Value = "17:00:00", Label = "05:00 PM - 06:00 PM" }
+        ];
 
         public AppointmentService(
             IAppointmentRepository appointmentRepository,
             IRepository<Doctor> doctorRepository,
             IPatientRepository patientRepository,
             IMapper mapper,
-            RabbitMQPublisher publisher)
+            RabbitMQPublisher publisher,
+            IDistributedCache cache,
+            ILogger<AppointmentService> logger)
         {
             _appointmentRepository = appointmentRepository;
             _doctorRepository = doctorRepository;
             _patientRepository = patientRepository;
             _mapper = mapper;
             _publisher = publisher;
+            _cache = cache; 
+            _logger = logger;
         }
 
         public async Task<IEnumerable<AppointmentDto>> GetAllAsync(
@@ -42,6 +63,77 @@ namespace HealthAxis.API.Services.Implementations
 
             return _mapper.Map<IEnumerable<AppointmentDto>>(
                 appointments);
+        }
+
+        public async Task<List<TimeSlotDto>> GetAvailableSlotsAsync(
+            int doctorId,
+            DateTime date,
+            CancellationToken ct = default)
+        {
+            var cacheKey = $"available-slots:{doctorId}:{date:yyyy-MM-dd}";
+
+            _logger.LogInformation(
+                "Checking available slots cache. DoctorId: {DoctorId}, Date: {Date}, CacheKey: {CacheKey}",
+                doctorId,
+                date.ToString("yyyy-MM-dd"),
+                cacheKey);
+
+            // ===========================
+            // Check Redis Cache
+            // ===========================
+            var cachedData = await _cache.GetStringAsync(cacheKey, ct);
+
+            if (!string.IsNullOrWhiteSpace(cachedData))
+            {
+                _logger.LogInformation(
+                    "Cache HIT for available slots. DoctorId: {DoctorId}, Date: {Date}",
+                    doctorId,
+                    date.ToString("yyyy-MM-dd"));
+
+                return JsonSerializer.Deserialize<List<TimeSlotDto>>(cachedData)!
+                       ?? [];
+            }
+
+            _logger.LogInformation(
+                "Cache MISS for available slots. DoctorId: {DoctorId}, Date: {Date}. Fetching from database...",
+                doctorId,
+                date.ToString("yyyy-MM-dd"));
+
+            // ===========================
+            // Fetch from Database
+            // ===========================
+            var bookedSlots = await _appointmentRepository
+                .GetBookedTimeSlotsAsync(
+                    doctorId,
+                    date,
+                    ct);
+
+            var availableSlots = AllTimeSlots
+                .Where(slot =>
+                    !bookedSlots.Contains(TimeOnly.Parse(slot.Value)))
+                .ToList();
+
+            // ===========================
+            // Store in Redis
+            // ===========================
+            var options = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            };
+
+            await _cache.SetStringAsync(
+                cacheKey,
+                JsonSerializer.Serialize(availableSlots),
+                options,
+                ct);
+
+            _logger.LogInformation(
+                "Available slots cached successfully. DoctorId: {DoctorId}, Date: {Date}, SlotsCount: {Count}",
+                doctorId,
+                date.ToString("yyyy-MM-dd"),
+                availableSlots.Count);
+
+            return availableSlots;
         }
 
         // Get Appointment Report
@@ -128,6 +220,10 @@ namespace HealthAxis.API.Services.Implementations
                 await _appointmentRepository.AddAsync(
                     appointment,
                     ct);
+
+            await _cache.RemoveAsync(
+                $"available-slots:{savedAppointment.DoctorId}:{savedAppointment.ScheduledDate:yyyy-MM-dd}",
+                ct);
 
             await _publisher.PublishAsync(new AppointmentEvent
             {
@@ -309,6 +405,10 @@ namespace HealthAxis.API.Services.Implementations
             var updatedAppointment = await _appointmentRepository.UpdateAsync(
                 appointmentId,
                 appointment,
+                ct);
+
+            await _cache.RemoveAsync(
+                $"available-slots:{updatedAppointment.DoctorId}:{updatedAppointment.ScheduledDate:yyyy-MM-dd}",
                 ct);
 
             await _publisher.PublishAsync(new AppointmentEvent

@@ -98,8 +98,6 @@
 
             <option [ngValue]="doc.doctorId">
               {{ doc.fullName }}
-              <!-- — {{ doc.yearsOfExperience }} yrs
-              — ₹{{ doc.consultationFee }} -->
             </option>
 
           }
@@ -136,40 +134,58 @@
 
     </div>
 
-<!-- ================= Time ================= -->
+    <!-- ================= Time Slot ================= -->
 
-<div class="field">
+    <div class="field">
 
-  <label for="timeSlot">
-    Time Slot
-  </label>
+      <label for="timeSlot">
+        Time Slot
+      </label>
 
-  <select
-    id="timeSlot"
-    formControlName="timeSlot">
+      <select
+        id="timeSlot"
+        formControlName="timeSlot"
+        [disabled]="
+          !bookingForm.get('doctorId')?.value ||
+          !bookingForm.get('scheduledDate')?.value">
 
-    <option [ngValue]="null">
-      Select a time slot
-    </option>
+        @if (!bookingForm.get('doctorId')?.value ||
+             !bookingForm.get('scheduledDate')?.value) {
 
-    @for (slot of timeSlots; track slot.value) {
+          <option value="">
+            Select doctor and date first
+          </option>
 
-      <option [value]="slot.value">
+        } @else if (timeSlots.length === 0) {
 
-        {{ slot.label }}
+          <option value="">
+            No available time slots
+          </option>
 
-      </option>
+        } @else {
 
-    }
+          <option value="">
+            Select a time slot
+          </option>
 
-  </select>
+          @for (slot of timeSlots; track slot.value) {
 
-  <app-input-error
-    [control]="bookingForm.get('timeSlot')"
-    [message]="VALIDATION_MESSAGES.REQUIRED('Time slot')">
-  </app-input-error>
+            <option [value]="slot.value">
+              {{ slot.label }}
+            </option>
 
-</div>
+          }
+
+        }
+
+      </select>
+
+      <app-input-error
+        [control]="bookingForm.get('timeSlot')"
+        [message]="VALIDATION_MESSAGES.REQUIRED('Time slot')">
+      </app-input-error>
+
+    </div>
 
     <!-- ================= Submit ================= -->
 

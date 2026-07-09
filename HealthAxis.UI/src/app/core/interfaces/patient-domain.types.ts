@@ -120,3 +120,8 @@ export interface PatientDashboard {
   totalHealthRecords: number;
   nextAppointment: DashboardAppointment | null;
 }
+
+export interface TimeSlot {
+  value: string;
+  label: string;
+}

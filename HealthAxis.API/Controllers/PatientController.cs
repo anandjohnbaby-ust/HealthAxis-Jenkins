@@ -1,6 +1,4 @@
-﻿using HealthAxis.API.Services.Implementations;
-using HealthAxis.API.Services.Interfaces;
-using HealthAxis.Shared.Common;
+﻿using HealthAxis.API.Services.Interfaces;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.DTOs.HealthRecordDtos;
@@ -8,7 +6,6 @@ using HealthAxis.Shared.DTOs.PatientDtos;
 using HealthAxis.Shared.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace HealthAxis.API.Controllers
 {
@@ -18,12 +15,19 @@ namespace HealthAxis.API.Controllers
     public class PatientsController : ControllerBase
     {
         #region Dependency Injection
+
         private readonly IPatientService _patientService;
+        private readonly IDoctorService _doctorService;
+        private readonly IAppointmentService _appointmentService;
 
         public PatientsController(
-            IPatientService patientService)
+            IPatientService patientService,
+            IDoctorService doctorService,
+            IAppointmentService appointmentService)
         {
             _patientService = patientService;
+            _doctorService = doctorService;
+            _appointmentService = appointmentService;
         }
 
         #endregion
@@ -60,7 +64,7 @@ namespace HealthAxis.API.Controllers
         {
             dto.PatientId = id;
 
-            var appointment = await _patientService.BookAppointmentAsync(dto, ct);
+            var appointment = await _appointmentService.BookAppointmentAsync(dto, ct);
 
             return CreatedAtAction(
                 nameof(BookAppointment),
@@ -75,7 +79,7 @@ namespace HealthAxis.API.Controllers
             [FromQuery] string? search,
             CancellationToken ct)
         {
-            var doctors = await _patientService.GetAvailableDoctorsAsync(
+            var doctors = await _doctorService.GetAvailableDoctorsAsync(
                 specialisation,
                 search,
                 ct);
@@ -104,7 +108,7 @@ namespace HealthAxis.API.Controllers
             CancellationToken ct)
         {
             var appointment =
-                await _patientService.CancelAppointmentByPatientAsync(
+                await _appointmentService.CancelAppointmentByPatientAsync(
                     patientId,
                     appointmentId,
                     dto,
@@ -141,6 +145,17 @@ namespace HealthAxis.API.Controllers
             return Ok(dashboard);
         }
 
+        [HttpGet("available-slots")]
+        public async Task<IActionResult> GetAvailableSlots(
+            int doctorId,
+            DateTime date,
+            CancellationToken ct)
+        {
+            var slots = await _appointmentService
+                .GetAvailableSlotsAsync(doctorId, date, ct);
+
+            return Ok(slots);
+        }
 
     }
 }

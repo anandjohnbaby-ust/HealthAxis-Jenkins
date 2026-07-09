@@ -27,23 +27,8 @@ namespace HealthAxis.API.Services.Interfaces
             int patientId,
             CancellationToken ct = default);
 
-        Task<AppointmentDto> BookAppointmentAsync(
-            CreateAppointmentDto dto,
-            CancellationToken ct = default);
-
-        Task<IEnumerable<DoctorDto>> GetAvailableDoctorsAsync(
-            Specialisation? specialisation,
-            string? search,
-            CancellationToken ct = default);
-
         Task<IEnumerable<AppointmentDto>> GetAppointmentsByPatientIdAsync(
             int patientId,
-            CancellationToken ct = default);
-
-        Task<AppointmentDto> CancelAppointmentByPatientAsync(
-            int patientId,
-            int appointmentId,
-            CancelAppointmentDto dto,
             CancellationToken ct = default);
 
         Task<PatientDashboardDto> GetDashboardAsync(
