@@ -26,54 +26,41 @@
           <!-- Full Name -->
 
           <div class="field">
-            <label for="fullName"> Full Name </label>
+            <label for="fullName">Full Name</label>
 
             <input id="fullName" type="text" formControlName="fullName" [readonly]="!editing()" />
           </div>
 
-          <!-- Email
+          <!-- Email -->
 
           <div class="field">
-
-            <label for="email">
-              Email
-            </label>
+            <label for="email"> Email </label>
 
             <input
               id="email"
               type="email"
               formControlName="email"
+              class="readonly-field"
               readonly
-              class="readonly-field"> -->
-
-          <!-- </div> -->
+            />
+          </div>
 
           <!-- Specialisation -->
 
           <div class="field">
             <label for="specialisation"> Specialisation </label>
 
-            @if (!editing()) {
-              <input
-                type="text"
-                class="readonly-field"
-                [value]="
-                  specialisationOptions.find(
-                    (s) => s.value === profileForm.get('specialisation')?.value
-                  )?.label
-                "
-                readonly
-              />
-
-            } @else {
-              <select id="specialisation" formControlName="specialisation">
-                @for (item of specialisationOptions; track item.value) {
-                  <option [value]="item.value">
-                    {{ item.label }}
-                  </option>
-                }
-              </select>
-            }
+            <input
+              id="specialisation"
+              type="text"
+              class="readonly-field"
+              [value]="
+                specialisationOptions.find(
+                  (s) => s.value === profileForm.get('specialisation')?.value
+                )?.label ?? ''
+              "
+              readonly
+            />
           </div>
 
           <!-- Experience -->
@@ -127,12 +114,10 @@
             <button type="button" class="btn btn--secondary" (click)="goToChangePassword()">
               Change Password
             </button>
-
           } @else {
             <button class="btn btn--primary" type="submit" [disabled]="savingProfile()">
               @if (savingProfile()) {
                 Saving...
-
               } @else {
                 Save Changes
               }

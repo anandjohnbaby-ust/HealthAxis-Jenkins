@@ -85,39 +85,52 @@ namespace HealthAxis.API.Services.Implementations
             return _mapper.Map<PatientDto>(updatedPatient);
         }
 
-        public async Task<IEnumerable<HealthRecordDto>> GetHealthRecordsByPatientId(int patientId, CancellationToken ct = default)
-        {
-            var patient =
-                await _patientRepository
-                    .GetHealthRecordsByPatientId(patientId, ct);
-
-            if (patient is null)
-            {
-                throw new NotFoundException(
-                    $"Patient with ID {patientId} not found");
-            }
-
-            return _mapper.Map<IEnumerable<HealthRecordDto>>
-                (patient.HealthRecords);
-        }
-
-        public async Task<IEnumerable<AppointmentDto>> GetAppointmentsByPatientIdAsync(
+        public async Task<PagedResult<HealthRecordDto>> GetHealthRecordsByPatientId(
             int patientId,
+            PaginationRequest request,
             CancellationToken ct = default)
         {
-            var patient = await _patientRepository.GetByIdAsync(patientId, ct);
+            var records = await _patientRepository
+                .GetHealthRecordsByPatientIdAsync(
+                    patientId,
+                    request,
+                    ct);
+
+            return new PagedResult<HealthRecordDto>
+            {
+                Items = _mapper.Map<List<HealthRecordDto>>(records.Items),
+                TotalCount = records.TotalCount,
+                PageNumber = records.PageNumber,
+                PageSize = records.PageSize
+            };
+        }
+
+        public async Task<PagedResult<AppointmentDto>> GetAppointmentsByPatientIdAsync(
+            int patientId,
+            PaginationRequest request,
+            CancellationToken ct = default)
+        {
+            var patient = await _patientRepository.GetByIdAsync(
+                patientId,
+                ct);
 
             if (patient is null)
             {
                 throw new NotFoundException(PatientNotFoundMessage);
             }
 
-            var appointments =
-                await _patientRepository.GetAppointmentsByPatientIdAsync(
-                    patientId,
-                    ct);
+            var appointments = await _patientRepository.GetAppointmentsByPatientIdAsync(
+                patientId,
+                request,
+                ct);
 
-            return _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
+            return new PagedResult<AppointmentDto>
+            {
+                Items = _mapper.Map<List<AppointmentDto>>(appointments.Items),
+                TotalCount = appointments.TotalCount,
+                PageNumber = appointments.PageNumber,
+                PageSize = appointments.PageSize
+            };
         }
 
         public async Task<PatientDashboardDto> GetDashboardAsync(

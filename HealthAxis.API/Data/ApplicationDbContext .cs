@@ -20,11 +20,12 @@ namespace HealthAxis.API.Data
 
         public DbSet<HealthRecord> HealthRecords { get; set; }
 
+        public DbSet<Notification> Notifications { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            // Configure one-to-one relationship
             builder.Entity<Patient>()
                 .HasOne(p => p.User)
                 .WithOne(u => u.Patient)
@@ -35,14 +36,19 @@ namespace HealthAxis.API.Data
                 .WithOne(u => u.Doctor)
                 .HasForeignKey<Doctor>(d => d.UserId);
 
-            // Restrict cascade deletes
+            // Appointment ↔ HealthRecord
+            builder.Entity<Appointment>()
+                .HasOne(a => a.HealthRecord)
+                .WithOne(h => h.Appointment)
+                .HasForeignKey<HealthRecord>(h => h.AppointmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             foreach (var relationship in builder.Model
                          .GetEntityTypes()
                          .SelectMany(e => e.GetForeignKeys()))
             {
                 relationship.DeleteBehavior = DeleteBehavior.Restrict;
             }
-
         }
     }
 }

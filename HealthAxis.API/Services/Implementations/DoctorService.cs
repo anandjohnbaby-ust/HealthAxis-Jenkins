@@ -64,12 +64,14 @@ namespace HealthAxis.API.Services.Implementations
             PaginationRequest request,
             Specialisation? specialisation,
             string? search,
+            bool? isActive,
             CancellationToken ct = default)
         {
             var pagedDoctors = await _doctorRepository.GetDoctorsAsync(
                 request,
                 specialisation,
                 search,
+                isActive,
                 ct);
 
             return new PagedResult<DoctorDto>
@@ -140,61 +142,104 @@ namespace HealthAxis.API.Services.Implementations
         }
 
 
-        public async Task<IEnumerable<DoctorDto>> GetAvailableDoctorsAsync(
+        public async Task<PagedResult<DoctorDto>> GetAvailableDoctorsAsync(
             Specialisation? specialisation,
             string? search,
+            PaginationRequest request,
             CancellationToken ct = default)
         {
-            var doctors = await _doctorRepository.GetAvailableDoctorsAsync(
+            var result = await _doctorRepository.GetAvailableDoctorsAsync(
                 specialisation,
                 search,
+                request,
                 ct);
 
-            return _mapper.Map<IEnumerable<DoctorDto>>(doctors);
+            return new PagedResult<DoctorDto>
+            {
+                Items = _mapper.Map<List<DoctorDto>>(result.Items),
+                TotalCount = result.TotalCount,
+                PageNumber = result.PageNumber,
+                PageSize = result.PageSize
+            };
         }
 
         // Doctor portal
-        public async Task<IEnumerable<AppointmentDto>> GetAppointmentsAsync(
+        public async Task<PagedResult<AppointmentDto>> GetAppointmentsAsync(
             string userId,
+            PaginationRequest request,
+            string? search = null,
+            AppointmentStatus? status = null,
+            DateTime? date = null,
             CancellationToken ct = default)
         {
             var doctor = await _doctorRepository.GetByUserIdAsync(userId, ct);
 
             if (doctor == null)
+            {
                 throw new NotFoundException(DoctorNotFoundMessage);
+            }
 
-            var appointments = await _doctorRepository
-                .GetAppointmentsAsync(doctor.DoctorId, ct);
+            var pagedAppointments = await _doctorRepository.GetAppointmentsAsync(
+                doctor.DoctorId,
+                request,
+                search,
+                status,
+                date,
+                ct);
 
-            return _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
+            return new PagedResult<AppointmentDto>
+            {
+                Items = _mapper.Map<List<AppointmentDto>>(pagedAppointments.Items),
+                TotalCount = pagedAppointments.TotalCount,
+                PageNumber = pagedAppointments.PageNumber,
+                PageSize = pagedAppointments.PageSize
+            };
         }
 
-        public async Task<IEnumerable<AppointmentDto>> GetTodaysAppointmentsAsync(
-            string userId,
-            CancellationToken ct = default)
+        public async Task<PagedResult<AppointmentDto>> GetTodaysAppointmentsAsync(
+           string userId,
+           PaginationRequest request,
+           string? search = null,
+           AppointmentStatus? status = null,
+           CancellationToken ct = default)
         {
             var doctor = await _doctorRepository.GetByUserIdAsync(userId, ct);
 
             if (doctor == null)
+            {
                 throw new NotFoundException(DoctorNotFoundMessage);
+            }
 
-            var appointments = await _doctorRepository
-                .GetTodaysAppointmentsAsync(
-                    doctor.DoctorId,
-                    DateTime.Today,
-                    ct);
+            var pagedAppointments = await _doctorRepository.GetTodaysAppointmentsAsync(
+                doctor.DoctorId,
+                DateTime.Today,
+                request,
+                search,
+                status,
+                ct);
 
-            return _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
+            return new PagedResult<AppointmentDto>
+            {
+                Items = _mapper.Map<List<AppointmentDto>>(pagedAppointments.Items),
+                TotalCount = pagedAppointments.TotalCount,
+                PageNumber = pagedAppointments.PageNumber,
+                PageSize = pagedAppointments.PageSize
+            };
         }
-
-        public async Task<IEnumerable<AppointmentDto>> GetWeeklyAppointmentsAsync(
-            string userId,
-            CancellationToken ct = default)
+        public async Task<PagedResult<AppointmentDto>> GetWeeklyAppointmentsAsync(
+             string userId,
+             PaginationRequest request,
+             string? search = null,
+             AppointmentStatus? status = null,
+             DateTime? date = null,
+             CancellationToken ct = default)
         {
             var doctor = await _doctorRepository.GetByUserIdAsync(userId, ct);
 
             if (doctor == null)
+            {
                 throw new NotFoundException(DoctorNotFoundMessage);
+            }
 
             DateTime today = DateTime.Today;
 
@@ -205,14 +250,23 @@ namespace HealthAxis.API.Services.Implementations
             DateTime startOfWeek = today.AddDays(-diff);
             DateTime endOfWeek = startOfWeek.AddDays(6);
 
-            var appointments = await _doctorRepository
-                .GetWeeklyAppointmentsAsync(
-                    doctor.DoctorId,
-                    startOfWeek,
-                    endOfWeek,
-                    ct);
+            var pagedAppointments = await _doctorRepository.GetWeeklyAppointmentsAsync(
+                doctor.DoctorId,
+                startOfWeek,
+                endOfWeek,
+                request,
+                search,
+                status,
+                date,
+                ct);
 
-            return _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
+            return new PagedResult<AppointmentDto>
+            {
+                Items = _mapper.Map<List<AppointmentDto>>(pagedAppointments.Items),
+                TotalCount = pagedAppointments.TotalCount,
+                PageNumber = pagedAppointments.PageNumber,
+                PageSize = pagedAppointments.PageSize
+            };
         }
 
         public async Task<DoctorDto> GetDoctorByUserIdAsync(

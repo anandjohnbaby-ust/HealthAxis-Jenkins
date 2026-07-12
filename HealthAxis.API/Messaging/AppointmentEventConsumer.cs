@@ -1,150 +1,108 @@
-﻿using System.Text;
-using System.Text.Json;
-using HealthAxis.API.Events;
-using Microsoft.Extensions.Hosting;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
+﻿using HealthAxis.API.Events;
+using HealthAxis.API.Services.Interfaces;
+using MassTransit;
 
 namespace HealthAxis.API.Messaging
 {
-    public class AppointmentEventConsumer : BackgroundService
+    public class AppointmentEventConsumer : IConsumer<AppointmentEvent>
     {
-        private readonly IConfiguration _configuration;
         private readonly ILogger<AppointmentEventConsumer> _logger;
-
-        private IConnection? _connection;
-        private IChannel? _channel;
+        private readonly INotificationService _notificationService;
 
         public AppointmentEventConsumer(
-            IConfiguration configuration,
-            ILogger<AppointmentEventConsumer> logger)
+            ILogger<AppointmentEventConsumer> logger,
+            INotificationService notificationService)
         {
-            _configuration = configuration;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
-        public override async Task StartAsync(CancellationToken cancellationToken)
+        public async Task Consume(
+            ConsumeContext<AppointmentEvent> context)
         {
-            var rabbitConfig = _configuration.GetSection("RabbitMQ");
-
-            var factory = new ConnectionFactory
-            {
-                HostName = rabbitConfig["HostName"],
-                Port = int.Parse(rabbitConfig["Port"]!),
-                UserName = rabbitConfig["UserName"],
-                Password = rabbitConfig["Password"],
-                VirtualHost = rabbitConfig["VirtualHost"]
-            };
-
-            _connection = await factory.CreateConnectionAsync(cancellationToken);
-
-            _channel = await _connection.CreateChannelAsync(
-                cancellationToken: cancellationToken);
+            var message = context.Message;
 
             _logger.LogInformation(
-                "AppointmentEventConsumer started and connected to RabbitMQ.");
+                "Received Appointment Event: {EventType}, AppointmentId: {AppointmentId}",
+                message.EventType,
+                message.AppointmentId);
 
-            await base.StartAsync(cancellationToken);
-        }
+            string title;
+            string body;
 
-        protected override async Task ExecuteAsync(
-            CancellationToken stoppingToken)
-        {
-            if (_channel == null)
-                return;
-
-            var queueName =
-                _configuration.GetSection("RabbitMQ")["AppointmentQueue"]!;
-
-            await _channel.QueueDeclareAsync(
-                queue: queueName,
-                durable: true,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null,
-                cancellationToken: stoppingToken);
-
-            var consumer =
-                new AsyncEventingBasicConsumer(_channel);
-
-            consumer.ReceivedAsync += async (sender, eventArgs) =>
+            switch (message.EventType)
             {
-                try
-                {
-                    var body = eventArgs.Body.ToArray();
+                case "AppointmentCreated":
 
-                    var json = Encoding.UTF8.GetString(body);
+                    title = "New Appointment";
 
-                    var appointmentEvent =
-                        JsonSerializer.Deserialize<AppointmentEvent>(
-                            json,
-                            new JsonSerializerOptions
-                            {
-                                PropertyNameCaseInsensitive = true
-                            });
+                    body = $"A new appointment (ID: {message.AppointmentId}) has been booked.";
 
-                    if (appointmentEvent != null)
-                    {
-                        _logger.LogInformation(
-                            """
-                            ===========================
-                            APPOINTMENT EVENT RECEIVED
-                            ===========================
-                            Event Type   : {EventType}
-                            Appointment  : {AppointmentId}
-                            Patient      : {PatientId}
-                            Doctor       : {DoctorId}
-                            Time         : {OccurredAt}
-                            ===========================
-                            """,
-                            appointmentEvent.EventType,
-                            appointmentEvent.AppointmentId,
-                            appointmentEvent.PatientId,
-                            appointmentEvent.DoctorId,
-                            appointmentEvent.OccurredAt);
-                    }
+                    break;
 
-                    await _channel.BasicAckAsync(
-                        eventArgs.DeliveryTag,
-                        false);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(
-                        ex,
-                        "Error while processing appointment event.");
+                case "Confirmed":
 
-                    await _channel.BasicNackAsync(
-                        eventArgs.DeliveryTag,
-                        false,
-                        true);
-                }
-            };
+                    title = "Appointment Confirmed";
 
-            await _channel.BasicConsumeAsync(
-                queue: queueName,
-                autoAck: false,
-                consumer: consumer,
-                cancellationToken: stoppingToken);
+                    body = $"Appointment #{message.AppointmentId} has been confirmed.";
 
-            await Task.Delay(
-                Timeout.Infinite,
-                stoppingToken);
-        }
+                    break;
 
-        public override async Task StopAsync(
-            CancellationToken cancellationToken)
-        {
-            _logger.LogInformation(
-                "Stopping AppointmentEventConsumer...");
+                case "Completed":
 
-            if (_channel != null)
-                await _channel.CloseAsync(cancellationToken);
+                    title = "Appointment Completed";
 
-            if (_connection != null)
-                await _connection.CloseAsync(cancellationToken);
+                    body = $"Appointment #{message.AppointmentId} has been completed.";
 
-            await base.StopAsync(cancellationToken);
+                    break;
+
+                case "Cancelled":
+
+                case "PatientCancelled":
+
+                    title = "Appointment Cancelled";
+
+                    body = $"Appointment #{message.AppointmentId} has been cancelled.";
+
+                    break;
+
+                case "AppointmentDeleted":
+
+                    title = "Appointment Deleted";
+
+                    body = $"Appointment #{message.AppointmentId} has been deleted.";
+
+                    break;
+
+                default:
+
+                    title = "Appointment Updated";
+
+                    body = $"Appointment #{message.AppointmentId} has been updated.";
+
+                    break;
+            }
+
+            try
+            {
+                await _notificationService.CreateNotificationAsync(
+                    message.DoctorId,
+                    title,
+                    body);
+
+                _logger.LogInformation(
+                    "Notification created successfully for DoctorId: {DoctorId}",
+                    message.DoctorId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to create notification for AppointmentId: {AppointmentId}",
+                    message.AppointmentId);
+
+                throw;
+            }
         }
     }
 }

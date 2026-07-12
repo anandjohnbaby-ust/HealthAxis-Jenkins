@@ -1,10 +1,11 @@
 ﻿using AutoMapper;
+using HealthAxis.API.Models;
+using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.DTOs.HealthRecordDtos;
+using HealthAxis.Shared.DTOs.NotificationDtos;
 using HealthAxis.Shared.DTOs.PatientDtos;
-using HealthAxis.API.Models;
-using HealthAxis.Shared.DTOs.AdminDtos;
 
 namespace HealthAxis.API.Profiles
 {
@@ -59,6 +60,8 @@ namespace HealthAxis.API.Profiles
             CreateMap<HealthRecord, HealthRecordDto>()
             .ForMember(dest => dest.DoctorName,
                 opt => opt.MapFrom(src => src.Doctor.FullName));
+
+            CreateMap<Notification, NotificationDto>();
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using HealthAxis.Shared.Common;
+﻿using HealthAxis.API.Models;
+using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
@@ -12,10 +13,11 @@ namespace HealthAxis.API.Services.Interfaces
         Task<DoctorDto> GetDoctorById(int id);
 
         Task<PagedResult<DoctorDto>> GetDoctorsAsync(
-            PaginationRequest request,
-            Specialisation? specialisation,
-            string? search,
-            CancellationToken ct = default);
+                    PaginationRequest request,
+                    Specialisation? specialisation,
+                    string? search,
+                    bool? isActive,
+                    CancellationToken ct = default);
 
         Task<DoctorDto> CreateDoctor(CreateDoctorDto dto);
 
@@ -23,22 +25,34 @@ namespace HealthAxis.API.Services.Interfaces
             int doctorId,
             UpdateDoctorDto dto);
 
-        Task<IEnumerable<DoctorDto>> GetAvailableDoctorsAsync(
+        Task<PagedResult<DoctorDto>> GetAvailableDoctorsAsync(
             Specialisation? specialisation,
             string? search,
+            PaginationRequest request,
             CancellationToken ct = default);
 
-        Task<IEnumerable<AppointmentDto>> GetAppointmentsAsync(
-            string userId,
-            CancellationToken ct = default);
+        Task<PagedResult<AppointmentDto>> GetAppointmentsAsync(
+                    string userId,
+                    PaginationRequest request,
+                    string? search = null,
+                    AppointmentStatus? status = null,
+                    DateTime? date = null,
+                    CancellationToken ct = default);
 
-        Task<IEnumerable<AppointmentDto>> GetTodaysAppointmentsAsync(
-            string userId,
-            CancellationToken ct = default);
+        Task<PagedResult<AppointmentDto>> GetTodaysAppointmentsAsync(
+                   string userId,
+                   PaginationRequest request,
+                   string? search = null,
+                   AppointmentStatus? status = null,
+                   CancellationToken ct = default);
 
-        Task<IEnumerable<AppointmentDto>> GetWeeklyAppointmentsAsync(
-            string userId,
-            CancellationToken ct = default);
+        Task<PagedResult<AppointmentDto>> GetWeeklyAppointmentsAsync(
+             string userId,
+             PaginationRequest request,
+             string? search = null,
+             AppointmentStatus? status = null,
+             DateTime? date = null,
+             CancellationToken ct = default);
 
         Task<DoctorDto> GetDoctorByUserIdAsync(
             string userId,

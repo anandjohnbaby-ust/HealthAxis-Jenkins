@@ -31,11 +31,13 @@ namespace HealthAxis.Admin.Services
                     new AuthenticationHeaderValue("Bearer", token);
             }
         }
+
         public async Task<PagedResult<DoctorDto>?> GetDoctors(
             int pageNumber = 1,
             int pageSize = 10,
             Specialisation? specialisation = null,
-            string? search = null)
+            string? search = null,
+            bool? isActive = null)
         {
             await SetAuthorizationHeader();
 
@@ -52,6 +54,9 @@ namespace HealthAxis.Admin.Services
 
             if (!string.IsNullOrWhiteSpace(search))
                 query.Add($"search={Uri.EscapeDataString(search)}");
+
+            if (isActive.HasValue)
+                query.Add($"isActive={isActive.Value.ToString().ToLower()}");
 
             url += "?" + string.Join("&", query);
 

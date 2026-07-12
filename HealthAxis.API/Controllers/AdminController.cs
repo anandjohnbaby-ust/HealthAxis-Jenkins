@@ -1,4 +1,6 @@
-﻿using HealthAxis.API.Services.Implementations;
+﻿using HealthAxis.API.Repositories.Implementations;
+using HealthAxis.API.Repositories.Interfaces;
+using HealthAxis.API.Services.Implementations;
 using HealthAxis.API.Services.Interfaces;
 using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AdminDtos;
@@ -16,26 +18,39 @@ namespace HealthAxis.API.Controllers
     [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
-        private readonly IAdminService _adminService;
 
-        public AdminController(IAdminService adminService)
+        #region Dependency injection
+        private readonly IAdminService _adminService;
+        private readonly IDoctorService _doctorService;
+        private readonly IPatientService _patientService;
+        private readonly IAppointmentService _appointmentService;
+
+        public AdminController(IAdminService adminService,
+            IDoctorService doctorService,
+            IPatientService patientService,
+            IAppointmentService appointmentService)
         {
             _adminService = adminService;
+            _doctorService = doctorService;
+            _patientService = patientService;
+            _appointmentService = appointmentService;
         }
+        #endregion
 
         #region Doctors
-
         [HttpGet("doctors")]
         public async Task<ActionResult<PagedResult<DoctorDto>>> GetDoctors(
             [FromQuery] PaginationRequest request,
             [FromQuery] Specialisation? specialisation,
             [FromQuery] string? search,
+            [FromQuery] bool? isActive,
             CancellationToken ct)
         {
-            var doctors = await _adminService.GetDoctorsAsync(
+            var doctors = await _doctorService.GetDoctorsAsync(
                 request,
                 specialisation,
                 search,
+                isActive,
                 ct);
 
             return Ok(doctors);
@@ -44,7 +59,7 @@ namespace HealthAxis.API.Controllers
         [HttpGet("doctors/{id:int}")]
         public async Task<IActionResult> GetDoctorById(int id)
         {
-            var doctor = await _adminService.GetDoctorById(id);
+            var doctor = await _doctorService.GetDoctorById(id);
 
             return Ok(doctor);
         }
@@ -53,7 +68,7 @@ namespace HealthAxis.API.Controllers
         public async Task<IActionResult> CreateDoctor(
             CreateDoctorDto dto)
         {
-            var doctor = await _adminService.CreateDoctor(dto);
+            var doctor = await _doctorService.CreateDoctor(dto);
 
             return CreatedAtAction(
                 nameof(GetDoctorById),
@@ -66,7 +81,7 @@ namespace HealthAxis.API.Controllers
             int id,
             UpdateDoctorDto dto)
         {
-            var doctor = await _adminService.UpdateDoctor(id, dto);
+            var doctor = await _doctorService.UpdateDoctor(id, dto);
 
             return Ok(doctor);
         }
@@ -81,7 +96,7 @@ namespace HealthAxis.API.Controllers
             [FromQuery] string? search,
             CancellationToken ct)
         {
-            var patients = await _adminService.GetPatientsAsync(
+            var patients = await _patientService.GetPatientsAsync(
                 request,
                 search,
                 ct);
@@ -96,7 +111,7 @@ namespace HealthAxis.API.Controllers
             CancellationToken ct)
         {
             var updatedPatient =
-                await _adminService.UpdatePatientAsync(
+                await _patientService.UpdateAsync(
                     id,
                     dto,
                     ct);
@@ -112,7 +127,7 @@ namespace HealthAxis.API.Controllers
         public async Task<ActionResult<PagedResult<AppointmentReportDto>>> GetAppointmentReport(
             [FromQuery] PaginationRequest request)
         {
-            var report = await _adminService.GetAppointmentReport(request);
+            var report = await _appointmentService.GetAppointmentReportAsync(request);
 
             return Ok(report);
         }
@@ -127,7 +142,6 @@ namespace HealthAxis.API.Controllers
             return Ok(dashboard);
         }
         #endregion
-
 
     }
 }

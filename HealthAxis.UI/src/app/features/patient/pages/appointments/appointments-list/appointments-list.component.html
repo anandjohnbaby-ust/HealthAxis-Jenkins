@@ -67,18 +67,61 @@
               </span>
             </td>
 
-            <td class="text-end">
 
-                @if (appt.status === 1) {
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-danger"
-                    (click)="openCancelDialog(appt)">
-                    Cancel
-                  </button>
-                }
+<td class="text-end">
 
-            </td>
+  @if (appt.status === AppointmentStatus.Pending) {
+
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-danger me-2"
+      (click)="openCancelDialog(appt)">
+
+      Cancel
+
+    </button>
+
+  }
+
+  @if (appt.status === AppointmentStatus.Cancelled) {
+
+    <button
+      type="button"
+      class="btn btn--reason"
+      (click)="openReasonDialog(appt)">
+
+      View Reason
+
+    </button>
+
+  }
+
+  @if (appt.status === AppointmentStatus.Completed) {
+
+    @if (appt.healthRecordId) {
+
+      <button
+        type="button"
+        class="btn btn--primary"
+        (click)="openHealthRecordDialog(appt.healthRecordId!)">
+
+        View Record
+
+      </button>
+
+    } @else {
+
+      <span class="text-muted">
+
+        Health Record Not Available
+
+      </span>
+
+    }
+
+  }
+
+</td>
 
           </tr>
 
@@ -87,8 +130,66 @@
       </tbody>
 
     </table>
+<!-- ================= Pagination ================= -->
 
-  }
+<div class="pagination-container">
+
+  <div class="pagination-info">
+
+    Showing
+
+    {{
+      ((pageNumber() - 1) * pageSize()) + 1
+    }}
+
+    -
+
+    {{
+      pageNumber() * pageSize() > totalCount()
+        ? totalCount()
+        : pageNumber() * pageSize()
+    }}
+
+    of
+
+    {{ totalCount() }}
+
+    appointments
+
+  </div>
+
+  <div class="pagination-buttons">
+
+    <button
+      class="btn-page"
+      (click)="previousPage()"
+      [disabled]="pageNumber() === 1">
+
+      Previous
+
+    </button>
+
+    <span class="page-number">
+
+      Page {{ pageNumber() }} of {{ totalPages() }}
+
+    </span>
+
+    <button
+      class="btn-page"
+      (click)="nextPage()"
+      [disabled]="pageNumber() >= totalPages()">
+
+      Next
+
+    </button>
+
+  </div>
+
+</div>
+
+}
+
 </div>
 
 <!-- Angular Confirmation Dialog -->
@@ -103,7 +204,6 @@
     <p>
       Are you sure you want to cancel this appointment?
     </p>
-
 <div class="field">
   <label>
     Cancellation Reason
@@ -117,20 +217,58 @@
   </textarea>
 </div>
 
+<div class="dialog-actions">
+
+  <button
+    type="button"
+    class="btn btn-secondary"
+    (click)="closeCancelDialog()">
+
+    No
+
+  </button>
+
+  <button
+    type="button"
+    class="btn btn-danger"
+    (click)="confirmCancel()">
+
+    Yes, Cancel
+
+  </button>
+
+</div>
+
+  </div>
+
+</div>
+
+}
+<!-- ===========================
+     View Cancellation Reason
+=========================== -->
+
+@if (showReasonDialog()) {
+
+<div class="dialog-backdrop">
+
+  <div class="dialog">
+
+    <h3>Cancellation Reason</h3>
+
+    <div class="reason-box">
+      {{ selectedCancellationReason() }}
+    </div>
+
     <div class="dialog-actions">
 
       <button
         type="button"
         class="btn btn-secondary"
-        (click)="closeCancelDialog()">
-        No
-      </button>
+        (click)="closeReasonDialog()">
 
-      <button
-        type="button"
-        class="btn btn-danger"
-        (click)="confirmCancel()">
-        Yes, Cancel
+        Close
+
       </button>
 
     </div>
@@ -139,5 +277,75 @@
 
 </div>
 
+}
 
-} 
+<!-- ===========================
+     View Health Record
+=========================== -->
+
+@if (showHealthRecordDialog()) {
+
+<div class="dialog-backdrop">
+
+  <div class="dialog">
+
+    <h3>Health Record</h3>
+
+    <div class="field">
+      <label>Doctor</label>
+
+      <div class="reason-box">
+        {{ selectedHealthRecord()?.doctorName }}
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Visit Date</label>
+
+      <div class="reason-box">
+        {{ formatDate(selectedHealthRecord()?.visitDate ?? '') }}
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Diagnosis</label>
+
+      <div class="reason-box">
+        {{ selectedHealthRecord()?.diagnosis }}
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Prescription</label>
+
+      <div class="reason-box">
+        {{ selectedHealthRecord()?.prescription }}
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Notes</label>
+
+      <div class="reason-box">
+        {{ selectedHealthRecord()?.notes || 'No notes available.' }}
+      </div>
+    </div>
+
+    <div class="dialog-actions">
+
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="closeHealthRecordDialog()">
+
+        Close
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+}

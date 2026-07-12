@@ -23,12 +23,14 @@ namespace HealthAxis.API.Services.Interfaces
             UpdatePatientDto dto,
             CancellationToken ct = default);
 
-        Task<IEnumerable<HealthRecordDto>> GetHealthRecordsByPatientId(
+        Task<PagedResult<HealthRecordDto>> GetHealthRecordsByPatientId(
             int patientId,
+            PaginationRequest request,
             CancellationToken ct = default);
 
-        Task<IEnumerable<AppointmentDto>> GetAppointmentsByPatientIdAsync(
+        Task<PagedResult<AppointmentDto>> GetAppointmentsByPatientIdAsync(
             int patientId,
+            PaginationRequest request,
             CancellationToken ct = default);
 
         Task<PatientDashboardDto> GetDashboardAsync(

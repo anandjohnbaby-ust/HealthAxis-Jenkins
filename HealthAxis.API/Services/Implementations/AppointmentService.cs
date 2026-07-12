@@ -9,9 +9,10 @@ using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.Enums;
+using MassTransit;
+using MassTransit.Transports;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
-
 namespace HealthAxis.API.Services.Implementations
 {
     public class AppointmentService : IAppointmentService
@@ -20,7 +21,7 @@ namespace HealthAxis.API.Services.Implementations
         private readonly IRepository<Doctor> _doctorRepository;
         private readonly IPatientRepository _patientRepository;
         private readonly IMapper _mapper;
-        private readonly RabbitMQPublisher _publisher;
+        private readonly IPublishEndpoint _publishEndPoint;
         private readonly IDistributedCache _cache;
         private readonly ILogger<AppointmentService> _logger;
 
@@ -42,15 +43,15 @@ namespace HealthAxis.API.Services.Implementations
             IRepository<Doctor> doctorRepository,
             IPatientRepository patientRepository,
             IMapper mapper,
-            RabbitMQPublisher publisher,
+            IPublishEndpoint publishEndPoint,
             IDistributedCache cache,
             ILogger<AppointmentService> logger)
         {
             _appointmentRepository = appointmentRepository;
             _doctorRepository = doctorRepository;
             _patientRepository = patientRepository;
+            _publishEndPoint = publishEndPoint;
             _mapper = mapper;
-            _publisher = publisher;
             _cache = cache; 
             _logger = logger;
         }
@@ -225,7 +226,7 @@ namespace HealthAxis.API.Services.Implementations
                 $"available-slots:{savedAppointment.DoctorId}:{savedAppointment.ScheduledDate:yyyy-MM-dd}",
                 ct);
 
-            await _publisher.PublishAsync(new AppointmentEvent
+            await _publishEndPoint.Publish(new AppointmentEvent
             {
                 EventType = "AppointmentCreated",
                 AppointmentId = savedAppointment.AppointmentId,
@@ -312,7 +313,7 @@ namespace HealthAxis.API.Services.Implementations
             var updatedAppointment =
                 await _appointmentRepository.UpdateAsync(id, appointment, ct);
 
-            await _publisher.PublishAsync(new AppointmentEvent
+            await _publishEndPoint.Publish(new AppointmentEvent
             {
                 EventType = appointment.Status.ToString(),
                 AppointmentId = updatedAppointment.AppointmentId,
@@ -359,7 +360,7 @@ namespace HealthAxis.API.Services.Implementations
             var deletedAppointment =
                 await _appointmentRepository.DeleteAsync(id, ct);
 
-            await _publisher.PublishAsync(new AppointmentEvent
+            await _publishEndPoint.Publish(new AppointmentEvent
             {
                 EventType = "AppointmentDeleted",
                 AppointmentId = deletedAppointment.AppointmentId,
@@ -411,7 +412,7 @@ namespace HealthAxis.API.Services.Implementations
                 $"available-slots:{updatedAppointment.DoctorId}:{updatedAppointment.ScheduledDate:yyyy-MM-dd}",
                 ct);
 
-            await _publisher.PublishAsync(new AppointmentEvent
+            await _publishEndPoint.Publish(new AppointmentEvent
             {
                 EventType = "PatientCancelled",
                 AppointmentId = updatedAppointment.AppointmentId,

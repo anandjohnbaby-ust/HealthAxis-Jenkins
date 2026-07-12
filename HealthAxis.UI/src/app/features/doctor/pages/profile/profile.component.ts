@@ -65,13 +65,13 @@ export class ProfileComponent implements OnInit {
       ]
     ],
 
-    // email: [
-    //   '',
-    //   [
-    //     Validators.required,
-    //     Validators.email
-    //   ]
-    // ],
+    email: [
+      '',
+      [
+        Validators.required,
+        Validators.email
+      ]
+    ],
 
     specialisation: [
       null as Specialisation | null,
@@ -130,7 +130,7 @@ private loadProfile(): void {
 
           fullName: doctor.fullName,
 
-          // email: doctor.email,
+          email: doctor.email,
 
           specialisation: doctor.specialisation,
 
@@ -198,66 +198,6 @@ private loadProfile(): void {
 
   }
 
-  // ============================
-  // Save Profile
-  // ============================
-
-//   saveProfile(): void {
-    
-    
-//     if (this.profileForm.invalid) {
-
-//       this.profileForm.markAllAsTouched();
-
-//       return;
-
-//     }
-
-//     this.savingProfile.set(true);
-
-//     this.successMessage.set(null);
-
-//     this.errorMessage.set(null);
-
-// const dto = this.profileForm.getRawValue() as UpdateDoctorProfileRequest;
-
-//     this.doctorService
-//       .updateMyProfile(dto)
-//       .subscribe({
-
-//         next: doctor => {
-
-//           this.doctor = doctor;
-
-//           this.successMessage.set(
-//             'Profile updated successfully.'
-//           );
-
-//           this.savingProfile.set(false);
-
-//           this.editing.set(false);
-
-//           this.profileForm
-//             .get('specialisation')
-//             ?.disable();
-
-//           this.loadProfile();
-
-//         },
-
-//         error: () => {
-
-//           this.errorMessage.set(
-//             'Unable to update profile.'
-//           );
-
-//           this.savingProfile.set(false);
-
-//         }
-
-//       });
-
-//   }
 saveProfile(): void {
 
   if (this.profileForm.invalid) {

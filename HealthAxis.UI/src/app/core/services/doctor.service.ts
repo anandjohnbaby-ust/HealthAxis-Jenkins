@@ -1,6 +1,6 @@
 // src/app/core/services/doctor.service.ts
 
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -14,7 +14,9 @@ import {
   DoctorDashboard,
   HealthRecordDto,
   UpdateAppointmentStatus,
-  UpdateDoctorProfileRequest
+  UpdateDoctorProfileRequest,
+  PagedResult,
+  PaginationRequest
 } from '../interfaces/doctor-domain.types';
 import { HealthRecord } from '../interfaces/patient-domain.types';
 
@@ -45,7 +47,6 @@ getMyProfile(): Observable<DoctorProfile> {
   return this.http.get<DoctorProfile>(
     `${this.apiUrl}${API_ENDPOINTS.DOCTORS.ME}`
   );
-
 }
 
 updateMyProfile(
@@ -63,24 +64,79 @@ updateMyProfile(
   // Appointments
   // ============================
 
-  getAllAppointments(): Observable<DoctorAppointmentDto[]> {
-    return this.http.get<DoctorAppointmentDto[]>(
-      `${this.apiUrl}${API_ENDPOINTS.DOCTORS.APPOINTMENTS}`
-    );
+getAllAppointments(
+  request: PaginationRequest
+): Observable<PagedResult<DoctorAppointmentDto>> {
+
+  let params = new HttpParams()
+    .set('pageNumber', request.pageNumber)
+    .set('pageSize', request.pageSize);
+
+  if (request.search?.trim()) {
+    params = params.set('search', request.search.trim());
   }
 
-  getTodaySchedule(): Observable<DoctorAppointmentDto[]> {
-    return this.http.get<DoctorAppointmentDto[]>(
-      `${this.apiUrl}${API_ENDPOINTS.DOCTORS.TODAY_SCHEDULE}`
-    );
+  if (request.status !== null && request.status !== undefined) {
+    params = params.set('status', request.status);
   }
 
-  getWeeklySchedule(): Observable<DoctorAppointmentDto[]> {
-    return this.http.get<DoctorAppointmentDto[]>(
-      `${this.apiUrl}${API_ENDPOINTS.DOCTORS.WEEKLY_SCHEDULE}`
-    );
+  if (request.date) {
+    params = params.set('date', request.date);
   }
 
+  return this.http.get<PagedResult<DoctorAppointmentDto>>(
+    `${this.apiUrl}${API_ENDPOINTS.DOCTORS.APPOINTMENTS}`,
+    { params }
+  );
+}
+
+getTodaySchedule(
+  request: PaginationRequest
+): Observable<PagedResult<DoctorAppointmentDto>> {
+
+  let params = new HttpParams()
+    .set('pageNumber', request.pageNumber)
+    .set('pageSize', request.pageSize);
+
+  if (request.search?.trim()) {
+    params = params.set('search', request.search.trim());
+  }
+
+  if (request.status !== null && request.status !== undefined) {
+    params = params.set('status', request.status);
+  }
+
+  return this.http.get<PagedResult<DoctorAppointmentDto>>(
+    `${this.apiUrl}${API_ENDPOINTS.DOCTORS.TODAY_SCHEDULE}`,
+    { params }
+  );
+}
+
+getWeeklySchedule(
+  request: PaginationRequest
+): Observable<PagedResult<DoctorAppointmentDto>> {
+
+  let params = new HttpParams()
+    .set('pageNumber', request.pageNumber)
+    .set('pageSize', request.pageSize);
+
+  if (request.search?.trim()) {
+    params = params.set('search', request.search.trim());
+  }
+
+  if (request.status !== null && request.status !== undefined) {
+    params = params.set('status', request.status);
+  }
+
+  if (request.date) {
+    params = params.set('date', request.date);
+  }
+
+  return this.http.get<PagedResult<DoctorAppointmentDto>>(
+    `${this.apiUrl}${API_ENDPOINTS.DOCTORS.WEEKLY_SCHEDULE}`,
+    { params }
+  );
+}
   getAppointmentDetails(
     appointmentId: number
   ): Observable<DoctorAppointmentDto> {
@@ -119,44 +175,44 @@ updateMyProfile(
   }
 
   // GET /api/doctors/health-records/{id}
-getHealthRecordById(
-  id: number
-): Observable<HealthRecordDto> {
+  getHealthRecordById(
+    id: number
+  ): Observable<HealthRecordDto> {
 
-  return this.http.get<HealthRecordDto>(
-    `${this.apiUrl}${API_ENDPOINTS.DOCTORS.GET_HEALTH_RECORD(id)}`
-  );
+    return this.http.get<HealthRecordDto>(
+      `${this.apiUrl}${API_ENDPOINTS.DOCTORS.GET_HEALTH_RECORD(id)}`
+    );
 
-}
-hasHealthRecord(appt: DoctorAppointmentDto): boolean {
+  }
+  hasHealthRecord(appt: DoctorAppointmentDto): boolean {
 
-  return appt.healthRecordId != null;
+    return appt.healthRecordId != null;
 
-}
+  }
 
-getPatientHealthHistory(
-  patientId: number,
-  appointmentId: number
-): Observable<HealthRecordDto[]> {
+  getPatientHealthHistory(
+    patientId: number,
+    appointmentId: number
+  ): Observable<HealthRecordDto[]> {
 
-  return this.http.get<HealthRecordDto[]>(
-    `${this.apiUrl}${API_ENDPOINTS.DOCTORS.PATIENT_HEALTH_HISTORY(
-      patientId,
-      appointmentId
-    )}`
-  );
+    return this.http.get<HealthRecordDto[]>(
+      `${this.apiUrl}${API_ENDPOINTS.DOCTORS.PATIENT_HEALTH_HISTORY(
+        patientId,
+        appointmentId
+      )}`
+    );
 
-}
+  }
 
 // ============================
 // Dashboard
 // ============================
 
-getDashboard(): Observable<DoctorDashboard> {
+  getDashboard(): Observable<DoctorDashboard> {
 
-  return this.http.get<DoctorDashboard>(
-    `${this.apiUrl}${API_ENDPOINTS.DOCTORS.DASHBOARD}`
-  );
+    return this.http.get<DoctorDashboard>(
+      `${this.apiUrl}${API_ENDPOINTS.DOCTORS.DASHBOARD}`
+    );
 
-}
-}
+  }
+  }

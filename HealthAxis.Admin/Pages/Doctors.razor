@@ -43,6 +43,17 @@
                         }
                     </InputSelect>
                 </div>
+                <div style="width:180px">
+                    <InputSelect class="form-select"
+                                 @bind-Value="selectedStatus"
+                                 @bind-Value:after="FilterDoctors">
+
+                        <option value="">All Status</option>
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+
+                    </InputSelect>
+                </div>
 
                 <div class="search-wrap" style="width:280px">
                     <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24"
@@ -336,6 +347,7 @@
 
     private Specialisation? selectedSpecialisation;
     private string searchText = string.Empty;
+    private string selectedStatus = "";
 
     private PagedResult<DoctorDto>? pagedDoctors;
     private List<DoctorDto> doctors = [];
@@ -450,11 +462,19 @@
 
     private async Task RefreshDoctors()
     {
+        bool? isActive = selectedStatus switch
+        {
+            "true" => true,
+            "false" => false,
+            _ => null
+        };
+
         pagedDoctors = await DoctorService.GetDoctors(
             currentPage,
             PageSize,
             selectedSpecialisation,
-            searchText);
+            searchText,
+            isActive);
 
         doctors = pagedDoctors?.Items.ToList() ?? [];
     }
@@ -500,12 +520,14 @@
         await RefreshDoctors();
     }
 
-    private async Task ResetFilters()
-    {
-        searchText = string.Empty;
-        selectedSpecialisation = null;
-        currentPage = 1;
+private async Task ResetFilters()
+{
+    searchText = string.Empty;
+    selectedSpecialisation = null;
+    selectedStatus = "";
 
-        await RefreshDoctors();
-    }
+    currentPage = 1;
+
+    await RefreshDoctors();
+}
 }

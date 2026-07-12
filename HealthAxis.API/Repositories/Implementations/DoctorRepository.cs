@@ -23,12 +23,15 @@ namespace HealthAxis.API.Repositories.Implementations
             return doctor;
         }
 
-        public async Task<IEnumerable<Doctor>> GetAvailableDoctorsAsync(
+        public async Task<PagedResult<Doctor>> GetAvailableDoctorsAsync(
             Specialisation? specialisation,
             string? search,
+            PaginationRequest request,
             CancellationToken ct = default)
         {
             var query = _context.Doctors
+                .AsNoTracking()
+                .Include(d => d.User)
                 .Where(d => d.IsActive)
                 .AsQueryable();
 
@@ -46,24 +49,48 @@ namespace HealthAxis.API.Repositories.Implementations
                     d.FullName.Contains(search));
             }
 
-            return await query.ToListAsync(ct);
+            var totalCount = await query.CountAsync(ct);
+
+            var doctors = await query
+                .OrderBy(d => d.FullName)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync(ct);
+
+            return new PagedResult<Doctor>
+            {
+                Items = doctors,
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
 
-        // Search, filter, pagenation all doctors
+        // Search, filter, pagination all doctors
         public async Task<PagedResult<Doctor>> GetDoctorsAsync(
             PaginationRequest request,
             Specialisation? specialisation,
             string? search,
+            bool? isActive,
             CancellationToken ct = default)
         {
             IQueryable<Doctor> query = _context.Doctors.AsNoTracking();
 
+            // Filter by Specialisation
             if (specialisation.HasValue)
             {
                 query = query.Where(d =>
                     d.Specialisation == specialisation.Value);
             }
 
+            // Filter by Active / Inactive
+            if (isActive.HasValue)
+            {
+                query = query.Where(d =>
+                    d.IsActive == isActive.Value);
+            }
+
+            // Search by Doctor ID or Name
             if (!string.IsNullOrWhiteSpace(search))
             {
                 search = search.Trim();
@@ -97,6 +124,7 @@ namespace HealthAxis.API.Repositories.Implementations
             CancellationToken cancellationToken = default)
         {
             return await _context.Doctors
+                .Include(d => d.User)
                 .FirstOrDefaultAsync(
                     d => d.UserId == userId,
                     cancellationToken);
@@ -106,45 +134,129 @@ namespace HealthAxis.API.Repositories.Implementations
         // Doctor Dashboard
         // ===================================================
 
-        public async Task<IEnumerable<Appointment>> GetAppointmentsAsync(
-            int doctorId,
-            CancellationToken ct = default)
+        public async Task<PagedResult<Appointment>> GetAppointmentsAsync(
+             int doctorId,
+             PaginationRequest request,
+             string? search = null,
+             AppointmentStatus? status = null,
+             DateTime? date = null,
+             CancellationToken ct = default)
         {
-            return await _context.Appointments
+            var query = _context.Appointments
                 .AsNoTracking()
                 .Include(a => a.Patient)
                 .Include(a => a.Doctor)
                 .Include(a => a.HealthRecord)
-                .Where(a => a.DoctorId == doctorId)
+                .Where(a => a.DoctorId == doctorId);
+
+            // Search by Patient Name or Patient ID
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+
+                query = query.Where(a =>
+                    a.Patient.FullName.Contains(search) ||
+                    a.Patient.PatientId.ToString().Contains(search));
+            }
+
+            // Filter by Status
+            if (status.HasValue)
+            {
+                query = query.Where(a => a.Status == status.Value);
+            }
+
+            // Filter by Date
+            if (date.HasValue)
+            {
+                query = query.Where(a =>
+                    a.ScheduledDate.Date == date.Value.Date);
+            }
+
+            var totalCount = await query.CountAsync(ct);
+
+            var appointments = await query
                 .OrderBy(a => a.ScheduledDate)
                 .ThenBy(a => a.TimeSlot)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .ToListAsync(ct);
+
+            return new PagedResult<Appointment>
+            {
+                Items = appointments,
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
 
-        public async Task<IEnumerable<Appointment>> GetTodaysAppointmentsAsync(
+        public async Task<PagedResult<Appointment>> GetTodaysAppointmentsAsync(
             int doctorId,
             DateTime today,
+            PaginationRequest request,
+            string? search = null,
+            AppointmentStatus? status = null,
             CancellationToken ct = default)
         {
-            return await _context.Appointments
+            var query = _context.Appointments
                 .AsNoTracking()
                 .Include(a => a.Patient)
                 .Include(a => a.Doctor)
                 .Include(a => a.HealthRecord)
                 .Where(a =>
                     a.DoctorId == doctorId &&
-                    a.ScheduledDate.Date == today.Date)
+                    a.ScheduledDate.Date == today.Date);
+
+            // ==========================
+            // Search by Patient Name / ID
+            // ==========================
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+
+                query = query.Where(a =>
+                    a.Patient.FullName.Contains(search) ||
+                    a.Patient.PatientId.ToString().Contains(search));
+            }
+
+            // ==========================
+            // Filter by Status
+            // ==========================
+
+            if (status.HasValue)
+            {
+                query = query.Where(a => a.Status == status.Value);
+            }
+
+            var totalCount = await query.CountAsync(ct);
+
+            var appointments = await query
                 .OrderBy(a => a.TimeSlot)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .ToListAsync(ct);
+
+            return new PagedResult<Appointment>
+            {
+                Items = appointments,
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
 
-        public async Task<IEnumerable<Appointment>> GetWeeklyAppointmentsAsync(
+        public async Task<PagedResult<Appointment>> GetWeeklyAppointmentsAsync(
             int doctorId,
             DateTime startDate,
             DateTime endDate,
+            PaginationRequest request,
+            string? search = null,
+            AppointmentStatus? status = null,
+            DateTime? date = null,
             CancellationToken ct = default)
         {
-            return await _context.Appointments
+            var query = _context.Appointments
                 .AsNoTracking()
                 .Include(a => a.Patient)
                 .Include(a => a.Doctor)
@@ -152,10 +264,56 @@ namespace HealthAxis.API.Repositories.Implementations
                 .Where(a =>
                     a.DoctorId == doctorId &&
                     a.ScheduledDate.Date >= startDate.Date &&
-                    a.ScheduledDate.Date <= endDate.Date)
+                    a.ScheduledDate.Date <= endDate.Date);
+
+            // ==========================
+            // Search by Patient Name / ID
+            // ==========================
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+
+                query = query.Where(a =>
+                    a.Patient.FullName.Contains(search) ||
+                    a.Patient.PatientId.ToString().Contains(search));
+            }
+
+            // ==========================
+            // Filter by Status
+            // ==========================
+
+            if (status.HasValue)
+            {
+                query = query.Where(a => a.Status == status.Value);
+            }
+
+            // ==========================
+            // Filter by Date
+            // ==========================
+
+            if (date.HasValue)
+            {
+                query = query.Where(a =>
+                    a.ScheduledDate.Date == date.Value.Date);
+            }
+
+            var totalCount = await query.CountAsync(ct);
+
+            var appointments = await query
                 .OrderBy(a => a.ScheduledDate)
                 .ThenBy(a => a.TimeSlot)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .ToListAsync(ct);
+
+            return new PagedResult<Appointment>
+            {
+                Items = appointments,
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
 
         public async Task<DoctorDashboardDto?> GetDashboardAsync(

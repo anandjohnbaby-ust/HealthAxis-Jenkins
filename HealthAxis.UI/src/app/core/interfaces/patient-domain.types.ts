@@ -36,6 +36,15 @@ export interface ChangePasswordRequest {
   confirmPassword: string;
 }
 
+// src/app/core/interfaces/paged-result.interface.ts
+
+export interface PagedResult<T> {
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+}
+
 // =========================================================================
 // 2. DOCTORS
 // =========================================================================
@@ -59,6 +68,7 @@ export interface DoctorDto {
   yearsOfExperience: number;
   consultationFee: number;
   isActive: boolean;
+  email: string; // <-- add this
 }
 
 // =========================================================================
@@ -73,6 +83,8 @@ export interface Appointment {
   scheduledDate: string; // yyyy-MM-dd
   timeSlot: string;      // HH:mm:ss (TimeOnly from .NET)
   status: AppointmentStatus;
+  cancellationReason?: string | null
+  healthRecordId?: number | null;
 }
 
 /** Exact shape confirmed from POST /api/patients/{id}/appointments */

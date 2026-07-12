@@ -6,8 +6,15 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { PatientService } from '../../../../core/services/patient.service';
-import { DoctorDto, Specialisation } from '../../../../core/interfaces/patient-domain.types';
-import { SPECIALISATION_OPTIONS, SpecialisationLabel } from '../../../../core/enums/specialisation.enum';
+import {
+  DoctorDto,
+  Specialisation
+} from '../../../../core/interfaces/patient-domain.types';
+
+import {
+  SPECIALISATION_OPTIONS,
+  SpecialisationLabel
+} from '../../../../core/enums/specialisation.enum';
 
 @Component({
   selector: 'app-doctors',
@@ -27,10 +34,19 @@ export class DoctorsComponent implements OnInit {
   readonly loading = signal(true);
   readonly doctors = signal<DoctorDto[]>([]);
 
+  // ===============================
+  // Pagination
+  // ===============================
+
+  readonly pageNumber = signal(1);
+  readonly pageSize = signal(10);
+  readonly totalCount = signal(0);
+
+  // ===============================
+
   search = '';
   selectedSpecialisation: Specialisation | null = null;
 
-  // Use the pre-built options array from your enum file
   readonly specialisationOptions = SPECIALISATION_OPTIONS;
 
   ngOnInit(): void {
@@ -38,13 +54,22 @@ export class DoctorsComponent implements OnInit {
   }
 
   loadDoctors(): void {
+
     this.loading.set(true);
 
     this.patientService
-      .getAvailableDoctors(this.selectedSpecialisation, this.search)
+      .getAvailableDoctors(
+        this.selectedSpecialisation,
+        this.pageNumber(),
+        this.pageSize(),
+        this.search
+      )
       .subscribe({
-        next: doctors => {
-          this.doctors.set(doctors);
+        next: result => {
+
+          this.doctors.set(result.items);
+          this.totalCount.set(result.totalCount);
+
           this.loading.set(false);
         },
         error: () => {
@@ -54,19 +79,63 @@ export class DoctorsComponent implements OnInit {
   }
 
   onSearchChange(): void {
+
+    this.pageNumber.set(1);
+
     this.loadDoctors();
   }
 
   onSpecialisationChange(): void {
+
+    this.pageNumber.set(1);
+
     this.loadDoctors();
   }
 
-  specialisationLabel(value: Specialisation): string {
-    // Map the numeric enum to the readable label
-    return SpecialisationLabel[value] ?? 'Unknown';
+  previousPage(): void {
+
+    if (this.pageNumber() > 1) {
+
+      this.pageNumber.update(p => p - 1);
+
+      this.loadDoctors();
+    }
   }
 
-  bookAppointment(doctor: DoctorDto): void {
+  nextPage(): void {
+
+    const totalPages = Math.ceil(
+      this.totalCount() / this.pageSize()
+    );
+
+    if (this.pageNumber() < totalPages) {
+
+      this.pageNumber.update(p => p + 1);
+
+      this.loadDoctors();
+    }
+  }
+
+  totalPages(): number {
+
+    return Math.ceil(
+      this.totalCount() / this.pageSize()
+    );
+
+  }
+
+  specialisationLabel(
+    value: Specialisation
+  ): string {
+
+    return SpecialisationLabel[value] ?? 'Unknown';
+
+  }
+
+  bookAppointment(
+    doctor: DoctorDto
+  ): void {
+
     this.router.navigate(
       ['/patient/appointments/book'],
       {
@@ -79,8 +148,12 @@ export class DoctorsComponent implements OnInit {
   }
 
   resetFilters(): void {
+
     this.search = '';
     this.selectedSpecialisation = null;
+
+    this.pageNumber.set(1);
+
     this.loadDoctors();
   }
 }

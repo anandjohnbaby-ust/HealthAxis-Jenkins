@@ -11,16 +11,19 @@ namespace HealthAxis.API.Repositories.Interfaces
         string userId,
         CancellationToken cancellationToken = default);
 
-        Task<Patient?> GetHealthRecordsByPatientId(int patientId,
-        CancellationToken cancellationToken = default);
+        Task<PagedResult<HealthRecord>> GetHealthRecordsByPatientIdAsync(
+            int patientId,
+            PaginationRequest request,
+            CancellationToken cancellationToken = default);
 
         Task<PagedResult<Patient>> GetPatientsAsync(
             PaginationRequest request,
             string? search,
             CancellationToken ct = default);
 
-        Task<IEnumerable<Appointment>> GetAppointmentsByPatientIdAsync(
+        Task<PagedResult<Appointment>> GetAppointmentsByPatientIdAsync(
             int patientId,
+            PaginationRequest request,
             CancellationToken ct = default);
 
 

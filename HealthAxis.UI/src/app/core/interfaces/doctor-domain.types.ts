@@ -1,93 +1,112 @@
-// src/app/core/interfaces/doctor-domain.types.ts
+  // src/app/core/interfaces/doctor-domain.types.ts
 
-// The primary object returned by your API
-// Rename 'Appointment' to 'DoctorAppointmentDto'
-// export interface DoctorAppointmentDto {
-//   appointmentId: number;
-//   patientId: number;
-//   patientName: string;
-//   doctorId: number;
-//   doctorName: string;
-//   scheduledDate: string;
-//   timeSlot: string;
-//   status: number;
-//   cancellationReason?: string | null;
-// }
-import { AppointmentStatus } from '../enums/appointment-status.enum';
+  // The primary object returned by your API
+  // Rename 'Appointment' to 'DoctorAppointmentDto'
+  // export interface DoctorAppointmentDto {
+  //   appointmentId: number;
+  //   patientId: number;
+  //   patientName: string;
+  //   doctorId: number;
+  //   doctorName: string;
+  //   scheduledDate: string;
+  //   timeSlot: string;
+  //   status: number;
+  //   cancellationReason?: string | null;
+  // }
+  import { AppointmentStatus } from '../enums/appointment-status.enum';
 
+  // ===============================
+  // Pagination
+  // ===============================
 
-export interface DoctorAppointmentDto {
-  appointmentId: number;
-  patientId: number;
-  patientName: string;
-  doctorId: number;
-  doctorName: string;
-  scheduledDate: string;
-  timeSlot: string;
-  status: number;
-  cancellationReason?: string | null;
+  export interface PaginationRequest {
+    pageNumber: number;
+    pageSize: number;
 
-  healthRecordId?: number | null;
-}
+    search?: string;
+    status?: number;
+    date?: string;
+  }
 
-// The object required to modify an appointment
-export interface UpdateAppointmentStatus {
-  status: number;           // Mapped to AppointmentStatus enum
-  cancellationReason?: string | null;
-}
+  export interface PagedResult<T> {
+    items: T[];
+    totalCount: number;
+    pageNumber: number;
+    pageSize: number;
+  }
 
-export interface DoctorProfile {
-  doctorId: number;
-  fullName: string;
-  email: string;
-  specialisation: number;
-  yearsOfExperience: number;
-  consultationFee: number;
-  isActive: boolean;
-}
+  export interface DoctorAppointmentDto {
+    appointmentId: number;
+    patientId: number;
+    patientName: string;
+    doctorId: number;
+    doctorName: string;
+    scheduledDate: string;
+    timeSlot: string;
+    status: number;
+    cancellationReason?: string | null;
 
-export interface UpdateDoctorProfileRequest {
-  fullName: string;
-  specialisation: number;
-  yearsOfExperience: number;
-  consultationFee: number;
-  isActive: boolean;
-}
+    healthRecordId?: number | null;
+  }
 
-// ===============================
-// Health Record
-// ===============================
+  // The object required to modify an appointment
+  export interface UpdateAppointmentStatus {
+    status: number;           // Mapped to AppointmentStatus enum
+    cancellationReason?: string | null;
+  }
 
-export interface CreateHealthRecordRequest {
-  appointmentId: number;
-  diagnosis: string;
-  prescription: string;
-  notes?: string | null;
-}
+  export interface DoctorProfile {
+    doctorId: number;
+    fullName: string;
+    email: string;
+    specialisation: number;
+    yearsOfExperience: number;
+    consultationFee: number;
+    isActive: boolean;
+  }
 
-export interface HealthRecordDto {
-  recordId: number;
-  appointmentId: number;
-  patientId: number;
-  doctorId: number;
-  visitDate: string;
-  diagnosis: string;
-  prescription: string;
-  notes?: string | null;
-}
+  export interface UpdateDoctorProfileRequest {
+    fullName: string;
+    specialisation: number;
+    yearsOfExperience: number;
+    consultationFee: number;
+    isActive: boolean;
+  }
 
-export interface TodayAppointment {
-  appointmentId: number;
-  patientName: string;
-  scheduledDate: string;
-  timeSlot: string;
-  status: AppointmentStatus;
-}
+  // ===============================
+  // Health Record
+  // ===============================
 
-export interface DoctorDashboard {
-  fullName: string;
-  todayAppointments: number;
-  weeklyAppointments: number;
-  totalAppointments: number;
-  todaySchedule: TodayAppointment[];
-}
+  export interface CreateHealthRecordRequest {
+    appointmentId: number;
+    diagnosis: string;
+    prescription: string;
+    notes?: string | null;
+  }
+
+  export interface HealthRecordDto {
+    recordId: number;
+    appointmentId: number;
+    patientId: number;
+    doctorId: number;
+    visitDate: string;
+    diagnosis: string;
+    prescription: string;
+    notes?: string | null;
+  }
+
+  export interface TodayAppointment {
+    appointmentId: number;
+    patientName: string;
+    scheduledDate: string;
+    timeSlot: string;
+    status: AppointmentStatus;
+  }
+
+  export interface DoctorDashboard {
+    fullName: string;
+    todayAppointments: number;
+    weeklyAppointments: number;
+    totalAppointments: number;
+    todaySchedule: TodayAppointment[];
+  }

@@ -4,6 +4,7 @@ using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.DTOs.HealthRecordDtos;
+using HealthAxis.Shared.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -15,6 +16,7 @@ namespace HealthAxis.API.Controllers
     [Authorize]
     public class DoctorsController : ControllerBase
     {
+        #region Dependency Injection
         private readonly IDoctorService _doctorService;
         private readonly IAppointmentService _appointmentService;
         private readonly IHealthRecordService _healthRecordService;
@@ -28,6 +30,7 @@ namespace HealthAxis.API.Controllers
             _appointmentService = appointmentService;
             _healthRecordService = healthRecordService;
         }
+        #endregion
 
         //[AllowAnonymous]
         //[HttpGet("{id:int}")]
@@ -69,29 +72,66 @@ namespace HealthAxis.API.Controllers
 
         [Authorize(Roles = "Doctor")]
         [HttpGet("appointments")]
-        public async Task<IActionResult> GetAppointments(CancellationToken ct)
+        public async Task<ActionResult<PagedResult<AppointmentDto>>> GetAppointments(
+            [FromQuery] PaginationRequest request,
+            [FromQuery] string? search,
+            [FromQuery] AppointmentStatus? status,
+            [FromQuery] DateTime? date,
+            CancellationToken ct)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-            return Ok(await _doctorService.GetAppointmentsAsync(userId, ct));
+            var appointments = await _doctorService.GetAppointmentsAsync(
+                userId,
+                request,
+                search,
+                status,
+                date,
+                ct);
+
+            return Ok(appointments);
         }
 
         [Authorize(Roles = "Doctor")]
         [HttpGet("schedule/today")]
-        public async Task<IActionResult> GetTodaySchedule(CancellationToken ct)
+        public async Task<ActionResult<PagedResult<AppointmentDto>>> GetTodaySchedule(
+            [FromQuery] PaginationRequest request,
+            [FromQuery] string? search,
+            [FromQuery] AppointmentStatus? status,
+            CancellationToken ct)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-            return Ok(await _doctorService.GetTodaysAppointmentsAsync(userId, ct)); 
+            var appointments = await _doctorService.GetTodaysAppointmentsAsync(
+                userId,
+                request,
+                search,
+                status,
+                ct);
+
+            return Ok(appointments);
         }
 
         [Authorize(Roles = "Doctor")]
         [HttpGet("schedule/week")]
-        public async Task<IActionResult> GetWeekSchedule(CancellationToken ct)
+        public async Task<ActionResult<PagedResult<AppointmentDto>>> GetWeekSchedule(
+            [FromQuery] PaginationRequest request,
+            [FromQuery] string? search,
+            [FromQuery] AppointmentStatus? status,
+            [FromQuery] DateTime? date,
+            CancellationToken ct)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-            return Ok(await _doctorService.GetWeeklyAppointmentsAsync(userId, ct));
+            var appointments = await _doctorService.GetWeeklyAppointmentsAsync(
+                userId,
+                request,
+                search,
+                status,
+                date,
+                ct);
+
+            return Ok(appointments);
         }
 
 

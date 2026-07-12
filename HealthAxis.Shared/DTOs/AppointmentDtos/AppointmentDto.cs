@@ -22,7 +22,6 @@ namespace HealthAxis.Shared.DTOs.AppointmentDtos
 
         public string? CancellationReason { get; set; }
 
-        // ADD THIS
         public int? HealthRecordId { get; set; }
     }
 }

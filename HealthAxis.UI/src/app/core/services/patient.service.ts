@@ -8,7 +8,7 @@ import { API_ENDPOINTS } from '../constants/api-endpoints.constants';
 
 // Patient Interfaces
 import { Specialisation } from '../enums/specialisation.enum';
-import { Appointment, BookAppointmentRequest, CancelAppointment, DoctorDto, HealthRecord, Patient, PatientDashboard, TimeSlot, UpdatePatientRequest } from '../interfaces/patient-domain.types';
+import { Appointment, BookAppointmentRequest, CancelAppointment, DoctorDto, HealthRecord, PagedResult, Patient, PatientDashboard, TimeSlot, UpdatePatientRequest } from '../interfaces/patient-domain.types';
 
 // Health Record Interfaces
 
@@ -55,13 +55,21 @@ export class PatientService {
   // 2. APPOINTMENT MANAGEMENT
   // =========================================================================
 
-  /** GET /api/patients/{patientId}/appointments */
-  getMyAppointments(patientId: number): Observable<Appointment[]> {
-    return this.http.get<Appointment[]>(
-      `${this.baseUrl}${API_ENDPOINTS.PATIENTS.GET_APPOINTMENTS(patientId)}`
+  getMyAppointments(
+    patientId: number,
+    pageNumber: number,
+    pageSize: number
+  ): Observable<PagedResult<Appointment>> {
+
+    const params = new HttpParams()
+      .set('pageNumber', pageNumber)
+      .set('pageSize', pageSize);
+
+    return this.http.get<PagedResult<Appointment>>(
+      `${this.baseUrl}${API_ENDPOINTS.PATIENTS.GET_APPOINTMENTS(patientId)}`,
+      { params }
     );
   }
-
   /** POST /api/patients/{patientId}/book-appointments */
   bookAppointment(patientId: number, payload: BookAppointmentRequest): Observable<Appointment> {
     return this.http.post<Appointment>(
@@ -83,8 +91,16 @@ export class PatientService {
   // =========================================================================
 
   /** GET /api/patients/available-doctors */
-  getAvailableDoctors(specialisation: Specialisation | null, search?: string): Observable<DoctorDto[]> {
-    let params = new HttpParams();
+  getAvailableDoctors(
+    specialisation: Specialisation | null,
+    pageNumber: number,
+    pageSize: number,
+    search?: string
+  ): Observable<PagedResult<DoctorDto>> {
+
+    let params = new HttpParams()
+      .set('pageNumber', pageNumber)
+      .set('pageSize', pageSize);
 
     if (specialisation !== null) {
       params = params.set('specialisation', specialisation);
@@ -94,7 +110,7 @@ export class PatientService {
       params = params.set('search', search.trim());
     }
 
-    return this.http.get<DoctorDto[]>(
+    return this.http.get<PagedResult<DoctorDto>>(
       `${this.baseUrl}${API_ENDPOINTS.PATIENTS.AVAILABLE_DOCTORS}`,
       { params }
     );
@@ -104,12 +120,23 @@ export class PatientService {
   // 4. HEALTH RECORDS
   // =========================================================================
 
-  /** GET /api/health-records/patient/{patientId} */
-  getHealthRecordsByPatientId(patientId: number): Observable<HealthRecord[]> {
-    return this.http.get<HealthRecord[]>(
-      `${this.baseUrl}${API_ENDPOINTS.HEALTH_RECORDS.BY_PATIENT(patientId)}`
-    );
-  }
+/** GET /api/patients/{patientId}/health-records */
+getHealthRecordsByPatientId(
+  patientId: number,
+  pageNumber: number,
+  pageSize: number
+): Observable<PagedResult<HealthRecord>> {
+
+  const params = new HttpParams()
+    .set('pageNumber', pageNumber)
+    .set('pageSize', pageSize);
+
+  return this.http.get<PagedResult<HealthRecord>>(
+    `${this.baseUrl}${API_ENDPOINTS.HEALTH_RECORDS.BY_PATIENT(patientId)}`,
+    { params }
+  );
+
+}
 
   // =========================================================================
   // 5. DASHBOARD

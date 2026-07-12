@@ -1,4 +1,5 @@
 ﻿using HealthAxis.API.Services.Interfaces;
+using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.DTOs.HealthRecordDtos;
@@ -44,13 +45,15 @@ namespace HealthAxis.API.Controllers
         }
 
         [HttpGet("{id:int}/health-records")]
-        public async Task<ActionResult<IEnumerable<HealthRecordDto>>> GetHealthRecords(
+        public async Task<ActionResult<PagedResult<HealthRecordDto>>> GetHealthRecords(
             int id,
+            [FromQuery] PaginationRequest request,
             CancellationToken ct)
         {
             var records =
                 await _patientService.GetHealthRecordsByPatientId(
                     id,
+                    request,
                     ct);
 
             return Ok(records);
@@ -71,30 +74,33 @@ namespace HealthAxis.API.Controllers
                 new { id = appointment.AppointmentId },
                 appointment);
         }
-
-
+        
         [HttpGet("available-doctors")]
-        public async Task<ActionResult<IEnumerable<DoctorDto>>> GetAvailableDoctors(
+        public async Task<ActionResult<PagedResult<DoctorDto>>> GetAvailableDoctors(
             [FromQuery] Specialisation? specialisation,
             [FromQuery] string? search,
+            [FromQuery] PaginationRequest request,
             CancellationToken ct)
         {
             var doctors = await _doctorService.GetAvailableDoctorsAsync(
                 specialisation,
                 search,
+                request,
                 ct);
 
             return Ok(doctors);
         }
 
         [HttpGet("{id:int}/appointments")]
-        public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointments(
+        public async Task<ActionResult<PagedResult<AppointmentDto>>> GetAppointments(
             int id,
+            [FromQuery] PaginationRequest request,
             CancellationToken ct)
         {
             var appointments =
                 await _patientService.GetAppointmentsByPatientIdAsync(
                     id,
+                    request,
                     ct);
 
             return Ok(appointments);

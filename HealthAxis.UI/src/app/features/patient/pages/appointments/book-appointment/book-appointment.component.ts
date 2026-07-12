@@ -89,19 +89,41 @@ export class BookAppointmentComponent implements OnInit {
     
   }
 
-  private loadAvailableDoctors(specialisation: Specialisation, selectedDoctorId?: number): void {
-    this.doctorsLoading.set(true);
+private loadAvailableDoctors(
+  specialisation: Specialisation,
+  selectedDoctorId?: number
+): void {
 
-    this.patientService.getAvailableDoctors(specialisation).subscribe({
-      next: data => {
-        const doctors = data.filter(doc => doc.isActive);
+  this.doctorsLoading.set(true);
+
+  this.patientService
+    .getAvailableDoctors(
+      specialisation,
+      1,      // page number
+      100,    // page size (load all doctors for booking)
+      ''
+    )
+    .subscribe({
+      next: result => {
+
+        const doctors = result.items.filter(doc => doc.isActive);
+
         this.doctors.set(doctors);
 
-        // If a doctor was selected (or passed via query params), keep them selected
-        if (selectedDoctorId !== undefined && doctors.some(d => d.doctorId === selectedDoctorId)) {
-          this.bookingForm.patchValue({ doctorId: selectedDoctorId }, { emitEvent: false });
-        } else {
-          this.bookingForm.patchValue({ doctorId: null }, { emitEvent: false });
+        if (
+          selectedDoctorId !== undefined &&
+          doctors.some(d => d.doctorId === selectedDoctorId)
+        ) {
+          this.bookingForm.patchValue(
+            { doctorId: selectedDoctorId },
+            { emitEvent: false }
+          );
+        }
+        else {
+          this.bookingForm.patchValue(
+            { doctorId: null },
+            { emitEvent: false }
+          );
         }
 
         this.doctorsLoading.set(false);
@@ -110,7 +132,7 @@ export class BookAppointmentComponent implements OnInit {
         this.doctorsLoading.set(false);
       }
     });
-  }
+}
 
   private loadAvailableTimeSlots(): void {
 

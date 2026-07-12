@@ -7,7 +7,11 @@ import { RouterLink } from '@angular/router';
 
 import { TokenService } from '../../../../../core/services/token.service';
 import { PatientService } from '../../../../../core/services/patient.service';
-import { Appointment, AppointmentStatus } from '../../../../../core/interfaces/patient-domain.types';
+import {
+  Appointment,
+  AppointmentStatus,
+  HealthRecord
+} from '../../../../../core/interfaces/patient-domain.types';
 import { AppointmentStatusLabel } from '../../../../../core/enums/appointment-status.enum';
 
 @Component({
@@ -25,16 +29,30 @@ export class AppointmentsListComponent implements OnInit {
 
   private readonly patientService = inject(PatientService);
   private readonly tokenService = inject(TokenService);
+  readonly showHealthRecordDialog = signal(false);
+  readonly selectedHealthRecord = signal<HealthRecord | null>(null);
 
   readonly loading = signal(true);
   readonly appointments = signal<Appointment[]>([]);
   readonly loadError = signal<string | null>(null);
+
   readonly showCancelDialog = signal(false);
+  readonly showReasonDialog = signal(false);
+  readonly selectedCancellationReason = signal('');
+
+  // ==========================
+  // Pagination
+  // ==========================
+
+  readonly pageNumber = signal(1);
+  readonly pageSize = signal(10);
+  readonly totalCount = signal(0);
+
+  // ==========================
 
   selectedAppointment: Appointment | null = null;
   cancellationReason = '';
 
-  // Expose the enum to the template so we can use it in @if statements
   readonly AppointmentStatus = AppointmentStatus;
 
   ngOnInit(): void {
@@ -42,6 +60,7 @@ export class AppointmentsListComponent implements OnInit {
   }
 
   private loadAppointments(): void {
+
     this.loading.set(true);
     this.loadError.set(null);
 
@@ -49,36 +68,116 @@ export class AppointmentsListComponent implements OnInit {
     const patientId = this.tokenService.getPatientIdFromToken(token);
 
     if (patientId === null) {
+
       this.loading.set(false);
-      this.loadError.set('Could not determine your patient ID. Please log in again.');
+
+      this.loadError.set(
+        'Could not determine your patient ID. Please log in again.'
+      );
+
       return;
     }
 
-    this.patientService.getMyAppointments(patientId).subscribe({
-      next: (data) => {
-        this.appointments.set(data);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.loadError.set('Could not load your appointments. Please try again.');
-      }
-    });
+    this.patientService
+      .getMyAppointments(
+        patientId,
+        this.pageNumber(),
+        this.pageSize()
+      )
+      .subscribe({
+
+        next: result => {
+
+          this.appointments.set(result.items);
+
+          this.totalCount.set(result.totalCount);
+
+          this.loading.set(false);
+
+        },
+
+        error: () => {
+
+          this.loading.set(false);
+
+          this.loadError.set(
+            'Could not load your appointments. Please try again.'
+          );
+
+        }
+
+      });
+  }
+
+  previousPage(): void {
+
+    if (this.pageNumber() > 1) {
+
+      this.pageNumber.update(p => p - 1);
+
+      this.loadAppointments();
+
+    }
+
+  }
+
+  nextPage(): void {
+
+    if (this.pageNumber() < this.totalPages()) {
+
+      this.pageNumber.update(p => p + 1);
+
+      this.loadAppointments();
+
+    }
+
+  }
+
+  totalPages(): number {
+
+    return Math.ceil(
+      this.totalCount() / this.pageSize()
+    );
+
   }
 
   openCancelDialog(appointment: Appointment): void {
+
     this.selectedAppointment = appointment;
     this.cancellationReason = '';
     this.showCancelDialog.set(true);
+
   }
 
   closeCancelDialog(): void {
+
     this.selectedAppointment = null;
     this.cancellationReason = '';
     this.showCancelDialog.set(false);
+
+  }
+
+  openReasonDialog(appointment: Appointment): void {
+
+    this.selectedCancellationReason.set(
+      appointment.cancellationReason?.trim() ||
+      'No cancellation reason was provided.'
+    );
+
+    this.showReasonDialog.set(true);
+
+  }
+
+  closeReasonDialog(): void {
+
+    this.selectedCancellationReason.set('');
+
+    this.showReasonDialog.set(false);
+
   }
 
   confirmCancel(): void {
+
     if (!this.selectedAppointment) {
       return;
     }
@@ -91,39 +190,116 @@ export class AppointmentsListComponent implements OnInit {
     }
 
     this.patientService
-      .cancelAppointment(patientId, this.selectedAppointment.appointmentId, {
-        cancellationReason: this.cancellationReason.trim() || null
-      })
+      .cancelAppointment(
+        patientId,
+        this.selectedAppointment.appointmentId,
+        {
+          cancellationReason:
+            this.cancellationReason.trim() || null
+        })
       .subscribe({
+
         next: () => {
+
           this.closeCancelDialog();
+
           this.loadAppointments();
+
         },
+
         error: () => {
+
           alert('Unable to cancel appointment.');
+
         }
+
       });
   }
+openHealthRecordDialog(recordId: number): void {
+
+  const token = this.tokenService.getAccessToken() ?? '';
+  const patientId = this.tokenService.getPatientIdFromToken(token);
+
+  if (patientId === null) {
+    return;
+  }
+
+  this.patientService
+    .getHealthRecordsByPatientId(
+      patientId,
+      1,
+      1000
+    )
+    .subscribe({
+
+      next: result => {
+
+        const record = result.items.find(
+          r => r.recordId === recordId
+        );
+
+        if (!record) {
+
+          alert('Health record not found.');
+
+          return;
+
+        }
+
+        this.selectedHealthRecord.set(record);
+
+        this.showHealthRecordDialog.set(true);
+
+      },
+
+      error: () => {
+
+        alert('Unable to load health record.');
+
+      }
+
+    });
+
+}
+
+closeHealthRecordDialog(): void {
+
+  this.selectedHealthRecord.set(null);
+
+  this.showHealthRecordDialog.set(false);
+
+}
 
   statusLabel(status: AppointmentStatus): string {
-    // Maps the number (1, 2, 3) back to the readable label ('Pending', 'Confirmed')
-    return AppointmentStatusLabel[status as keyof typeof AppointmentStatusLabel] ?? 'Unknown';
+
+    return AppointmentStatusLabel[
+      status as keyof typeof AppointmentStatusLabel
+    ] ?? 'Unknown';
+
   }
 
   badgeClass(status: AppointmentStatus): string {
-    // Restored your original logic: maps to CSS classes like badge--1, badge--2
+
     const known = [
-      AppointmentStatus.Pending, 
-      AppointmentStatus.Confirmed, 
-      AppointmentStatus.Cancelled, 
+      AppointmentStatus.Pending,
+      AppointmentStatus.Confirmed,
+      AppointmentStatus.Cancelled,
       AppointmentStatus.Completed
     ];
-    
-    return known.includes(status) ? `badge--${status}` : 'badge--unknown';
+
+    return known.includes(status)
+      ? `badge--${status}`
+      : 'badge--unknown';
+
   }
 
   formatDate(isoDate: string): string {
-    if (!isoDate) return '';
+
+    if (!isoDate) {
+      return '';
+    }
+
     return isoDate.split('T')[0];
+
   }
 }

@@ -48,16 +48,31 @@ namespace HealthAxis.API.Repositories.Implementations
             };
         }
 
-        public async Task<Patient?> GetHealthRecordsByPatientId(
+        public async Task<PagedResult<HealthRecord>> GetHealthRecordsByPatientIdAsync(
             int patientId,
+            PaginationRequest request,
             CancellationToken cancellationToken = default)
         {
-            return await _context.Patients
-                .Include(p => p.HealthRecords)
-                    .ThenInclude(hr => hr.Doctor)
-                .FirstOrDefaultAsync(
-                    p => p.PatientId == patientId,
-                    cancellationToken);
+            var query = _context.HealthRecords
+                .AsNoTracking()
+                .Include(hr => hr.Doctor)
+                .Where(hr => hr.PatientId == patientId)
+                .OrderByDescending(hr => hr.VisitDate);
+
+            int totalCount = await query.CountAsync(cancellationToken);
+
+            var records = await query
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync(cancellationToken);
+
+            return new PagedResult<HealthRecord>
+            {
+                Items = records,
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
 
         public async Task<Patient?> GetByUserIdAsync(
@@ -69,15 +84,34 @@ namespace HealthAxis.API.Repositories.Implementations
                     p => p.UserId == userId,
                     cancellationToken);
         }
-        public async Task<IEnumerable<Appointment>> GetAppointmentsByPatientIdAsync(
-            int patientId,
-            CancellationToken ct = default)
+        public async Task<PagedResult<Appointment>> GetAppointmentsByPatientIdAsync(
+           int patientId,
+           PaginationRequest request,
+           CancellationToken ct = default)
         {
-            return await _context.Appointments
+            var query = _context.Appointments
+                .AsNoTracking()
                 .Where(a => a.PatientId == patientId)
                 .Include(a => a.Doctor)
+                .Include(a => a.Patient)
+                .Include(a => a.HealthRecord)   // <-- Add this
                 .OrderByDescending(a => a.ScheduledDate)
+                .ThenBy(a => a.TimeSlot);
+
+            int totalCount = await query.CountAsync(ct);
+
+            var appointments = await query
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .ToListAsync(ct);
+
+            return new PagedResult<Appointment>
+            {
+                Items = appointments,
+                TotalCount = totalCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
         }
 
         public async Task<PatientDashboardDto?> GetDashboardAsync(

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
@@ -7,6 +7,7 @@ import {
   CreateHealthRecordRequest,
   DoctorAppointmentDto,
   HealthRecordDto,
+  PaginationRequest,
   UpdateAppointmentStatus
 } from '../../../../core/interfaces/doctor-domain.types';
 
@@ -19,6 +20,7 @@ type DialogAction =
   | 'confirm'
   | 'complete'
   | 'cancel'
+  | 'viewCancellationReason'
   | 'healthRecord'
   | 'viewHealthRecord'
   | 'viewPatientHistory'
@@ -41,6 +43,26 @@ export class SharedScheduleComponent implements OnInit {
 
   readonly AppointmentStatus = AppointmentStatus;
 
+  readonly statusOptions = [
+  {
+    value: AppointmentStatus.Pending,
+    label: 'Pending'
+  },
+  {
+    value: AppointmentStatus.Confirmed,
+    label: 'Confirmed'
+  },
+  {
+    value: AppointmentStatus.Cancelled,
+    label: 'Cancelled'
+  },
+  {
+    value: AppointmentStatus.Completed,
+    label: 'Completed'
+  }
+];
+
+
   // ===========================
   // Config (set from route data)
   // ===========================
@@ -53,6 +75,16 @@ export class SharedScheduleComponent implements OnInit {
   readonly updating = signal(false);
 
   readonly appointments = signal<DoctorAppointmentDto[]>([]);
+
+  readonly pageNumber = signal(1);
+  readonly pageSize = signal(10);
+
+  readonly totalCount = signal(0);
+  readonly totalPages = signal(0);
+
+  readonly search = signal('');
+  readonly selectedStatus = signal<number | null>(null);
+  readonly selectedDate = signal('');
 
   readonly successMessage = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
@@ -80,53 +112,94 @@ export class SharedScheduleComponent implements OnInit {
   selectedAppointment: DoctorAppointmentDto | null = null;
 
   // ===========================
+  readonly showingFrom = computed(() =>
+    ((this.pageNumber() - 1) * this.pageSize()) + 1
+  );
 
-  ngOnInit(): void {
-    const data = this.route.snapshot.data;
+  readonly showingTo = computed(() =>
+    Math.min(
+      this.pageNumber() * this.pageSize(),
+      this.totalCount()
+    )
+  );
+ngOnInit(): void {
 
-    this.mode = (data['mode'] as ScheduleMode) ?? 'all';
-    this.pageTitle = data['title'] ?? 'Appointments';
-    this.emptyMessage = data['emptyMessage'] ?? 'No appointments found.';
+  const data = this.route.snapshot.data;
 
-    this.loadAppointments();
+  this.mode = (data['mode'] as ScheduleMode) ?? 'all';
+  this.pageTitle = data['title'] ?? 'Appointments';
+  this.emptyMessage = data['emptyMessage'] ?? 'No appointments found.';
+
+  this.loadAppointments(true);
+
+}
+
+loadAppointments(showLoader = false): void {
+
+  if (showLoader) {
+    this.loading.set(true);
   }
 
-  loadAppointments(): void {
+  this.errorMessage.set(null);
 
-    this.loading.set(true);
-    this.errorMessage.set(null);
+  const request: PaginationRequest = {
+    pageNumber: this.pageNumber(),
+    pageSize: this.pageSize(),
+    search: this.search().trim() || undefined,
+    status: this.selectedStatus() ?? undefined
+  };
 
-    const request$ =
-      this.mode === 'today' ? this.doctorService.getTodaySchedule() :
-      this.mode === 'week' ? this.doctorService.getWeeklySchedule() :
-      this.doctorService.getAllAppointments();
+  // Only All Appointments and Weekly Schedule support date filtering
+  if (this.mode !== 'today') {
+    request.date = this.selectedDate() || undefined;
+  }
 
-    request$.subscribe({
+  const request$ =
+    this.mode === 'today'
+      ? this.doctorService.getTodaySchedule(request)
+      : this.mode === 'week'
+        ? this.doctorService.getWeeklySchedule(request)
+        : this.doctorService.getAllAppointments(request);
 
-      next: appointments => {
+  request$.subscribe({
 
-        this.appointments.set(this.sortAppointments(appointments));
+    next: result => {
+
+      this.appointments.set(
+        this.sortAppointments(result.items)
+      );
+
+      this.totalCount.set(result.totalCount);
+
+      this.totalPages.set(
+        Math.ceil(result.totalCount / result.pageSize)
+      );
+
+      if (showLoader) {
         this.loading.set(false);
-
-      },
-
-      error: () => {
-
-        this.errorMessage.set(
-          this.mode === 'today'
-            ? "Unable to load today's schedule."
-            : this.mode === 'week'
-              ? 'Unable to load weekly schedule.'
-              : 'Unable to load appointments.'
-        );
-
-        this.loading.set(false);
-
       }
 
-    });
+    },
 
-  }
+    error: () => {
+
+      this.errorMessage.set(
+        this.mode === 'today'
+          ? "Unable to load today's schedule."
+          : this.mode === 'week'
+            ? 'Unable to load weekly schedule.'
+            : 'Unable to load appointments.'
+      );
+
+      if (showLoader) {
+        this.loading.set(false);
+      }
+
+    }
+
+  });
+
+}
 
   private sortAppointments(
     appointments: DoctorAppointmentDto[]
@@ -161,9 +234,69 @@ export class SharedScheduleComponent implements OnInit {
   }
 
   refresh(): void {
+
+    this.pageNumber.set(1);
+
     this.loadAppointments();
+
+  }
+  applyFilters(): void {
+
+  this.pageNumber.set(1);
+
+  this.loadAppointments();
+
+}
+
+clearFilters(): void {
+
+  this.search.set('');
+
+  this.selectedStatus.set(null);
+
+  this.selectedDate.set('');
+
+  this.pageNumber.set(1);
+
+  this.loadAppointments();
+
+}
+
+  previousPage(): void {
+
+    if (this.pageNumber() <= 1) {
+      return;
+    }
+
+    this.pageNumber.update(page => page - 1);
+
+    this.loadAppointments();
+
   }
 
+  nextPage(): void {
+
+    if (this.pageNumber() >= this.totalPages()) {
+      return;
+    }
+
+    this.pageNumber.update(page => page + 1);
+
+    this.loadAppointments();
+
+  }
+
+  goToPage(page: number): void {
+
+    if (page < 1 || page > this.totalPages()) {
+      return;
+    }
+
+    this.pageNumber.set(page);
+
+    this.loadAppointments();
+
+  }
   // ===========================
   // Status Helpers
   // ===========================
@@ -201,7 +334,7 @@ export class SharedScheduleComponent implements OnInit {
 
   canCancel(appt: DoctorAppointmentDto): boolean {
     return appt.status === AppointmentStatus.Pending ||
-           appt.status === AppointmentStatus.Confirmed;
+      appt.status === AppointmentStatus.Confirmed;
   }
 
   canAddHealthRecord(appt: DoctorAppointmentDto): boolean {
@@ -239,6 +372,24 @@ export class SharedScheduleComponent implements OnInit {
     this.dialogMessage.set('Please provide a cancellation reason.');
     this.dialogAction.set('cancel');
     this.cancellationReason.set('');
+    this.dialogOpen.set(true);
+
+  }
+
+  openCancellationReasonDialog(appt: DoctorAppointmentDto): void {
+
+    this.selectedAppointment = appt;
+
+    this.dialogTitle.set('Cancellation Reason');
+
+    this.dialogMessage.set(
+      appt.cancellationReason?.trim()
+        ? appt.cancellationReason
+        : 'No cancellation reason was provided.'
+    );
+
+    this.dialogAction.set('viewCancellationReason');
+
     this.dialogOpen.set(true);
 
   }
@@ -364,7 +515,7 @@ export class SharedScheduleComponent implements OnInit {
         this.successMessage.set('Health record added successfully.');
         this.savingHealthRecord.set(false);
         this.closeDialog();
-        this.loadAppointments();
+        this.loadAppointments(false);
 
       },
 
@@ -401,7 +552,7 @@ export class SharedScheduleComponent implements OnInit {
 
         this.successMessage.set('Appointment updated successfully.');
         this.updating.set(false);
-        this.loadAppointments();
+        this.loadAppointments(false);
 
       },
 
@@ -482,6 +633,29 @@ export class SharedScheduleComponent implements OnInit {
     });
 
   }
-  
+
+  onSearchChange(value: string): void {
+
+  this.search.set(value);
+
+  this.applyFilters();
+
+}
+
+onStatusChange(value: number | null): void {
+
+  this.selectedStatus.set(value);
+
+  this.applyFilters();
+
+}
+
+onDateChange(value: string): void {
+
+  this.selectedDate.set(value);
+
+  this.applyFilters();
+
+}
 
 }

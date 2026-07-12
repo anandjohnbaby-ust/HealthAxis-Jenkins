@@ -9,6 +9,7 @@ using HealthAxis.API.Services;
 using HealthAxis.API.Services.Implementation;
 using HealthAxis.API.Services.Implementations;
 using HealthAxis.API.Services.Interfaces;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -228,10 +229,28 @@ builder.Services.AddHostedService<HeartbeatService>();
 
 builder.Services.AddHostedService<HeartbeatConsumer>();
 
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
-builder.Services.AddSingleton<RabbitMQPublisher>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
-builder.Services.AddHostedService<AppointmentEventConsumer>();
+var rabbitmqConfig = builder.Configuration.GetSection("RabbitMQ");
+
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<AppointmentEventConsumer>();
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(rabbitmqConfig["HostName"], rabbitmqConfig["VirtualHost"], h =>
+        {
+            h.Username(rabbitmqConfig["UserName"]!);
+            h.Password(rabbitmqConfig["Password"]!);
+        });
+        cfg.ReceiveEndpoint(rabbitmqConfig["AppointmentQueue"]!, e =>
+        {
+            e.ConfigureConsumer<AppointmentEventConsumer>(context);
+        });
+    });
+});
 
 //----------------------------------------------------------
 // Redis Configurations
