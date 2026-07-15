@@ -4,7 +4,7 @@ using MassTransit;
 
 namespace HealthAxis.API.Messaging
 {
-    public class AppointmentEventConsumer : IConsumer<AppointmentEvent>
+    public partial class AppointmentEventConsumer : IConsumer<AppointmentEvent>
     {
         private readonly ILogger<AppointmentEventConsumer> _logger;
         private readonly INotificationService _notificationService;
@@ -17,90 +17,52 @@ namespace HealthAxis.API.Messaging
             _notificationService = notificationService;
         }
 
-        public async Task Consume(
-            ConsumeContext<AppointmentEvent> context)
+        [LoggerMessage(
+            EventId = 1,
+            Level = LogLevel.Information,
+            Message = "Received AppointmentCreated event for AppointmentId: {AppointmentId}")]
+        private static partial void LogAppointmentCreated(
+            ILogger logger,
+            int appointmentId);
+
+        [LoggerMessage(
+            EventId = 2,
+            Level = LogLevel.Information,
+            Message = "Notification created successfully for DoctorId: {DoctorId}")]
+        private static partial void LogNotificationCreated(
+            ILogger logger,
+            int doctorId);
+
+        [LoggerMessage(
+            EventId = 3,
+            Level = LogLevel.Error,
+            Message = "Failed to create notification for AppointmentId: {AppointmentId}")]
+        private static partial void LogNotificationFailed(
+            ILogger logger,
+            Exception exception,
+            int appointmentId);
+
+        public async Task Consume(ConsumeContext<AppointmentEvent> context)
         {
             var message = context.Message;
 
-            _logger.LogInformation(
-                "Received Appointment Event: {EventType}, AppointmentId: {AppointmentId}",
-                message.EventType,
-                message.AppointmentId);
+            if (message.EventType != "AppointmentCreated")
+                return;
 
-            string title;
-            string body;
-
-            switch (message.EventType)
-            {
-                case "AppointmentCreated":
-
-                    title = "New Appointment";
-
-                    body = $"A new appointment (ID: {message.AppointmentId}) has been booked.";
-
-                    break;
-
-                case "Confirmed":
-
-                    title = "Appointment Confirmed";
-
-                    body = $"Appointment #{message.AppointmentId} has been confirmed.";
-
-                    break;
-
-                case "Completed":
-
-                    title = "Appointment Completed";
-
-                    body = $"Appointment #{message.AppointmentId} has been completed.";
-
-                    break;
-
-                case "Cancelled":
-
-                case "PatientCancelled":
-
-                    title = "Appointment Cancelled";
-
-                    body = $"Appointment #{message.AppointmentId} has been cancelled.";
-
-                    break;
-
-                case "AppointmentDeleted":
-
-                    title = "Appointment Deleted";
-
-                    body = $"Appointment #{message.AppointmentId} has been deleted.";
-
-                    break;
-
-                default:
-
-                    title = "Appointment Updated";
-
-                    body = $"Appointment #{message.AppointmentId} has been updated.";
-
-                    break;
-            }
+            LogAppointmentCreated(_logger, message.AppointmentId);
 
             try
             {
                 await _notificationService.CreateNotificationAsync(
                     message.DoctorId,
-                    title,
-                    body);
+                    "New Appointment",
+                    $"A new appointment (ID: {message.AppointmentId}) has been booked.");
 
-                _logger.LogInformation(
-                    "Notification created successfully for DoctorId: {DoctorId}",
-                    message.DoctorId);
+                LogNotificationCreated(_logger, message.DoctorId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Failed to create notification for AppointmentId: {AppointmentId}",
-                    message.AppointmentId);
-
+                LogNotificationFailed(_logger, ex, message.AppointmentId);
                 throw;
             }
         }

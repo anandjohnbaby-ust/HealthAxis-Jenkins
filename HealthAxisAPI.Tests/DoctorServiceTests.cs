@@ -1,618 +1,895 @@
-﻿//using AutoMapper;
-//using FluentAssertions;
-//using HealthAxis.API.Data;
-//using HealthAxis.API.Exceptions;
-//using HealthAxis.API.Models;
-//using HealthAxis.API.Repositories.Interfaces;
-//using HealthAxis.API.Services.Implementations;
-//using HealthAxis.API.Services.Interfaces;
-//using HealthAxis.Shared.Common;
-//using HealthAxis.Shared.DTOs.AdminDtos;
-//using HealthAxis.Shared.DTOs.AppointmentDtos;
-//using HealthAxis.Shared.DTOs.DoctorDtos;
-//using HealthAxis.Shared.DTOs.HealthRecordDtos;
-//using HealthAxis.Shared.Enums;
-//using Microsoft.AspNetCore.Identity;
-//using Microsoft.EntityFrameworkCore;
-//using Moq;
-//using Xunit;
-
-//namespace HealthAxis.Tests.Services
-//{
-//    public class DoctorServiceTests
-//    {
-//        private readonly Mock<IDoctorRepository> _doctorRepository;
-//        private readonly Mock<IHealthRecordRepository> _healthRecordRepository;
-//        private readonly Mock<IAppointmentRepository> _appointmentRepository;
-//        private readonly Mock<UserManager<ApplicationUser>> _userManager;
-//        private readonly Mock<ApplicationDbContext> _context;
-//        private readonly Mock<IMapper> _mapper;
-//        private readonly Mock<IAppointmentService> _appointmentService;
-//        private readonly Mock<IHealthRecordService> _healthRecordService;
-
-//        private readonly DoctorService _service;
-
-//        public DoctorServiceTests()
-//        {
-//            _doctorRepository = new Mock<IDoctorRepository>();
-//            _healthRecordRepository = new Mock<IHealthRecordRepository>();
-
-//            var store = new Mock<IUserStore<ApplicationUser>>();
-
-//            _userManager = new Mock<UserManager<ApplicationUser>>(
-//                store.Object,
-//                null,
-//                null,
-//                null,
-//                null,
-//                null,
-//                null,
-//                null,
-//                null);
-
-//            _context = new Mock<ApplicationDbContext>(new DbContextOptions<ApplicationDbContext>());
-
-//            _mapper = new Mock<IMapper>();
-
-//            _appointmentService = new Mock<IAppointmentService>();
-
-//            _healthRecordService = new Mock<IHealthRecordService>();
-//            _appointmentRepository = new Mock<IAppointmentRepository>();
-
-//            _service = new DoctorService(
-//                _doctorRepository.Object,
-//                _userManager.Object,
-//                _context.Object,
-//                _mapper.Object,
-//                _appointmentService.Object,
-//                _healthRecordService.Object,
-//                _appointmentRepository.Object,
-//                _healthRecordRepository.Object);
-//        }
-
-//        // CreateDoctor uses _context.Database.BeginTransactionAsync() and
-//        // _context.Doctors.Add(...), which aren't practically mockable with
-//        // Mock<ApplicationDbContext>. Those tests get a real EF Core InMemory
-//        // context and a fresh DoctorService instance built from it.
-//        private (DoctorService Service, ApplicationDbContext Context) CreateServiceWithInMemoryContext()
-//        {
-//            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-//                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-//                .Options;
-
-//            var context = new ApplicationDbContext(options);
-
-//            var service = new DoctorService(
-//                _doctorRepository.Object,
-//                _userManager.Object,
-//                context,
-//                _mapper.Object,
-//                _appointmentService.Object,
-//                _healthRecordService.Object,
-//                _appointmentRepository.Object,
-//                _healthRecordRepository.Object);
-
-//            return (service, context);
-//        }
-
-//        // --- GetDoctorById (existing tests kept) ---
-//        [Fact]
-//        public async Task GetDoctorById_ShouldReturnDoctor_WhenDoctorExists()
-//        {
-//            int doctorId = 1;
-//            var doctor = new Doctor { DoctorId = doctorId, FullName = "John Doe" };
-//            var dto = new DoctorDto { DoctorId = doctorId, FullName = "John Doe" };
-
-//            _doctorRepository.Setup(x => x.GetByIdAsync(doctorId)).ReturnsAsync(doctor);
-//            _mapper.Setup(x => x.Map<DoctorDto>(doctor)).Returns(dto);
-
-//            var result = await _service.GetDoctorById(doctorId);
-
-//            result.Should().NotBeNull();
-//            result.DoctorId.Should().Be(doctorId);
-//            result.FullName.Should().Be("John Doe");
-//            _doctorRepository.Verify(x => x.GetByIdAsync(doctorId), Times.Once);
-//            _mapper.Verify(x => x.Map<DoctorDto>(doctor), Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task GetDoctorById_ShouldThrowNotFoundException_WhenDoctorDoesNotExist()
-//        {
-//            int doctorId = 10;
-//            _doctorRepository.Setup(x => x.GetByIdAsync(doctorId)).ReturnsAsync((Doctor)null);
-
-//            Func<Task> action = async () => await _service.GetDoctorById(doctorId);
-
-//            await action.Should().ThrowAsync<NotFoundException>().WithMessage("Doctor not found.");
-//            _doctorRepository.Verify(x => x.GetByIdAsync(doctorId), Times.Once);
-//        }
-
-//        // --- GetDoctorsAsync ---
-//        [Fact]
-//        public async Task GetDoctorsAsync_ShouldReturnPagedDoctors_WhenDoctorsExist()
-//        {
-//            var request = new PaginationRequest { PageNumber = 1, PageSize = 10 };
-//            var doctors = new List<Doctor> { new Doctor { DoctorId = 1, FullName = "A" }, new Doctor { DoctorId = 2, FullName = "B" } };
-//            var paged = new PagedResult<Doctor> { Items = doctors, TotalCount = 2, PageNumber = 1, PageSize = 10 };
-//            var dtos = new List<DoctorDto> { new DoctorDto { DoctorId = 1 }, new DoctorDto { DoctorId = 2 } };
-
-//            _doctorRepository.Setup(r => r.GetDoctorsAsync(request, null, null, It.IsAny<CancellationToken>())).ReturnsAsync(paged);
-//            _mapper.Setup(m => m.Map<IEnumerable<DoctorDto>>(doctors)).Returns(dtos);
-
-//            var result = await _service.GetDoctorsAsync(request, null, null);
-
-//            result.Should().NotBeNull();
-//            result.TotalCount.Should().Be(2);
-//            result.Items.Should().HaveCount(2);
-//            _doctorRepository.Verify(r => r.GetDoctorsAsync(request, null, null, It.IsAny<CancellationToken>()), Times.Once);
-//            _mapper.Verify(m => m.Map<IEnumerable<DoctorDto>>(doctors), Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task GetDoctorsAsync_ShouldPassSearchAndFilter()
-//        {
-//            var request = new PaginationRequest();
-//            _doctorRepository.Setup(r => r.GetDoctorsAsync(request, Specialisation.Neurology, "John", It.IsAny<CancellationToken>())).ReturnsAsync(new PagedResult<Doctor>());
-
-//            await _service.GetDoctorsAsync(request, Specialisation.Neurology, "John");
-
-//            _doctorRepository.Verify(r => r.GetDoctorsAsync(request, Specialisation.Neurology, "John", It.IsAny<CancellationToken>()), Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task GetDoctorsAsync_ShouldPropagateRepositoryException()
-//        {
-//            var request = new PaginationRequest();
-//            _doctorRepository.Setup(r => r.GetDoctorsAsync(request, null, null, It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("DB"));
-
-//            Func<Task> action = async () => await _service.GetDoctorsAsync(request, null, null);
-//            await action.Should().ThrowAsync<Exception>().WithMessage("DB");
-//        }
-
-//        // --- CreateDoctor ---
-//        [Fact]
-//        public async Task CreateDoctor_ShouldThrowBusinessRule_WhenEmailAlreadyExists()
-//        {
-//            var (service, context) = CreateServiceWithInMemoryContext();
-
-//            var existing = new ApplicationUser { Id = "existing", Email = "dup@x.com" };
-//            _userManager.Setup(u => u.FindByEmailAsync("dup@x.com")).ReturnsAsync(existing);
-
-//            var dto = new CreateDoctorDto
-//            {
-//                Email = "dup@x.com",
-//                Password = "Passw0rd!",
-//                FullName = "Dr Dup",
-//                Specialisation = Specialisation.Cardiology,
-//                YearsOfExperience = 5,
-//                ConsultationFee = 100
-//            };
-
-//            Func<Task> action = async () => await service.CreateDoctor(dto);
-
-//            await action.Should().ThrowAsync<BusinessRuleException>().WithMessage("Email already exists.");
-//            context.Doctors.Should().BeEmpty();
-
-//            await context.DisposeAsync();
-//        }
-
-//        [Fact]
-//        public async Task CreateDoctor_ShouldThrowBusinessRule_AndRollback_WhenUserCreationFails()
-//        {
-//            var (service, context) = CreateServiceWithInMemoryContext();
-
-//            _userManager.Setup(u => u.FindByEmailAsync("bad@x.com")).ReturnsAsync((ApplicationUser)null);
-//            _userManager
-//                .Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
-//                .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Weak password" }));
-
-//            var dto = new CreateDoctorDto
-//            {
-//                Email = "bad@x.com",
-//                Password = "weak",
-//                FullName = "Dr Bad",
-//                Specialisation = Specialisation.Cardiology,
-//                YearsOfExperience = 2,
-//                ConsultationFee = 50
-//            };
-
-//            Func<Task> action = async () => await service.CreateDoctor(dto);
-
-//            await action.Should().ThrowAsync<BusinessRuleException>().WithMessage("Weak password");
-//            context.Doctors.Should().BeEmpty();
-
-//            await context.DisposeAsync();
-//        }
-
-//        [Fact]
-//        public async Task CreateDoctor_ShouldSucceed_WhenValid()
-//        {
-//            var (service, context) = CreateServiceWithInMemoryContext();
-
-//            _userManager.Setup(u => u.FindByEmailAsync("new@x.com")).ReturnsAsync((ApplicationUser)null);
-//            _userManager
-//                .Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
-//                .ReturnsAsync(IdentityResult.Success)
-//                .Callback<ApplicationUser, string>((u, p) => u.Id = "new-doctor-user-id");
-//            _userManager
-//                .Setup(u => u.AddToRoleAsync(It.IsAny<ApplicationUser>(), "Doctor"))
-//                .ReturnsAsync(IdentityResult.Success);
-//            _mapper
-//                .Setup(m => m.Map<DoctorDto>(It.IsAny<Doctor>()))
-//                .Returns((Doctor d) => new DoctorDto { DoctorId = d.DoctorId, FullName = d.FullName });
-
-//            var dto = new CreateDoctorDto
-//            {
-//                Email = "new@x.com",
-//                Password = "Passw0rd!",
-//                FullName = "Dr New",
-//                Specialisation = Specialisation.Neurology,
-//                YearsOfExperience = 8,
-//                ConsultationFee = 200
-//            };
-
-//            var result = await service.CreateDoctor(dto);
-
-//            result.Should().NotBeNull();
-//            result.FullName.Should().Be("Dr New");
-
-//            context.Doctors.Should().ContainSingle(d => d.UserId == "new-doctor-user-id" && d.FullName == "Dr New" && d.IsActive);
-//            _userManager.Verify(u => u.AddToRoleAsync(It.IsAny<ApplicationUser>(), "Doctor"), Times.Once);
-
-//            await context.DisposeAsync();
-//        }
-
-//        [Fact]
-//        public async Task CreateDoctor_ShouldRollbackAndRethrow_WhenExceptionOccursMidTransaction()
-//        {
-//            var (service, context) = CreateServiceWithInMemoryContext();
-
-//            _userManager.Setup(u => u.FindByEmailAsync("crash@x.com")).ReturnsAsync((ApplicationUser)null);
-//            _userManager
-//                .Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
-//                .ReturnsAsync(IdentityResult.Success);
-//            _userManager
-//                .Setup(u => u.AddToRoleAsync(It.IsAny<ApplicationUser>(), "Doctor"))
-//                .ThrowsAsync(new Exception("role assignment failed"));
-
-//            var dto = new CreateDoctorDto
-//            {
-//                Email = "crash@x.com",
-//                Password = "Passw0rd!",
-//                FullName = "Dr Crash",
-//                Specialisation = Specialisation.Cardiology,
-//                YearsOfExperience = 3,
-//                ConsultationFee = 75
-//            };
-
-//            Func<Task> action = async () => await service.CreateDoctor(dto);
-
-//            await action.Should().ThrowAsync<Exception>().WithMessage("role assignment failed");
-//            context.Doctors.Should().BeEmpty();
-
-//            await context.DisposeAsync();
-//        }
-
-//        // --- UpdateDoctor ---
-//        [Fact]
-//        public async Task UpdateDoctor_ShouldThrowNotFound_WhenDoctorDoesNotExist()
-//        {
-//            _doctorRepository.Setup(r => r.GetByIdAsync(5)).ReturnsAsync((Doctor)null);
-
-//            Func<Task> action = async () => await _service.UpdateDoctor(5, new HealthAxis.Shared.DTOs.DoctorDtos.UpdateDoctorDto());
-//            await action.Should().ThrowAsync<NotFoundException>();
-//        }
-
-//        [Fact]
-//        public async Task UpdateDoctor_ShouldMapAndCallRepository_WhenDoctorExists()
-//        {
-//            var doctor = new Doctor { DoctorId = 3, FullName = "Old" };
-//            var dto = new HealthAxis.Shared.DTOs.DoctorDtos.UpdateDoctorDto { FullName = "New", Specialisation = Specialisation.Cardiology };
-
-//            _doctorRepository.Setup(r => r.GetByIdAsync(3)).ReturnsAsync(doctor);
-//            _doctorRepository.Setup(r => r.UpdateAsync(3, It.IsAny<Doctor>())).ReturnsAsync(doctor);
-//            _mapper.Setup(m => m.Map<DoctorDto>(doctor)).Returns(new DoctorDto { DoctorId = 3, FullName = "New" });
-
-//            var result = await _service.UpdateDoctor(3, dto);
-
-//            _mapper.Verify(m => m.Map(dto, doctor), Times.Once);
-//            _doctorRepository.Verify(r => r.UpdateAsync(3, It.IsAny<Doctor>()), Times.Once);
-//            result.DoctorId.Should().Be(3);
-//        }
-
-//        [Fact]
-//        public async Task UpdateDoctor_ShouldPropagateException_WhenRepositoryUpdateFails()
-//        {
-//            var doctor = new Doctor { DoctorId = 4, FullName = "Old" };
-//            _doctorRepository.Setup(r => r.GetByIdAsync(4)).ReturnsAsync(doctor);
-//            _doctorRepository.Setup(r => r.UpdateAsync(4, It.IsAny<Doctor>())).ThrowsAsync(new Exception("update failed"));
-
-//            Func<Task> action = async () => await _service.UpdateDoctor(4, new HealthAxis.Shared.DTOs.DoctorDtos.UpdateDoctorDto());
-
-//            await action.Should().ThrowAsync<Exception>().WithMessage("update failed");
-//        }
-
-//        // --- GetAvailableDoctorsAsync ---
-//        [Fact]
-//        public async Task GetAvailableDoctorsAsync_ShouldReturnMappedDoctors()
-//        {
-//            var doctors = new List<Doctor> { new Doctor { DoctorId = 1 } };
-//            _doctorRepository.Setup(r => r.GetAvailableDoctorsAsync(null, null, It.IsAny<CancellationToken>())).ReturnsAsync(doctors);
-//            _mapper.Setup(m => m.Map<IEnumerable<DoctorDto>>(doctors)).Returns(new List<DoctorDto> { new DoctorDto { DoctorId = 1 } });
-
-//            var result = await _service.GetAvailableDoctorsAsync(null, null);
-//            result.Should().HaveCount(1);
-//            _doctorRepository.Verify(r => r.GetAvailableDoctorsAsync(null, null, It.IsAny<CancellationToken>()), Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task GetAvailableDoctorsAsync_ShouldPropagateException()
-//        {
-//            _doctorRepository.Setup(r => r.GetAvailableDoctorsAsync(null, null, It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("fail"));
-//            Func<Task> action = async () => await _service.GetAvailableDoctorsAsync(null, null);
-//            await action.Should().ThrowAsync<Exception>().WithMessage("fail");
-//        }
-
-//        // --- Appointments retrieval ---
-//        [Fact]
-//        public async Task GetAppointmentsAsync_ShouldThrow_WhenDoctorNotFound()
-//        {
-//            _doctorRepository.Setup(r => r.GetByUserIdAsync("u", It.IsAny<CancellationToken>())).ReturnsAsync((Doctor)null);
-//            Func<Task> action = async () => await _service.GetAppointmentsAsync("u", CancellationToken.None);
-//            await action.Should().ThrowAsync<NotFoundException>().WithMessage("Doctor not found.");
-//        }
-
-//        [Fact]
-//        public async Task GetAppointmentsAsync_ShouldReturnMappedAppointments()
-//        {
-//            var doctor = new Doctor { DoctorId = 7 };
-//            var appts = new List<Appointment> { new Appointment { AppointmentId = 11 } };
-//            _doctorRepository.Setup(r => r.GetByUserIdAsync("u", It.IsAny<CancellationToken>())).ReturnsAsync(doctor);
-//            _doctorRepository.Setup(r => r.GetAppointmentsAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(appts);
-//            _mapper.Setup(m => m.Map<IEnumerable<AppointmentDto>>(appts)).Returns(new List<AppointmentDto> { new AppointmentDto { AppointmentId = 11 } });
-
-//            var result = await _service.GetAppointmentsAsync("u", CancellationToken.None);
-//            result.Should().HaveCount(1);
-//            _doctorRepository.Verify(r => r.GetAppointmentsAsync(7, It.IsAny<CancellationToken>()), Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task GetTodaysAppointmentsAsync_ShouldThrow_WhenDoctorNotFound()
-//        {
-//            _doctorRepository.Setup(r => r.GetByUserIdAsync("u", It.IsAny<CancellationToken>())).ReturnsAsync((Doctor)null);
-//            Func<Task> action = async () => await _service.GetTodaysAppointmentsAsync("u", CancellationToken.None);
-//            await action.Should().ThrowAsync<NotFoundException>();
-//        }
-
-//        [Fact]
-//        public async Task GetTodaysAppointmentsAsync_ShouldReturnMapped()
-//        {
-//            var doctor = new Doctor { DoctorId = 8 };
-//            var appts = new List<Appointment> { new Appointment { AppointmentId = 12, ScheduledDate = DateTime.Today } };
-//            _doctorRepository.Setup(r => r.GetByUserIdAsync("u", It.IsAny<CancellationToken>())).ReturnsAsync(doctor);
-//            _doctorRepository.Setup(r => r.GetTodaysAppointmentsAsync(8, DateTime.Today, It.IsAny<CancellationToken>())).ReturnsAsync(appts);
-//            _mapper.Setup(m => m.Map<IEnumerable<AppointmentDto>>(appts)).Returns(new List<AppointmentDto> { new AppointmentDto { AppointmentId = 12 } });
-
-//            var result = await _service.GetTodaysAppointmentsAsync("u", CancellationToken.None);
-//            result.Should().HaveCount(1);
-//        }
-
-//        [Fact]
-//        public async Task GetWeeklyAppointmentsAsync_ShouldThrow_WhenDoctorNotFound()
-//        {
-//            _doctorRepository.Setup(r => r.GetByUserIdAsync("u", It.IsAny<CancellationToken>())).ReturnsAsync((Doctor)null);
-//            Func<Task> action = async () => await _service.GetWeeklyAppointmentsAsync("u", CancellationToken.None);
-//            await action.Should().ThrowAsync<NotFoundException>().WithMessage("Doctor not found.");
-//        }
-
-//        [Fact]
-//        public async Task GetWeeklyAppointmentsAsync_ShouldReturnMapped_AndUseWeekRange()
-//        {
-//            var doctor = new Doctor { DoctorId = 9 };
-//            DateTime today = DateTime.Today;
-//            int diff = today.DayOfWeek == DayOfWeek.Sunday ? 6 : (int)today.DayOfWeek - 1;
-//            DateTime start = today.AddDays(-diff);
-//            DateTime end = start.AddDays(6);
-
-//            var appts = new List<Appointment> { new Appointment { AppointmentId = 13 } };
-//            _doctorRepository.Setup(r => r.GetByUserIdAsync("u", It.IsAny<CancellationToken>())).ReturnsAsync(doctor);
-//            _doctorRepository.Setup(r => r.GetWeeklyAppointmentsAsync(9, start, end, It.IsAny<CancellationToken>())).ReturnsAsync(appts);
-//            _mapper.Setup(m => m.Map<IEnumerable<AppointmentDto>>(appts)).Returns(new List<AppointmentDto> { new AppointmentDto { AppointmentId = 13 } });
-
-//            var result = await _service.GetWeeklyAppointmentsAsync("u", CancellationToken.None);
-//            result.Should().HaveCount(1);
-//            _doctorRepository.Verify(r => r.GetWeeklyAppointmentsAsync(9, start, end, It.IsAny<CancellationToken>()), Times.Once);
-//        }
-
-//        // --- Delegating methods ---
-//        [Fact]
-//        public async Task UpdateAppointmentStatusAsync_ForwardsCallToAppointmentService()
-//        {
-//            var dto = new UpdateAppointmentStatusDto { Status = AppointmentStatus.Confirmed };
-//            var ret = new AppointmentDto { AppointmentId = 20, Status = AppointmentStatus.Confirmed };
-//            _appointmentService.Setup(a => a.UpdateStatusAsync(20, dto, It.IsAny<CancellationToken>())).ReturnsAsync(ret);
-
-//            var result = await _service.UpdateAppointmentStatusAsync(20, dto);
-//            result.Should().Be(ret);
-//            _appointmentService.Verify(a => a.UpdateStatusAsync(20, dto, It.IsAny<CancellationToken>()), Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task UpdateAppointmentStatusAsync_ShouldPropagateException()
-//        {
-//            var dto = new UpdateAppointmentStatusDto { Status = AppointmentStatus.Cancelled };
-//            _appointmentService.Setup(a => a.UpdateStatusAsync(21, dto, It.IsAny<CancellationToken>())).ThrowsAsync(new NotFoundException("Appointment not found."));
-
-//            Func<Task> action = async () => await _service.UpdateAppointmentStatusAsync(21, dto);
-
-//            await action.Should().ThrowAsync<NotFoundException>().WithMessage("Appointment not found.");
-//        }
-
-//        [Fact]
-//        public async Task AddHealthRecordAsync_ForwardsToHealthRecordService()
-//        {
-//            var dto = new HealthAxis.Shared.DTOs.HealthRecordDtos.CreateHealthRecordDto();
-//            var ret = new HealthAxis.Shared.DTOs.HealthRecordDtos.HealthRecordDto { RecordId = 5 };
-//            _healthRecordService.Setup(h => h.AddAsync(dto, It.IsAny<CancellationToken>())).ReturnsAsync(ret);
-
-//            var result = await _service.AddHealthRecordAsync(dto);
-//            result.Should().Be(ret);
-//            _healthRecordService.Verify(h => h.AddAsync(dto, It.IsAny<CancellationToken>()), Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task AddHealthRecordAsync_ShouldPropagateException()
-//        {
-//            var dto = new HealthAxis.Shared.DTOs.HealthRecordDtos.CreateHealthRecordDto();
-//            _healthRecordService.Setup(h => h.AddAsync(dto, It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("save failed"));
-
-//            Func<Task> action = async () => await _service.AddHealthRecordAsync(dto);
-
-//            await action.Should().ThrowAsync<Exception>().WithMessage("save failed");
-//        }
-
-//        [Fact]
-//        public async Task GetHealthRecordByIdAsync_ForwardsToService()
-//        {
-//            var ret = new HealthAxis.Shared.DTOs.HealthRecordDtos.HealthRecordDto { RecordId = 7 };
-//            _healthRecordService.Setup(h => h.GetByRecordIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(ret);
-
-//            var result = await _service.GetHealthRecordByIdAsync(7);
-//            result.Should().Be(ret);
-//            _healthRecordService.Verify(h => h.GetByRecordIdAsync(7, It.IsAny<CancellationToken>()), Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task GetHealthRecordByIdAsync_ShouldPropagateException()
-//        {
-//            _healthRecordService.Setup(h => h.GetByRecordIdAsync(99, It.IsAny<CancellationToken>())).ThrowsAsync(new NotFoundException("Health record not found."));
-
-//            Func<Task> action = async () => await _service.GetHealthRecordByIdAsync(99);
-
-//            await action.Should().ThrowAsync<NotFoundException>().WithMessage("Health record not found.");
-//        }
-
-//        // --- GetDoctorByUserIdAsync & UpdateDoctorByUserIdAsync ---
-//        [Fact]
-//        public async Task GetDoctorByUserIdAsync_ShouldReturnMapped_WhenExists()
-//        {
-//            var doctor = new Doctor { DoctorId = 100 };
-//            var dto = new DoctorDto { DoctorId = 100 };
-//            _doctorRepository.Setup(r => r.GetByUserIdAsync("u", It.IsAny<CancellationToken>())).ReturnsAsync(doctor);
-//            _mapper.Setup(m => m.Map<DoctorDto>(doctor)).Returns(dto);
-
-//            var result = await _service.GetDoctorByUserIdAsync("u");
-//            result.Should().Be(dto);
-//        }
-
-//        [Fact]
-//        public async Task GetDoctorByUserIdAsync_ShouldThrow_WhenNotFound()
-//        {
-//            _doctorRepository.Setup(r => r.GetByUserIdAsync("u", It.IsAny<CancellationToken>())).ReturnsAsync((Doctor)null);
-//            Func<Task> action = async () => await _service.GetDoctorByUserIdAsync("u");
-//            await action.Should().ThrowAsync<NotFoundException>().WithMessage("Doctor profile not found.");
-//        }
-
-//        [Fact]
-//        public async Task UpdateDoctorByUserIdAsync_ShouldThrow_WhenNotFound()
-//        {
-//            _doctorRepository.Setup(r => r.GetByUserIdAsync("u", It.IsAny<CancellationToken>())).ReturnsAsync((Doctor)null);
-//            Func<Task> action = async () => await _service.UpdateDoctorByUserIdAsync("u", new HealthAxis.Shared.DTOs.DoctorDtos.UpdateDoctorDto());
-//            await action.Should().ThrowAsync<NotFoundException>();
-//        }
-
-//        [Fact]
-//        public async Task UpdateDoctorByUserIdAsync_ShouldMapAndUpdate_WhenExists()
-//        {
-//            var doctor = new Doctor { DoctorId = 200 };
-//            var dto = new HealthAxis.Shared.DTOs.DoctorDtos.UpdateDoctorDto { FullName = "X", Specialisation = Specialisation.Dermatology };
-//            _doctorRepository.Setup(r => r.GetByUserIdAsync("u", It.IsAny<CancellationToken>())).ReturnsAsync(doctor);
-//            _doctorRepository.Setup(r => r.UpdateAsync(200, doctor, It.IsAny<CancellationToken>())).ReturnsAsync(doctor);
-//            _mapper.Setup(m => m.Map<DoctorDto>(doctor)).Returns(new DoctorDto { DoctorId = 200 });
-
-//            var result = await _service.UpdateDoctorByUserIdAsync("u", dto);
-//            _mapper.Verify(m => m.Map(dto, doctor), Times.Once);
-//            _doctorRepository.Verify(r => r.UpdateAsync(200, doctor, It.IsAny<CancellationToken>()), Times.Once);
-//            result.DoctorId.Should().Be(200);
-//        }
-
-//        // --- Dashboard ---
-//        [Fact]
-//        public async Task GetDashboardAsync_ShouldThrow_WhenNull()
-//        {
-//            _doctorRepository.Setup(r => r.GetDashboardAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync((DoctorDashboardDto)null);
-//            Func<Task> action = async () => await _service.GetDashboardAsync(1);
-//            await action.Should().ThrowAsync<NotFoundException>().WithMessage("Doctor not found.");
-//        }
-
-//        [Fact]
-//        public async Task GetDashboardAsync_ShouldReturnDashboard_WhenExists()
-//        {
-//            var dash = new DoctorDashboardDto { /* properties may vary */ };
-//            _doctorRepository.Setup(r => r.GetDashboardAsync(2, It.IsAny<CancellationToken>())).ReturnsAsync(dash);
-
-//            var result = await _service.GetDashboardAsync(2);
-//            result.Should().Be(dash);
-//        }
-
-//        [Fact]
-//        public async Task GetDashboardAsync_ShouldPropagateException()
-//        {
-//            _doctorRepository.Setup(r => r.GetDashboardAsync(3, It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("dashboard failed"));
-
-//            Func<Task> action = async () => await _service.GetDashboardAsync(3);
-
-//            await action.Should().ThrowAsync<Exception>().WithMessage("dashboard failed");
-//        }
-
-//        // --- GetPatientHealthHistoryAsync ---
-//        [Fact]
-//        public async Task GetPatientHealthHistoryAsync_ShouldThrowNotFound_WhenAppointmentMissing()
-//        {
-//            _appointmentRepository.Setup(r => r.GetByIdAsync(50, It.IsAny<CancellationToken>())).ReturnsAsync((Appointment)null);
-
-//            Func<Task> action = async () => await _service.GetPatientHealthHistoryAsync(1, 50);
-
-//            await action.Should().ThrowAsync<NotFoundException>().WithMessage("Appointment with ID 50 was not found.");
-//        }
-
-//        [Fact]
-//        public async Task GetPatientHealthHistoryAsync_ShouldThrowBusinessRule_WhenAppointmentBelongsToDifferentPatient()
-//        {
-//            var appointment = new Appointment { AppointmentId = 51, PatientId = 999 };
-//            _appointmentRepository.Setup(r => r.GetByIdAsync(51, It.IsAny<CancellationToken>())).ReturnsAsync(appointment);
-
-//            Func<Task> action = async () => await _service.GetPatientHealthHistoryAsync(1, 51);
-
-//            await action.Should().ThrowAsync<BusinessRuleException>()
-//                .WithMessage("The appointment does not belong to the specified patient.");
-//        }
-
-//        [Fact]
-//        public async Task GetPatientHealthHistoryAsync_ShouldReturnMapped_WhenValid()
-//        {
-//            var appointment = new Appointment { AppointmentId = 52, PatientId = 1 };
-//            var records = new List<HealthAxis.API.Models.HealthRecord> { new HealthAxis.API.Models.HealthRecord { RecordId = 1 } };
-//            var dtos = new List<HealthAxis.Shared.DTOs.HealthRecordDtos.HealthRecordDto> { new HealthAxis.Shared.DTOs.HealthRecordDtos.HealthRecordDto { RecordId = 1 } };
-
-//            _appointmentRepository.Setup(r => r.GetByIdAsync(52, It.IsAny<CancellationToken>())).ReturnsAsync(appointment);
-//            _healthRecordRepository.Setup(r => r.GetPatientHealthRecordsAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(records);
-//            _mapper.Setup(m => m.Map<IEnumerable<HealthAxis.Shared.DTOs.HealthRecordDtos.HealthRecordDto>>(records)).Returns(dtos);
-
-//            var result = await _service.GetPatientHealthHistoryAsync(1, 52);
-
-//            result.Should().HaveCount(1);
-//            _healthRecordRepository.Verify(r => r.GetPatientHealthRecordsAsync(1, It.IsAny<CancellationToken>()), Times.Once);
-//        }
-
-//        [Fact]
-//        public async Task GetPatientHealthHistoryAsync_ShouldPropagateException_WhenRepositoryFails()
-//        {
-//            _appointmentRepository.Setup(r => r.GetByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>())).ThrowsAsync(new Exception("lookup failed"));
-
-//            Func<Task> action = async () => await _service.GetPatientHealthHistoryAsync(1, 53);
-
-//            await action.Should().ThrowAsync<Exception>().WithMessage("lookup failed");
-//        }
-//    }
-//}
+﻿using AutoMapper;
+using FluentAssertions;
+using HealthAxis.API.Events;
+using HealthAxis.API.Exceptions;
+using HealthAxis.API.Models;
+using HealthAxis.API.Repositories.Interfaces;
+using HealthAxis.API.Services.Implementations;
+using HealthAxis.Shared.Common;
+using HealthAxis.Shared.DTOs.AdminDtos;
+using HealthAxis.Shared.DTOs.AppointmentDtos;
+using HealthAxis.Shared.DTOs.DoctorDtos;
+using HealthAxis.Shared.DTOs.HealthRecordDtos;
+using HealthAxis.Shared.Enums;
+using MassTransit;
+using Microsoft.AspNetCore.Identity;
+using Moq;
+using Xunit;
+
+namespace HealthAxis.Tests.Services
+{
+    public class DoctorServiceTests
+    {
+        protected readonly Mock<IDoctorRepository> _doctorRepository;
+        protected readonly Mock<IUserStore<ApplicationUser>> _userStore;
+        protected readonly Mock<UserManager<ApplicationUser>> _userManager;
+        protected readonly Mock<IMapper> _mapper;
+        protected readonly Mock<IAppointmentRepository> _appointmentRepository;
+        protected readonly Mock<IHealthRecordRepository> _healthRecordRepository;
+        protected readonly Mock<IPublishEndpoint> _publishEndpoint;
+        protected readonly DoctorService _service;
+
+        public DoctorServiceTests()
+        {
+            _doctorRepository = new Mock<IDoctorRepository>();
+            _userStore = new Mock<IUserStore<ApplicationUser>>();
+
+            _userManager = new Mock<UserManager<ApplicationUser>>(
+                _userStore.Object, null!, null!, null!, null!, null!, null!, null!, null!);
+
+            _mapper = new Mock<IMapper>();
+            _appointmentRepository = new Mock<IAppointmentRepository>();
+            _healthRecordRepository = new Mock<IHealthRecordRepository>();
+            _publishEndpoint = new Mock<IPublishEndpoint>();
+
+            _service = new DoctorService(
+                _doctorRepository.Object,
+                _userManager.Object,
+                _mapper.Object,
+                _appointmentRepository.Object,
+                _healthRecordRepository.Object,
+                _publishEndpoint.Object);
+        }
+
+        #region GetDoctorById
+
+        [Fact]
+        public async Task GetDoctorById_ShouldReturnDoctor_WhenDoctorExists()
+        {
+            var doctor = new Doctor { DoctorId = 1, FullName = "Dr. Smith" };
+            var doctorDto = new DoctorDto { DoctorId = 1, FullName = "Dr. Smith" };
+
+            _doctorRepository.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(doctor);
+            _mapper.Setup(x => x.Map<DoctorDto>(doctor)).Returns(doctorDto);
+
+            var result = await _service.GetDoctorById(1);
+
+            result.Should().BeEquivalentTo(doctorDto);
+        }
+
+        [Fact]
+        public async Task GetDoctorById_ShouldThrowNotFoundException_WhenDoctorDoesNotExist()
+        {
+            _doctorRepository.Setup(x => x.GetByIdAsync(1)).ReturnsAsync((Doctor?)null);
+
+            Func<Task> act = async () => await _service.GetDoctorById(1);
+
+            await act.Should().ThrowAsync<NotFoundException>()
+                .WithMessage("Doctor not found.");
+        }
+
+        #endregion
+
+        #region GetDoctorsAsync
+
+        [Fact]
+        public async Task GetDoctorsAsync_ShouldReturnPagedResult_WhenCalled()
+        {
+            var request = new PaginationRequest { PageNumber = 1, PageSize = 10 };
+
+            var pagedDoctors = new PagedResult<Doctor>
+            {
+                Items = new List<Doctor> { new() { DoctorId = 1 } },
+                TotalCount = 1,
+                PageNumber = 1,
+                PageSize = 10
+            };
+
+            var doctorDtos = new List<DoctorDto> { new() { DoctorId = 1 } };
+
+            _doctorRepository
+                .Setup(x => x.GetDoctorsAsync(request, null, null, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(pagedDoctors);
+
+            _mapper
+                .Setup(x => x.Map<IEnumerable<DoctorDto>>(pagedDoctors.Items))
+                .Returns(doctorDtos);
+
+            var result = await _service.GetDoctorsAsync(request, null, null, null);
+
+            result.Items.Should().BeEquivalentTo(doctorDtos);
+            result.TotalCount.Should().Be(1);
+        }
+
+        #endregion
+
+        #region CreateDoctor
+
+        private static CreateDoctorDto ValidCreateDto() => new()
+        {
+            Email = "doc@example.com",
+            Password = "P@ssw0rd!",
+            FullName = "Dr. New",
+            Specialisation = Specialisation.Cardiology,
+            YearsOfExperience = 5,
+            ConsultationFee = 100
+        };
+
+        [Fact]
+        public async Task CreateDoctor_ShouldThrowBusinessRuleException_WhenEmailAlreadyExists()
+        {
+            var dto = ValidCreateDto();
+
+            _userManager
+                .Setup(x => x.FindByEmailAsync(dto.Email))
+                .ReturnsAsync(new ApplicationUser { Email = dto.Email });
+
+            Func<Task> act = async () => await _service.CreateDoctor(dto);
+
+            await act.Should().ThrowAsync<BusinessRuleException>()
+                .WithMessage("Email already exists.");
+        }
+
+        [Fact]
+        public async Task CreateDoctor_ShouldThrowBusinessRuleException_WhenUserCreationFails()
+        {
+            var dto = ValidCreateDto();
+
+            _userManager
+                .Setup(x => x.FindByEmailAsync(dto.Email))
+                .ReturnsAsync((ApplicationUser?)null);
+
+            var identityErrors = new[]
+            {
+                new IdentityError { Description = "Password too weak" }
+            };
+
+            _userManager
+                .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), dto.Password))
+                .ReturnsAsync(IdentityResult.Failed(identityErrors));
+
+            Func<Task> act = async () => await _service.CreateDoctor(dto);
+
+            await act.Should().ThrowAsync<BusinessRuleException>()
+                .WithMessage("Password too weak");
+        }
+
+        [Fact]
+        public async Task CreateDoctor_ShouldCreateSuccessfully_WhenValidDataProvided()
+        {
+            var dto = ValidCreateDto();
+            var doctorDto = new DoctorDto { FullName = dto.FullName };
+
+            _userManager
+                .Setup(x => x.FindByEmailAsync(dto.Email))
+                .ReturnsAsync((ApplicationUser?)null);
+
+            _userManager
+                .Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), dto.Password))
+                .ReturnsAsync(IdentityResult.Success);
+
+            _userManager
+                .Setup(x => x.AddToRoleAsync(It.IsAny<ApplicationUser>(), "Doctor"))
+                .ReturnsAsync(IdentityResult.Success);
+
+            _doctorRepository
+                .Setup(x => x.CreateDoctorAsync(It.IsAny<Doctor>()))
+                .ReturnsAsync((Doctor d, CancellationToken _) => d); // fixed below if signature has no ct
+
+            _mapper
+                .Setup(x => x.Map<DoctorDto>(It.IsAny<Doctor>()))
+                .Returns(doctorDto);
+
+            var result = await _service.CreateDoctor(dto);
+
+            result.Should().BeEquivalentTo(doctorDto);
+
+            _doctorRepository.Verify(
+                x => x.CreateDoctorAsync(It.Is<Doctor>(d =>
+                    d.FullName == dto.FullName &&
+                    d.Specialisation == dto.Specialisation &&
+                    d.IsActive == true)),
+                Times.Once);
+
+            _userManager.Verify(
+                x => x.AddToRoleAsync(It.IsAny<ApplicationUser>(), "Doctor"),
+                Times.Once);
+        }
+
+        #endregion
+
+        #region UpdateDoctor
+
+        [Fact]
+        public async Task UpdateDoctor_ShouldUpdateSuccessfully_WhenDoctorExists()
+        {
+            var doctor = new Doctor { DoctorId = 1, FullName = "Old Name" };
+            var dto = new UpdateDoctorDto { FullName = "New Name" };
+            var doctorDto = new DoctorDto { DoctorId = 1, FullName = "New Name" };
+
+            _doctorRepository.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(doctor);
+
+            _mapper
+                .Setup(x => x.Map(dto, doctor))
+                .Returns(doctor);
+
+            _doctorRepository
+                .Setup(x => x.UpdateAsync(1, doctor))
+                .ReturnsAsync(doctor);   // <-- fixed: was Task.CompletedTask
+
+            _mapper.Setup(x => x.Map<DoctorDto>(doctor)).Returns(doctorDto);
+
+            var result = await _service.UpdateDoctor(1, dto);
+
+            result.Should().BeEquivalentTo(doctorDto);
+
+            _doctorRepository.Verify(x => x.UpdateAsync(1, doctor), Times.Once);
+        }
+
+        #endregion
+
+        #region GetAvailableDoctorsAsync
+
+        [Fact]
+        public async Task GetAvailableDoctorsAsync_ShouldReturnPagedResult_WhenCalled()
+        {
+            var request = new PaginationRequest { PageNumber = 1, PageSize = 10 };
+
+            var pagedDoctors = new PagedResult<Doctor>
+            {
+                Items = new List<Doctor> { new() { DoctorId = 1 } },
+                TotalCount = 1,
+                PageNumber = 1,
+                PageSize = 10
+            };
+
+            var doctorDtos = new List<DoctorDto> { new() { DoctorId = 1 } };
+
+            _doctorRepository
+                .Setup(x => x.GetAvailableDoctorsAsync(null, null, request, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(pagedDoctors);
+
+            _mapper
+                .Setup(x => x.Map<List<DoctorDto>>(pagedDoctors.Items))
+                .Returns(doctorDtos);
+
+            var result = await _service.GetAvailableDoctorsAsync(null, null, request);
+
+            result.Items.Should().BeEquivalentTo(doctorDtos);
+        }
+
+        #endregion
+
+        #region GetAppointmentsAsync
+
+        [Fact]
+        public async Task GetAppointmentsAsync_ShouldThrowNotFoundException_WhenDoctorDoesNotExist()
+        {
+            _doctorRepository
+                .Setup(x => x.GetByUserIdAsync("user1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Doctor?)null);
+
+            Func<Task> act = async () =>
+                await _service.GetAppointmentsAsync("user1", new PaginationRequest());
+
+            await act.Should().ThrowAsync<NotFoundException>()
+                .WithMessage("Doctor not found.");
+        }
+
+        [Fact]
+        public async Task GetAppointmentsAsync_ShouldReturnPagedResult_WhenDoctorExists()
+        {
+            var doctor = new Doctor { DoctorId = 1, UserId = "user1" };
+            var request = new PaginationRequest();
+
+            var pagedAppointments = new PagedResult<Appointment>
+            {
+                Items = new List<Appointment> { new() { AppointmentId = 1 } },
+                TotalCount = 1,
+                PageNumber = 1,
+                PageSize = 10
+            };
+
+            var appointmentDtos = new List<AppointmentDto> { new() { AppointmentId = 1 } };
+
+            _doctorRepository
+                .Setup(x => x.GetByUserIdAsync("user1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(doctor);
+
+            _doctorRepository
+                .Setup(x => x.GetAppointmentsAsync(1, request, null, null, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(pagedAppointments);
+
+            _mapper
+                .Setup(x => x.Map<List<AppointmentDto>>(pagedAppointments.Items))
+                .Returns(appointmentDtos);
+
+            var result = await _service.GetAppointmentsAsync("user1", request);
+
+            result.Items.Should().BeEquivalentTo(appointmentDtos);
+        }
+
+        #endregion
+
+        #region GetTodaysAppointmentsAsync
+
+        [Fact]
+        public async Task GetTodaysAppointmentsAsync_ShouldThrowNotFoundException_WhenDoctorDoesNotExist()
+        {
+            _doctorRepository
+                .Setup(x => x.GetByUserIdAsync("user1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Doctor?)null);
+
+            Func<Task> act = async () =>
+                await _service.GetTodaysAppointmentsAsync("user1", new PaginationRequest());
+
+            await act.Should().ThrowAsync<NotFoundException>()
+                .WithMessage("Doctor not found.");
+        }
+
+        [Fact]
+        public async Task GetTodaysAppointmentsAsync_ShouldReturnPagedResult_WhenDoctorExists()
+        {
+            var doctor = new Doctor { DoctorId = 1, UserId = "user1" };
+            var request = new PaginationRequest();
+
+            var pagedAppointments = new PagedResult<Appointment>
+            {
+                Items = new List<Appointment> { new() { AppointmentId = 1 } },
+                TotalCount = 1,
+                PageNumber = 1,
+                PageSize = 10
+            };
+
+            var appointmentDtos = new List<AppointmentDto> { new() { AppointmentId = 1 } };
+
+            _doctorRepository
+                .Setup(x => x.GetByUserIdAsync("user1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(doctor);
+
+            _doctorRepository
+                .Setup(x => x.GetTodaysAppointmentsAsync(1, It.IsAny<DateTime>(), request, null, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(pagedAppointments);
+
+            _mapper
+                .Setup(x => x.Map<List<AppointmentDto>>(pagedAppointments.Items))
+                .Returns(appointmentDtos);
+
+            var result = await _service.GetTodaysAppointmentsAsync("user1", request);
+
+            result.Items.Should().BeEquivalentTo(appointmentDtos);
+        }
+
+        #endregion
+
+        #region GetWeeklyAppointmentsAsync
+
+        [Fact]
+        public async Task GetWeeklyAppointmentsAsync_ShouldThrowNotFoundException_WhenDoctorDoesNotExist()
+        {
+            _doctorRepository
+                .Setup(x => x.GetByUserIdAsync("user1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Doctor?)null);
+
+            Func<Task> act = async () =>
+                await _service.GetWeeklyAppointmentsAsync("user1", new PaginationRequest());
+
+            await act.Should().ThrowAsync<NotFoundException>()
+                .WithMessage("Doctor not found.");
+        }
+
+        [Fact]
+        public async Task GetWeeklyAppointmentsAsync_ShouldReturnPagedResult_WhenDoctorExists()
+        {
+            var doctor = new Doctor { DoctorId = 1, UserId = "user1" };
+            var request = new PaginationRequest();
+
+            var pagedAppointments = new PagedResult<Appointment>
+            {
+                Items = new List<Appointment> { new() { AppointmentId = 1 } },
+                TotalCount = 1,
+                PageNumber = 1,
+                PageSize = 10
+            };
+
+            var appointmentDtos = new List<AppointmentDto> { new() { AppointmentId = 1 } };
+
+            _doctorRepository
+                .Setup(x => x.GetByUserIdAsync("user1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(doctor);
+
+            _doctorRepository
+                .Setup(x => x.GetWeeklyAppointmentsAsync(1, request, null, null, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(pagedAppointments);
+
+            _mapper
+                .Setup(x => x.Map<List<AppointmentDto>>(pagedAppointments.Items))
+                .Returns(appointmentDtos);
+
+            var result = await _service.GetWeeklyAppointmentsAsync("user1", request);
+
+            result.Items.Should().BeEquivalentTo(appointmentDtos);
+        }
+
+        #endregion
+
+        #region GetDoctorByUserIdAsync
+
+        [Fact]
+        public async Task GetDoctorByUserIdAsync_ShouldThrowNotFoundException_WhenDoctorProfileDoesNotExist()
+        {
+            _doctorRepository
+                .Setup(x => x.GetByUserIdAsync("user1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Doctor?)null);
+
+            Func<Task> act = async () => await _service.GetDoctorByUserIdAsync("user1");
+
+            await act.Should().ThrowAsync<NotFoundException>()
+                .WithMessage("Doctor profile not found.");
+        }
+
+        [Fact]
+        public async Task GetDoctorByUserIdAsync_ShouldReturnDoctor_WhenProfileExists()
+        {
+            var doctor = new Doctor { DoctorId = 1, UserId = "user1" };
+            var doctorDto = new DoctorDto { DoctorId = 1 };
+
+            _doctorRepository
+                .Setup(x => x.GetByUserIdAsync("user1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(doctor);
+
+            _mapper.Setup(x => x.Map<DoctorDto>(doctor)).Returns(doctorDto);
+
+            var result = await _service.GetDoctorByUserIdAsync("user1");
+
+            result.Should().BeEquivalentTo(doctorDto);
+        }
+
+        #endregion
+
+        #region UpdateDoctorByUserIdAsync
+
+        [Fact]
+        public async Task UpdateDoctorByUserIdAsync_ShouldThrowNotFoundException_WhenProfileDoesNotExist()
+        {
+            _doctorRepository
+                .Setup(x => x.GetByUserIdAsync("user1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Doctor?)null);
+
+            Func<Task> act = async () =>
+                await _service.UpdateDoctorByUserIdAsync("user1", new UpdateDoctorDto());
+
+            await act.Should().ThrowAsync<NotFoundException>()
+                .WithMessage("Doctor profile not found.");
+        }
+
+        [Fact]
+        public async Task UpdateDoctorByUserIdAsync_ShouldUpdateSuccessfully_WhenProfileExists()
+        {
+            var doctor = new Doctor { DoctorId = 1, UserId = "user1", FullName = "Old" };
+            var dto = new UpdateDoctorDto { FullName = "New" };
+            var doctorDto = new DoctorDto { DoctorId = 1, FullName = "New" };
+
+            _doctorRepository
+                .Setup(x => x.GetByUserIdAsync("user1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(doctor);
+
+            _mapper.Setup(x => x.Map(dto, doctor)).Returns(doctor);
+
+            _doctorRepository
+                .Setup(x => x.UpdateAsync(1, doctor, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(doctor);   // <-- fixed: was Task.CompletedTask
+
+            _mapper.Setup(x => x.Map<DoctorDto>(doctor)).Returns(doctorDto);
+
+            var result = await _service.UpdateDoctorByUserIdAsync("user1", dto);
+
+            result.Should().BeEquivalentTo(doctorDto);
+        }
+
+        #endregion
+
+        #region GetDashboardAsync
+
+        [Fact]
+        public async Task GetDashboardAsync_ShouldThrowNotFoundException_WhenDashboardIsNull()
+        {
+            _doctorRepository
+                .Setup(x => x.GetDashboardAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((DoctorDashboardDto?)null);
+
+            Func<Task> act = async () => await _service.GetDashboardAsync(1);
+
+            await act.Should().ThrowAsync<NotFoundException>()
+                .WithMessage("Doctor not found.");
+        }
+
+        [Fact]
+        public async Task GetDashboardAsync_ShouldReturnDashboard_WhenFound()
+        {
+            var dashboard = new DoctorDashboardDto();
+
+            _doctorRepository
+                .Setup(x => x.GetDashboardAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(dashboard);
+
+            var result = await _service.GetDashboardAsync(1);
+
+            result.Should().BeSameAs(dashboard);
+        }
+
+        #endregion
+
+        #region GetPatientHealthHistoryAsync
+
+        [Fact]
+        public async Task GetPatientHealthHistoryAsync_ShouldThrowNotFoundException_WhenAppointmentDoesNotExist()
+        {
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Appointment?)null);
+
+            Func<Task> act = async () =>
+                await _service.GetPatientHealthHistoryAsync(5, 1);
+
+            await act.Should().ThrowAsync<NotFoundException>()
+                .WithMessage("Appointment with ID 1 was not found.");
+        }
+
+        [Fact]
+        public async Task GetPatientHealthHistoryAsync_ShouldThrowBusinessRuleException_WhenAppointmentBelongsToDifferentPatient()
+        {
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Appointment { AppointmentId = 1, PatientId = 999 });
+
+            Func<Task> act = async () =>
+                await _service.GetPatientHealthHistoryAsync(5, 1);
+
+            await act.Should().ThrowAsync<BusinessRuleException>()
+                .WithMessage("The appointment does not belong to the specified patient.");
+        }
+
+        [Fact]
+        public async Task GetPatientHealthHistoryAsync_ShouldReturnRecords_WhenAppointmentBelongsToPatient()
+        {
+            var appointment = new Appointment { AppointmentId = 1, PatientId = 5 };
+            var records = new List<HealthRecord> { new() { RecordId = 1, PatientId = 5 } };
+            var recordDtos = new List<HealthRecordDto> { new() { RecordId = 1 } };
+
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            _healthRecordRepository
+                .Setup(x => x.GetPatientHealthRecordsAsync(5, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(records);
+
+            _mapper
+                .Setup(x => x.Map<IEnumerable<HealthRecordDto>>(records))
+                .Returns(recordDtos);
+
+            var result = await _service.GetPatientHealthHistoryAsync(5, 1);
+
+            result.Should().BeEquivalentTo(recordDtos);
+        }
+
+        #endregion
+
+        #region UpdateStatusAsync
+
+        [Fact]
+        public async Task UpdateStatusAsync_ShouldThrowNotFoundException_WhenAppointmentDoesNotExist()
+        {
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Appointment?)null);
+
+            Func<Task> act = async () =>
+                await _service.UpdateStatusAsync(1, new UpdateAppointmentStatusDto { Status = AppointmentStatus.Confirmed });
+
+            await act.Should().ThrowAsync<NotFoundException>()
+                .WithMessage("Appointment not found.");
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ShouldThrowValidationException_WhenAppointmentIsCancelled()
+        {
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Appointment { AppointmentId = 1, Status = AppointmentStatus.Cancelled });
+
+            Func<Task> act = async () =>
+                await _service.UpdateStatusAsync(1, new UpdateAppointmentStatusDto { Status = AppointmentStatus.Confirmed });
+
+            await act.Should().ThrowAsync<ValidationException>()
+                .WithMessage("Cancelled appointments cannot be modified.");
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ShouldThrowValidationException_WhenAppointmentIsCompleted()
+        {
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Appointment { AppointmentId = 1, Status = AppointmentStatus.Completed });
+
+            Func<Task> act = async () =>
+                await _service.UpdateStatusAsync(1, new UpdateAppointmentStatusDto { Status = AppointmentStatus.Confirmed });
+
+            await act.Should().ThrowAsync<ValidationException>()
+                .WithMessage("Completed appointments cannot be modified.");
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ShouldThrowValidationException_WhenStatusIsUnchanged()
+        {
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Appointment { AppointmentId = 1, Status = AppointmentStatus.Confirmed });
+
+            Func<Task> act = async () =>
+                await _service.UpdateStatusAsync(1, new UpdateAppointmentStatusDto { Status = AppointmentStatus.Confirmed });
+
+            await act.Should().ThrowAsync<ValidationException>()
+                .WithMessage("Appointment is already Confirmed.");
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ShouldThrowValidationException_WhenCompletingPendingAppointmentDirectly()
+        {
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Appointment { AppointmentId = 1, Status = AppointmentStatus.Pending });
+
+            Func<Task> act = async () =>
+                await _service.UpdateStatusAsync(1, new UpdateAppointmentStatusDto { Status = AppointmentStatus.Completed });
+
+            await act.Should().ThrowAsync<ValidationException>()
+                .WithMessage("Pending appointments must be confirmed before completion.");
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ShouldThrowValidationException_WhenRevertingToPending()
+        {
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Appointment { AppointmentId = 1, Status = AppointmentStatus.Confirmed });
+
+            Func<Task> act = async () =>
+                await _service.UpdateStatusAsync(1, new UpdateAppointmentStatusDto { Status = AppointmentStatus.Pending });
+
+            await act.Should().ThrowAsync<ValidationException>()
+                .WithMessage("Appointments cannot be reverted to pending status.");
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ShouldThrowNotFoundException_WhenUpdateReturnsNull()
+        {
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Appointment { AppointmentId = 1, Status = AppointmentStatus.Pending });
+
+            _appointmentRepository
+                .Setup(x => x.UpdateAsync(1, It.IsAny<Appointment>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Appointment?)null);
+
+            Func<Task> act = async () =>
+                await _service.UpdateStatusAsync(1, new UpdateAppointmentStatusDto { Status = AppointmentStatus.Confirmed });
+
+            await act.Should().ThrowAsync<NotFoundException>()
+                .WithMessage("Appointment not found.");
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ShouldConfirmSuccessfully_WhenPendingToConfirmed()
+        {
+            var appointment = new Appointment { AppointmentId = 1, Status = AppointmentStatus.Pending };
+            var updated = new Appointment { AppointmentId = 1, Status = AppointmentStatus.Confirmed };
+            var dto = new UpdateAppointmentStatusDto { Status = AppointmentStatus.Confirmed };
+            var appointmentDto = new AppointmentDto { AppointmentId = 1 };
+
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            _appointmentRepository
+                .Setup(x => x.UpdateAsync(1, appointment, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(updated);
+
+            _publishEndpoint
+                .Setup(x => x.Publish(It.IsAny<AppointmentEvent>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _mapper.Setup(x => x.Map<AppointmentDto>(updated)).Returns(appointmentDto);
+
+            var result = await _service.UpdateStatusAsync(1, dto);
+
+            result.Should().BeEquivalentTo(appointmentDto);
+
+            _publishEndpoint.Verify(
+                x => x.Publish(It.IsAny<AppointmentEvent>(), It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ShouldCancelSuccessfully_WhenConfirmedToCancelled()
+        {
+            var appointment = new Appointment { AppointmentId = 1, Status = AppointmentStatus.Confirmed };
+            var updated = new Appointment { AppointmentId = 1, Status = AppointmentStatus.Cancelled };
+            var dto = new UpdateAppointmentStatusDto
+            {
+                Status = AppointmentStatus.Cancelled,
+                CancellationReason = "Doctor unavailable"
+            };
+            var appointmentDto = new AppointmentDto { AppointmentId = 1 };
+
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            _appointmentRepository
+                .Setup(x => x.UpdateAsync(1, appointment, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(updated);
+
+            _publishEndpoint
+                .Setup(x => x.Publish(It.IsAny<AppointmentEvent>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _mapper.Setup(x => x.Map<AppointmentDto>(updated)).Returns(appointmentDto);
+
+            var result = await _service.UpdateStatusAsync(1, dto);
+
+            result.Should().BeEquivalentTo(appointmentDto);
+        }
+
+        [Fact]
+        public async Task UpdateStatusAsync_ShouldCompleteSuccessfully_WhenConfirmedToCompleted()
+        {
+            var appointment = new Appointment { AppointmentId = 1, Status = AppointmentStatus.Confirmed };
+            var updated = new Appointment { AppointmentId = 1, Status = AppointmentStatus.Completed };
+            var dto = new UpdateAppointmentStatusDto { Status = AppointmentStatus.Completed };
+            var appointmentDto = new AppointmentDto { AppointmentId = 1 };
+
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            _appointmentRepository
+                .Setup(x => x.UpdateAsync(1, appointment, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(updated);
+
+            _publishEndpoint
+                .Setup(x => x.Publish(It.IsAny<AppointmentEvent>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _mapper.Setup(x => x.Map<AppointmentDto>(updated)).Returns(appointmentDto);
+
+            var result = await _service.UpdateStatusAsync(1, dto);
+
+            result.Should().BeEquivalentTo(appointmentDto);
+        }
+
+        #endregion
+
+        #region AddAsync (Health Record)
+
+        private static CreateHealthRecordDto ValidHealthRecordDto() => new()
+        {
+            AppointmentId = 1,
+            Diagnosis = "Flu",
+            Prescription = "Rest and fluids",
+            Notes = "Follow up in a week"
+        };
+
+        [Fact]
+        public async Task AddAsync_ShouldThrowNotFoundException_WhenAppointmentDoesNotExist()
+        {
+            var dto = ValidHealthRecordDto();
+
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(dto.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Appointment?)null);
+
+            Func<Task> act = async () => await _service.AddAsync(dto);
+
+            await act.Should().ThrowAsync<NotFoundException>()
+                .WithMessage("Appointment not found.");
+        }
+
+        [Fact]
+        public async Task AddAsync_ShouldThrowValidationException_WhenAppointmentIsNotCompleted()
+        {
+            var dto = ValidHealthRecordDto();
+
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(dto.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Appointment { AppointmentId = 1, Status = AppointmentStatus.Confirmed });
+
+            Func<Task> act = async () => await _service.AddAsync(dto);
+
+            await act.Should().ThrowAsync<ValidationException>()
+                .WithMessage("Health records can only be created for completed appointments.");
+        }
+
+        [Fact]
+        public async Task AddAsync_ShouldThrowValidationException_WhenHealthRecordAlreadyExists()
+        {
+            var dto = ValidHealthRecordDto();
+
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(dto.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Appointment { AppointmentId = 1, Status = AppointmentStatus.Completed });
+
+            _healthRecordRepository
+                .Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<HealthRecord> { new() { AppointmentId = 1 } });
+
+            Func<Task> act = async () => await _service.AddAsync(dto);
+
+            await act.Should().ThrowAsync<ValidationException>()
+                .WithMessage("Health record already exists for this appointment.");
+        }
+
+        [Fact]
+        public async Task AddAsync_ShouldCreateSuccessfully_WhenAppointmentIsCompletedAndNoExistingRecord()
+        {
+            var dto = ValidHealthRecordDto();
+
+            var appointment = new Appointment
+            {
+                AppointmentId = 1,
+                DoctorId = 10,
+                PatientId = 20,
+                ScheduledDate = DateTime.Today,
+                Status = AppointmentStatus.Completed
+            };
+
+            var savedRecord = new HealthRecord { RecordId = 99, AppointmentId = 1 };
+            var recordDto = new HealthRecordDto { RecordId = 99 };
+
+            _appointmentRepository
+                .Setup(x => x.GetByIdAsync(dto.AppointmentId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(appointment);
+
+            _healthRecordRepository
+                .Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<HealthRecord>());
+
+            _healthRecordRepository
+                .Setup(x => x.AddAsync(It.IsAny<HealthRecord>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(savedRecord);
+
+            _mapper
+                .Setup(x => x.Map<HealthRecordDto>(savedRecord))
+                .Returns(recordDto);
+
+            var result = await _service.AddAsync(dto);
+
+            result.Should().BeEquivalentTo(recordDto);
+
+            _healthRecordRepository.Verify(
+                x => x.AddAsync(
+                    It.Is<HealthRecord>(hr =>
+                        hr.AppointmentId == dto.AppointmentId &&
+                        hr.DoctorId == appointment.DoctorId &&
+                        hr.PatientId == appointment.PatientId &&
+                        hr.Diagnosis == dto.Diagnosis &&
+                        hr.Prescription == dto.Prescription &&
+                        hr.Notes == dto.Notes),
+                    It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        #endregion
+    }
+}

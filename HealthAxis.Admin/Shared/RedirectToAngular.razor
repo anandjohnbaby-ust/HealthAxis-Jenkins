@@ -1,10 +1,11 @@
 ﻿@inject NavigationManager Navigation
+@inject IConfiguration Configuration
 
 @code {
-
     protected override void OnInitialized()
     {
-        Navigation.NavigateTo("http://localhost:4200/login", true);
-    }
+        var baseUrl = Configuration["AngularApp:BaseUrl"];
 
+        Navigation.NavigateTo($"{baseUrl}/login", true);
+    }
 }

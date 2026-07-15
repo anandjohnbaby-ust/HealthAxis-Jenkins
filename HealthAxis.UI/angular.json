@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "hap-demo": {
+    "HealthAxis.UI": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -63,10 +63,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "hap-demo:build:production"
+              "buildTarget": "HealthAxis.UI:build:production"
             },
             "development": {
-              "buildTarget": "hap-demo:build:development"
+              "buildTarget": "HealthAxis.UI:build:development"
             }
           },
           "defaultConfiguration": "development"

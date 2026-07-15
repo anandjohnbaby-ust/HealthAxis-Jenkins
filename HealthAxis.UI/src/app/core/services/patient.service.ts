@@ -55,21 +55,36 @@ export class PatientService {
   // 2. APPOINTMENT MANAGEMENT
   // =========================================================================
 
-  getMyAppointments(
-    patientId: number,
-    pageNumber: number,
-    pageSize: number
-  ): Observable<PagedResult<Appointment>> {
+getMyAppointments(
+  patientId: number,
+  pageNumber: number,
+  pageSize: number,
+  search?: string,
+  status?: number | null,
+  date?: string | null
+): Observable<PagedResult<Appointment>> {
 
-    const params = new HttpParams()
-      .set('pageNumber', pageNumber)
-      .set('pageSize', pageSize);
+  let params = new HttpParams()
+    .set('pageNumber', pageNumber)
+    .set('pageSize', pageSize);
 
-    return this.http.get<PagedResult<Appointment>>(
-      `${this.baseUrl}${API_ENDPOINTS.PATIENTS.GET_APPOINTMENTS(patientId)}`,
-      { params }
-    );
+  if (search?.trim()) {
+    params = params.set('search', search.trim());
   }
+
+  if (status !== null && status !== undefined) {
+    params = params.set('status', status);
+  }
+
+  if (date) {
+    params = params.set('date', date);
+  }
+
+  return this.http.get<PagedResult<Appointment>>(
+    `${this.baseUrl}${API_ENDPOINTS.PATIENTS.GET_APPOINTMENTS(patientId)}`,
+    { params }
+  );
+}
   /** POST /api/patients/{patientId}/book-appointments */
   bookAppointment(patientId: number, payload: BookAppointmentRequest): Observable<Appointment> {
     return this.http.post<Appointment>(

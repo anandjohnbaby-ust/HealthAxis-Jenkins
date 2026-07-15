@@ -10,6 +10,59 @@
       Book Appointment
     </a>
   </div>
+  <!-- ================= Filters ================= -->
+
+<div class="filters">
+
+  <input
+    type="text"
+    class="filter-input"
+    placeholder="Search Doctor Name or ID..."
+    [(ngModel)]="search"
+    (ngModelChange)="onSearchChange()" />
+
+  <select
+    class="filter-select"
+    [(ngModel)]="selectedStatus"
+    (change)="onStatusChange()">
+
+    <option [ngValue]="null">
+      All Status
+    </option>
+
+    <option [ngValue]="AppointmentStatus.Pending">
+      Pending
+    </option>
+
+    <option [ngValue]="AppointmentStatus.Confirmed">
+      Confirmed
+    </option>
+
+    <option [ngValue]="AppointmentStatus.Completed">
+      Completed
+    </option>
+
+    <option [ngValue]="AppointmentStatus.Cancelled">
+      Cancelled
+    </option>
+
+  </select>
+
+  <input
+    type="date"
+    class="filter-date"
+    [(ngModel)]="selectedDate"
+    (change)="onDateChange()" />
+
+  <button
+    class="btn btn-secondary"
+    (click)="clearFilters()">
+
+    Clear
+
+  </button>
+
+</div>
 
   @if (loadError()) {
     <div class="alert alert--error">
@@ -24,16 +77,16 @@
   } @else if (!loadError() && appointments().length === 0) {
 
     <div class="empty">
-      <p>You don't have any appointments yet.</p>
+      <p>You don't have any appointments.</p>
 
       <a
         routerLink="/patient/appointments/book"
         class="btn btn--primary">
-        Book your first appointment
+        Book your appointment
       </a>
     </div>
 
-  } @else if (appointments().length > 0) {
+  } @else{
 
     <table class="table">
 
@@ -47,87 +100,118 @@
         </tr>
       </thead>
 
-      <tbody>
+<tbody>
 
-        @for (appt of appointments(); track appt.appointmentId) {
+  @if (appointments().length === 0) {
 
-          <tr>
+    <tr>
 
-            <td>{{ appt.doctorName ?? ('Doctor #' + appt.doctorId) }}</td>
+      <td colspan="5" class="empty-table">
 
-            <td>{{ formatDate(appt.scheduledDate) }}</td>
+        No appointments found.
 
-            <td>{{ appt.timeSlot }}</td>
+      </td>
 
-            <td>
-              <span
-                class="badge"
-                [class]="badgeClass(appt.status)">
-                {{ statusLabel(appt.status) }}
+    </tr>
+
+  } @else {
+
+    @for (appt of appointments(); track appt.appointmentId) {
+
+      <tr>
+
+        <td>
+
+          {{ appt.doctorName ?? ('Doctor #' + appt.doctorId) }}
+
+        </td>
+
+        <td>
+
+          {{ formatDate(appt.scheduledDate) }}
+
+        </td>
+
+        <td>
+
+          {{ appt.timeSlot }}
+
+        </td>
+
+        <td>
+
+          <span
+            class="badge"
+            [class]="badgeClass(appt.status)">
+
+            {{ statusLabel(appt.status) }}
+
+          </span>
+
+        </td>
+
+        <td class="text-end">
+
+          @if (appt.status === AppointmentStatus.Pending) {
+
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-danger me-2"
+              (click)="openCancelDialog(appt)">
+
+              Cancel
+
+            </button>
+
+          }
+
+          @if (appt.status === AppointmentStatus.Cancelled) {
+
+            <button
+              type="button"
+              class="btn btn--reason"
+              (click)="openReasonDialog(appt)">
+
+              View Reason
+
+            </button>
+
+          }
+
+          @if (appt.status === AppointmentStatus.Completed) {
+
+            @if (appt.healthRecordId) {
+
+              <button
+                type="button"
+                class="btn btn--primary"
+                (click)="openHealthRecordDialog(appt.healthRecordId!)">
+
+                View Record
+
+              </button>
+
+            } @else {
+
+              <span class="text-muted">
+
+                Health Record Not Available
+
               </span>
-            </td>
 
+            }
 
-<td class="text-end">
+          }
 
-  @if (appt.status === AppointmentStatus.Pending) {
+        </td>
 
-    <button
-      type="button"
-      class="btn btn-sm btn-outline-danger me-2"
-      (click)="openCancelDialog(appt)">
-
-      Cancel
-
-    </button>
-
-  }
-
-  @if (appt.status === AppointmentStatus.Cancelled) {
-
-    <button
-      type="button"
-      class="btn btn--reason"
-      (click)="openReasonDialog(appt)">
-
-      View Reason
-
-    </button>
-
-  }
-
-  @if (appt.status === AppointmentStatus.Completed) {
-
-    @if (appt.healthRecordId) {
-
-      <button
-        type="button"
-        class="btn btn--primary"
-        (click)="openHealthRecordDialog(appt.healthRecordId!)">
-
-        View Record
-
-      </button>
-
-    } @else {
-
-      <span class="text-muted">
-
-        Health Record Not Available
-
-      </span>
+      </tr>
 
     }
 
   }
 
-</td>
-
-          </tr>
-
-        }
-
-      </tbody>
+</tbody>
 
     </table>
 <!-- ================= Pagination ================= -->

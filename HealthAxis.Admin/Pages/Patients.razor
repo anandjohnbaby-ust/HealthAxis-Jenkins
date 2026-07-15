@@ -216,7 +216,7 @@
     private List<PatientDto> patients = [];
 
     private int currentPage = 1;
-    private int pageSize = 10;
+    private readonly int pageSize = 10;
     private bool showEditModal;
     private int editingPatientId;
     private string searchText = string.Empty;
@@ -269,7 +269,7 @@
         }
     }
 
-    private string GetGenderBadge(Gender gender)
+    private static string GetGenderBadge(Gender gender)
     {
         return gender switch
         {

@@ -248,14 +248,21 @@ namespace HealthAxis.API.Repositories.Implementations
 
         public async Task<PagedResult<Appointment>> GetWeeklyAppointmentsAsync(
             int doctorId,
-            DateTime startDate,
-            DateTime endDate,
             PaginationRequest request,
             string? search = null,
             AppointmentStatus? status = null,
             DateTime? date = null,
             CancellationToken ct = default)
         {
+            DateTime today = DateTime.Today;
+
+            int diff = today.DayOfWeek == DayOfWeek.Sunday
+                ? 6
+                : (int)today.DayOfWeek - 1;
+
+            DateTime startOfWeek = today.AddDays(-diff);
+            DateTime endOfWeek = startOfWeek.AddDays(6);
+
             var query = _context.Appointments
                 .AsNoTracking()
                 .Include(a => a.Patient)
@@ -263,8 +270,8 @@ namespace HealthAxis.API.Repositories.Implementations
                 .Include(a => a.HealthRecord)
                 .Where(a =>
                     a.DoctorId == doctorId &&
-                    a.ScheduledDate.Date >= startDate.Date &&
-                    a.ScheduledDate.Date <= endDate.Date);
+                    a.ScheduledDate.Date >= startOfWeek.Date &&
+                    a.ScheduledDate.Date <= endOfWeek.Date);
 
             // ==========================
             // Search by Patient Name / ID

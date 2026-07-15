@@ -281,15 +281,30 @@ builder.Services.AddAutoMapper(
 //----------------------------------------------------------
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAdmin",
-        policy => policy
-            .WithOrigins("https://localhost:7197", "http://localhost:5036", "https://localhost:7207")
+    options.AddPolicy("AllowAdmin", policy =>
+    {
+        policy
+            .WithOrigins(
+                "https://localhost:7197",
+                "http://localhost:5036",
+                "https://localhost:7207")
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials());
+            .AllowCredentials();
+    });
 
-    options.AddPolicy("AllowAllDev",
-        p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+    options.AddPolicy("AllowAllDev", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:4200",
+                "https://localhost:7197",
+                "https://localhost:7207",
+                "http://localhost:5036")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
 });
 
 var app = builder.Build();
@@ -347,5 +362,5 @@ catch (Exception ex)
 }
 finally
 {
-    Log.CloseAndFlush();
+     await Log.CloseAndFlushAsync();
 }

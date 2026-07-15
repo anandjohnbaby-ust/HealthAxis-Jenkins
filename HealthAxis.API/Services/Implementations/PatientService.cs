@@ -6,6 +6,7 @@ using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.DTOs.HealthRecordDtos;
 using HealthAxis.Shared.DTOs.PatientDtos;
+using HealthAxis.Shared.Enums;
 
 namespace HealthAxis.API.Services.Implementations
 {
@@ -108,6 +109,9 @@ namespace HealthAxis.API.Services.Implementations
         public async Task<PagedResult<AppointmentDto>> GetAppointmentsByPatientIdAsync(
             int patientId,
             PaginationRequest request,
+            string? search,
+            AppointmentStatus? status,
+            DateTime? date,
             CancellationToken ct = default)
         {
             var patient = await _patientRepository.GetByIdAsync(
@@ -122,6 +126,9 @@ namespace HealthAxis.API.Services.Implementations
             var appointments = await _patientRepository.GetAppointmentsByPatientIdAsync(
                 patientId,
                 request,
+                search,
+                status,
+                date,
                 ct);
 
             return new PagedResult<AppointmentDto>

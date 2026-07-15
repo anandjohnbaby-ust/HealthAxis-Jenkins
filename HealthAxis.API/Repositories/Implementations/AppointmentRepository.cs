@@ -10,17 +10,11 @@ namespace HealthAxis.API.Repositories.Implementations
 {
     public class AppointmentRepository : Repository<Appointment>, IAppointmentRepository
     {
-        private readonly IDistributedCache _cache;
-        private readonly ILogger<AppointmentRepository> _logger;
 
         public AppointmentRepository(
-            ApplicationDbContext context,
-            IDistributedCache cache,
-            ILogger<AppointmentRepository> logger)
+            ApplicationDbContext context)
             : base(context)
         {
-            _cache = cache;
-            _logger = logger;
         }
 
         public async Task<PagedResult<AppointmentReportDto>> GetAppointmentReportAsync(

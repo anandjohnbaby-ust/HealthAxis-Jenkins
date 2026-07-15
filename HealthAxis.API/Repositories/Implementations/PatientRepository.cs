@@ -85,16 +85,46 @@ namespace HealthAxis.API.Repositories.Implementations
                     cancellationToken);
         }
         public async Task<PagedResult<Appointment>> GetAppointmentsByPatientIdAsync(
-           int patientId,
-           PaginationRequest request,
-           CancellationToken ct = default)
+            int patientId,
+            PaginationRequest request,
+            string? search,
+            AppointmentStatus? status,
+            DateTime? date,
+            CancellationToken ct = default)
         {
             var query = _context.Appointments
                 .AsNoTracking()
-                .Where(a => a.PatientId == patientId)
                 .Include(a => a.Doctor)
                 .Include(a => a.Patient)
-                .Include(a => a.HealthRecord)   // <-- Add this
+                .Include(a => a.HealthRecord)
+                .Where(a => a.PatientId == patientId);
+
+            // Search by Doctor Name or Doctor ID
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+
+                bool isDoctorId = int.TryParse(search, out int doctorId);
+
+                query = query.Where(a =>
+                    (isDoctorId && a.DoctorId == doctorId) ||
+                    EF.Functions.Like(a.Doctor.FullName, $"%{search}%"));
+            }
+
+            // Filter by Appointment Status
+            if (status.HasValue)
+            {
+                query = query.Where(a => a.Status == status.Value);
+            }
+
+            // Filter by Appointment Date
+            if (date.HasValue)
+            {
+                query = query.Where(a =>
+                    a.ScheduledDate.Date == date.Value.Date);
+            }
+
+            query = query
                 .OrderByDescending(a => a.ScheduledDate)
                 .ThenBy(a => a.TimeSlot);
 

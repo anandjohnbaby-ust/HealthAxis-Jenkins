@@ -1,22 +1,23 @@
 ﻿using AutoMapper;
 using HealthAxis.API.Events;
 using HealthAxis.API.Exceptions;
-using HealthAxis.API.Messaging;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Interfaces;
-using HealthAxis.Shared.Common;
-using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.Enums;
 using MassTransit;
-using MassTransit.Transports;
 using Microsoft.Extensions.Caching.Distributed;
+using System.Globalization;
 using System.Text.Json;
+
 namespace HealthAxis.API.Services.Implementations
 {
-    public class AppointmentService : IAppointmentService
+    public partial class AppointmentService : IAppointmentService
     {
+        private const string DateFormat = "yyyy-MM-dd";
+        private const string AppointmentNotFound = "Appointment not found.";
+
         private readonly IAppointmentRepository _appointmentRepository;
         private readonly IRepository<Doctor> _doctorRepository;
         private readonly IPatientRepository _patientRepository;
@@ -52,9 +53,16 @@ namespace HealthAxis.API.Services.Implementations
             _patientRepository = patientRepository;
             _publishEndPoint = publishEndPoint;
             _mapper = mapper;
-            _cache = cache; 
+            _cache = cache;
             _logger = logger;
         }
+
+        // Source-generated log — only evaluated/formatted when Information level is enabled
+        [LoggerMessage(
+            EventId = 1,
+            Level = LogLevel.Information,
+            Message = "Appointment created. AppointmentId: {AppointmentId}, PatientId: {PatientId}, DoctorId: {DoctorId}")]
+        private partial void LogAppointmentCreated(int appointmentId, int patientId, int doctorId);
 
         public async Task<IEnumerable<AppointmentDto>> GetAllAsync(
             CancellationToken ct = default)
@@ -71,38 +79,15 @@ namespace HealthAxis.API.Services.Implementations
             DateTime date,
             CancellationToken ct = default)
         {
-            var cacheKey = $"available-slots:{doctorId}:{date:yyyy-MM-dd}";
+            var cacheKey = $"available-slots:{doctorId}:{date.ToString(DateFormat)}";
 
-            _logger.LogInformation(
-                "Checking available slots cache. DoctorId: {DoctorId}, Date: {Date}, CacheKey: {CacheKey}",
-                doctorId,
-                date.ToString("yyyy-MM-dd"),
-                cacheKey);
-
-            // ===========================
-            // Check Redis Cache
-            // ===========================
             var cachedData = await _cache.GetStringAsync(cacheKey, ct);
 
             if (!string.IsNullOrWhiteSpace(cachedData))
             {
-                _logger.LogInformation(
-                    "Cache HIT for available slots. DoctorId: {DoctorId}, Date: {Date}",
-                    doctorId,
-                    date.ToString("yyyy-MM-dd"));
-
-                return JsonSerializer.Deserialize<List<TimeSlotDto>>(cachedData)!
-                       ?? [];
+                return JsonSerializer.Deserialize<List<TimeSlotDto>>(cachedData) ?? [];
             }
 
-            _logger.LogInformation(
-                "Cache MISS for available slots. DoctorId: {DoctorId}, Date: {Date}. Fetching from database...",
-                doctorId,
-                date.ToString("yyyy-MM-dd"));
-
-            // ===========================
-            // Fetch from Database
-            // ===========================
             var bookedSlots = await _appointmentRepository
                 .GetBookedTimeSlotsAsync(
                     doctorId,
@@ -111,12 +96,9 @@ namespace HealthAxis.API.Services.Implementations
 
             var availableSlots = AllTimeSlots
                 .Where(slot =>
-                    !bookedSlots.Contains(TimeOnly.Parse(slot.Value)))
+                    !bookedSlots.Contains(TimeOnly.Parse(slot.Value, CultureInfo.InvariantCulture)))
                 .ToList();
 
-            // ===========================
-            // Store in Redis
-            // ===========================
             var options = new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
@@ -128,20 +110,7 @@ namespace HealthAxis.API.Services.Implementations
                 options,
                 ct);
 
-            _logger.LogInformation(
-                "Available slots cached successfully. DoctorId: {DoctorId}, Date: {Date}, SlotsCount: {Count}",
-                doctorId,
-                date.ToString("yyyy-MM-dd"),
-                availableSlots.Count);
-
             return availableSlots;
-        }
-
-        // Get Appointment Report
-        public async Task<PagedResult<AppointmentReportDto>> GetAppointmentReportAsync(
-            PaginationRequest request)
-        {
-            return await _appointmentRepository.GetAppointmentReportAsync(request);
         }
 
         // Add Appointment
@@ -223,7 +192,7 @@ namespace HealthAxis.API.Services.Implementations
                     ct);
 
             await _cache.RemoveAsync(
-                $"available-slots:{savedAppointment.DoctorId}:{savedAppointment.ScheduledDate:yyyy-MM-dd}",
+                $"available-slots:{savedAppointment!.DoctorId}:{savedAppointment.ScheduledDate.ToString(DateFormat)}",
                 ct);
 
             await _publishEndPoint.Publish(new AppointmentEvent
@@ -233,98 +202,18 @@ namespace HealthAxis.API.Services.Implementations
                 PatientId = savedAppointment.PatientId,
                 DoctorId = savedAppointment.DoctorId,
                 OccurredAt = DateTime.UtcNow
-            });
+            }, ct);
+
+            LogAppointmentCreated(
+                savedAppointment.AppointmentId,
+                savedAppointment.PatientId,
+                savedAppointment.DoctorId);
 
             return _mapper.Map<AppointmentDto>(
                 savedAppointment);
         }
 
-        // Update Appointment Status
-        public async Task<AppointmentDto> UpdateStatusAsync(
-            int id,
-            UpdateAppointmentStatusDto dto,
-            CancellationToken ct = default)
-        {
-            var appointment =
-                await _appointmentRepository.GetByIdAsync(id, ct);
 
-            if (appointment is null)
-            {
-                throw new NotFoundException(
-                    "Appointment not found.");
-            }
-
-            // Prevent changing status of cancelled appointments
-            if (appointment.Status == AppointmentStatus.Cancelled)
-            {
-                throw new ValidationException(
-                    "Cancelled appointments cannot be modified.");
-            }
-
-            // Prevent changing status of completed appointments
-            if (appointment.Status == AppointmentStatus.Completed)
-            {
-                throw new ValidationException(
-                    "Completed appointments cannot be modified.");
-            }
-
-            // Prevent updating to the same status
-            if (appointment.Status == dto.Status)
-            {
-                throw new ValidationException(
-                    $"Appointment is already {dto.Status}.");
-            }
-
-            // Prevent completing a pending appointment directly
-            if (appointment.Status == AppointmentStatus.Pending &&
-                dto.Status == AppointmentStatus.Completed)
-            {
-                throw new ValidationException(
-                    "Pending appointments must be confirmed before completion.");
-            }
-
-            switch (dto.Status)
-            {
-                case AppointmentStatus.Confirmed:
-
-                    appointment.Confirm();
-
-                    break;
-
-                case AppointmentStatus.Cancelled:
-
-                    appointment.Cancel(
-                        dto.CancellationReason ?? string.Empty);
-
-                    break;
-
-                case AppointmentStatus.Completed:
-
-                    appointment.Complete();
-
-                    break;
-
-                case AppointmentStatus.Pending:
-
-                    throw new ValidationException(
-                        "Appointments cannot be reverted to pending status.");
-            }
-
-            var updatedAppointment =
-                await _appointmentRepository.UpdateAsync(id, appointment, ct);
-
-            await _publishEndPoint.Publish(new AppointmentEvent
-            {
-                EventType = appointment.Status.ToString(),
-                AppointmentId = updatedAppointment.AppointmentId,
-                PatientId = updatedAppointment.PatientId,
-                DoctorId = updatedAppointment.DoctorId,
-                OccurredAt = DateTime.UtcNow
-            });
-
-            return _mapper.Map<AppointmentDto>(
-                updatedAppointment);
-        }
 
 
         // Delete Appointment
@@ -338,7 +227,7 @@ namespace HealthAxis.API.Services.Implementations
             if (appointment is null)
             {
                 throw new NotFoundException(
-                    "Appointment not found.");
+                    AppointmentNotFound);
             }
 
             // Prevent deleting completed appointments
@@ -358,7 +247,8 @@ namespace HealthAxis.API.Services.Implementations
             }
 
             var deletedAppointment =
-                await _appointmentRepository.DeleteAsync(id, ct);
+                await _appointmentRepository.DeleteAsync(id, ct)
+                ?? throw new NotFoundException(AppointmentNotFound);
 
             await _publishEndPoint.Publish(new AppointmentEvent
             {
@@ -367,7 +257,7 @@ namespace HealthAxis.API.Services.Implementations
                 PatientId = deletedAppointment.PatientId,
                 DoctorId = deletedAppointment.DoctorId,
                 OccurredAt = DateTime.UtcNow
-            });
+            }, ct);
 
             return _mapper.Map<AppointmentDto>(
                 deletedAppointment);
@@ -385,7 +275,7 @@ namespace HealthAxis.API.Services.Implementations
 
             if (appointment is null)
             {
-                throw new NotFoundException("Appointment not found.");
+                throw new NotFoundException(AppointmentNotFound);
             }
 
             if (appointment.PatientId != patientId)
@@ -406,10 +296,11 @@ namespace HealthAxis.API.Services.Implementations
             var updatedAppointment = await _appointmentRepository.UpdateAsync(
                 appointmentId,
                 appointment,
-                ct);
+                ct)
+                ?? throw new NotFoundException(AppointmentNotFound);
 
             await _cache.RemoveAsync(
-                $"available-slots:{updatedAppointment.DoctorId}:{updatedAppointment.ScheduledDate:yyyy-MM-dd}",
+                $"available-slots:{updatedAppointment.DoctorId}:{updatedAppointment.ScheduledDate.ToString(DateFormat)}",
                 ct);
 
             await _publishEndPoint.Publish(new AppointmentEvent
@@ -419,7 +310,7 @@ namespace HealthAxis.API.Services.Implementations
                 PatientId = updatedAppointment.PatientId,
                 DoctorId = updatedAppointment.DoctorId,
                 OccurredAt = DateTime.UtcNow
-            });
+            }, ct);
 
             return _mapper.Map<AppointmentDto>(updatedAppointment);
         }

@@ -383,6 +383,45 @@ tbody tr:hover {
   border-color: #B42318;
 }
 
+/* ================= Filters ================= */
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.filter-input {
+  width: 300px;
+  flex: 0 0 300px;
+}
+
+.filter-select {
+  width: 170px;
+}
+
+.filter-date {
+  width: 170px;
+}
+
+.filter-input,
+.filter-select,
+.filter-date {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: .9rem;
+}
+
+.empty-table {
+  text-align: center;
+  padding: 40px;
+  color: #6B7280;
+  font-size: .95rem;
+}
+
 @media (max-width: 768px) {
 
   .pagination-container {

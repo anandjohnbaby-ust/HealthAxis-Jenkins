@@ -9,17 +9,10 @@ namespace HealthAxis.API.Services.Interfaces
         Task<IEnumerable<AppointmentDto>> GetAllAsync(
             CancellationToken ct = default);
 
-        Task<PagedResult<AppointmentReportDto>> GetAppointmentReportAsync(
-            PaginationRequest request);
-
         Task<AppointmentDto> BookAppointmentAsync(
             CreateAppointmentDto dto,
             CancellationToken ct = default);
 
-        Task<AppointmentDto> UpdateStatusAsync(
-            int id,
-            UpdateAppointmentStatusDto dto,
-            CancellationToken ct = default);
 
         Task<AppointmentDto> DeleteAsync(
             int id,

@@ -71,5 +71,14 @@ namespace HealthAxis.API.Services.Interfaces
             int patientId,
             int appointmentId,
             CancellationToken ct = default);
+
+        Task<AppointmentDto> UpdateStatusAsync(
+            int id,
+            UpdateAppointmentStatusDto dto,
+            CancellationToken ct = default);
+
+        Task<HealthRecordDto> AddAsync(
+           CreateHealthRecordDto dto,
+           CancellationToken ct = default);
     }
 }

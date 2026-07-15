@@ -1,6 +1,7 @@
 ﻿using HealthAxis.API.Models;
 using HealthAxis.Shared.Common;
 using HealthAxis.Shared.DTOs.PatientDtos;
+using HealthAxis.Shared.Enums;
 
 namespace HealthAxis.API.Repositories.Interfaces
 {
@@ -24,6 +25,9 @@ namespace HealthAxis.API.Repositories.Interfaces
         Task<PagedResult<Appointment>> GetAppointmentsByPatientIdAsync(
             int patientId,
             PaginationRequest request,
+            string? search,
+            AppointmentStatus? status,
+            DateTime? date,
             CancellationToken ct = default);
 
 

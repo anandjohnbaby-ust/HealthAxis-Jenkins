@@ -5,6 +5,7 @@
 
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject IConfiguration Configuration
 @inject AuthenticationStateProvider AuthStateProvider
 
 <h4>Signing in...</h4>
@@ -35,7 +36,11 @@
 
         if (string.IsNullOrWhiteSpace(token))
         {
-            Navigation.NavigateTo("http://localhost:4200/login", true);
+            var angularBaseUrl = Configuration["AngularApp:BaseUrl"]
+                ?? throw new InvalidOperationException(
+                    "AngularApp:BaseUrl is not configured.");
+
+            Navigation.NavigateTo($"{angularBaseUrl}/login", true);
             return;
         }
 

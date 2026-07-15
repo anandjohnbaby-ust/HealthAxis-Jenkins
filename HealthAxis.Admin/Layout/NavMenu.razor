@@ -2,7 +2,7 @@
 @inject IJSRuntime JSRuntime
 @inject CustomAuthenticationStateProvider AuthProvider
 @inject NavigationManager NavigationManager
-
+@inject IConfiguration Configuration
 <AuthorizeView>
     <Authorized>
         <div class="top-row ps-3 navbar navbar-dark">
@@ -222,7 +222,9 @@
         AuthProvider.NotifyUserLoggedOut();
 
         // Redirect to the Angular login page
-    NavigationManager.NavigateTo("http://localhost:4200/logout", true);    }
+        var baseUrl = Configuration["AngularApp:BaseUrl"];
+        NavigationManager.NavigateTo($"{baseUrl}/logout", true);    
+    }
 
     private void ReloadPage()
     {

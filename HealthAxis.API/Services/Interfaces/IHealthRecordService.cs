@@ -11,10 +11,5 @@ namespace HealthAxis.API.Services.Interfaces
                 int id,
                 CancellationToken ct = default);
 
-        Task<HealthRecordDto>
-            AddAsync(
-                CreateHealthRecordDto dto,
-                CancellationToken ct = default);
-
     }
 }

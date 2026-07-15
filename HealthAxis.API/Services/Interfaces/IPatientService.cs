@@ -31,6 +31,9 @@ namespace HealthAxis.API.Services.Interfaces
         Task<PagedResult<AppointmentDto>> GetAppointmentsByPatientIdAsync(
             int patientId,
             PaginationRequest request,
+            string? search,
+            AppointmentStatus? status,
+            DateTime? date,
             CancellationToken ct = default);
 
         Task<PatientDashboardDto> GetDashboardAsync(

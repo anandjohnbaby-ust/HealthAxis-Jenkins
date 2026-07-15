@@ -2,7 +2,7 @@
 
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { TokenService } from '../../../../../core/services/token.service';
@@ -54,11 +54,34 @@ export class AppointmentsListComponent implements OnInit {
   cancellationReason = '';
 
   readonly AppointmentStatus = AppointmentStatus;
+  // ==========================
+  // Filters
+  // ==========================
+
+  search = '';
+  selectedStatus: AppointmentStatus | null = null;
+  selectedDate = '';
+
+  private readonly searchSubject = new Subject<string>();
 
   ngOnInit(): void {
-    this.loadAppointments();
-  }
 
+    this.searchSubject
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+
+        this.pageNumber.set(1);
+
+        this.loadAppointments();
+
+      });
+
+    this.loadAppointments();
+
+  }
   private loadAppointments(): void {
 
     this.loading.set(true);
@@ -82,7 +105,10 @@ export class AppointmentsListComponent implements OnInit {
       .getMyAppointments(
         patientId,
         this.pageNumber(),
-        this.pageSize()
+        this.pageSize(),
+        this.search,
+        this.selectedStatus,
+        this.selectedDate || null
       )
       .subscribe({
 
@@ -302,4 +328,34 @@ closeHealthRecordDialog(): void {
     return isoDate.split('T')[0];
 
   }
+  onSearchChange(): void {
+
+  this.searchSubject.next(this.search);
+
+}
+onStatusChange(): void {
+
+  this.pageNumber.set(1);
+
+  this.loadAppointments();
+
+}
+onDateChange(): void {
+
+  this.pageNumber.set(1);
+
+  this.loadAppointments();
+
+}
+clearFilters(): void {
+
+  this.search = '';
+  this.selectedStatus = null;
+  this.selectedDate = '';
+
+  this.pageNumber.set(1);
+
+  this.loadAppointments();
+
+}
 }

@@ -30,16 +30,5 @@ namespace HealthAxis.API.Controllers
             return Ok(record);
         }
 
-        [HttpPost]
-        [Authorize(Roles = "Doctor")]
-        public async Task<IActionResult> Create(
-            CreateHealthRecordDto dto,
-            CancellationToken ct)
-        {
-            var healthRecord = await _healthRecordService
-                .AddAsync(dto, ct);
-
-            return Ok(healthRecord);
-        }
     }
 }

@@ -1,6 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { NgIf } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
 
 @Component({
@@ -11,7 +10,7 @@ import { AuthService } from './core/services/auth.service';
   styleUrls: ['./app.css']
 })
 export class App {
-  protected readonly title = signal('hap-demo');
+  protected readonly title = signal('HealthAxis.UI');
   private readonly authService = inject(AuthService);
 
   protected isLoggedIn(): boolean {

@@ -9,9 +9,6 @@ namespace HealthAxis.Admin.Authentication
     {
         private readonly IJSRuntime _js;
 
-        private ClaimsPrincipal _currentUser =
-            new(new ClaimsIdentity());
-
         public CustomAuthenticationStateProvider(IJSRuntime js)
         {
             _js = js;
@@ -33,7 +30,7 @@ namespace HealthAxis.Admin.Authentication
                     new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
-            var claims = ParseClaimsFromJwt(token).ToList();
+            var claims = ParseClaimsFromJwt(token);
 
             Console.WriteLine("CLAIMS = " + claims.Count);
 
@@ -49,14 +46,7 @@ namespace HealthAxis.Admin.Authentication
             return new AuthenticationState(new ClaimsPrincipal(identity));
         }
 
-        private static AuthenticationState Anonymous()
-        {
-            return new AuthenticationState(
-                new ClaimsPrincipal(
-                    new ClaimsIdentity()));
-        }
-
-        private static IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
+        private static List<Claim> ParseClaimsFromJwt(string jwt)
         {
             var claims = new List<Claim>();
 
@@ -113,22 +103,21 @@ namespace HealthAxis.Admin.Authentication
                 claims,
                 authenticationType: "jwt");
 
-            _currentUser = new ClaimsPrincipal(identity);
+            var currentUser = new ClaimsPrincipal(identity);
 
             NotifyAuthenticationStateChanged(
                 Task.FromResult(
-                    new AuthenticationState(_currentUser)));
+                    new AuthenticationState(currentUser)));
         }
 
         public void NotifyUserLoggedOut()
         {
-            _currentUser =
-                new ClaimsPrincipal(
-                    new ClaimsIdentity());
+            var currentUser = new ClaimsPrincipal(
+                new ClaimsIdentity());
 
             NotifyAuthenticationStateChanged(
                 Task.FromResult(
-                    new AuthenticationState(_currentUser)));
+                    new AuthenticationState(currentUser)));
         }
     }
 }

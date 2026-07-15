@@ -47,14 +47,11 @@ namespace HealthAxis.API.Repositories.Interfaces
 
         Task<PagedResult<Appointment>> GetWeeklyAppointmentsAsync(
                     int doctorId,
-                    DateTime startDate,
-                    DateTime endDate,
                     PaginationRequest request,
                     string? search = null,
                     AppointmentStatus? status = null,
                     DateTime? date = null,
                     CancellationToken ct = default);
-
         Task<DoctorDashboardDto?> GetDashboardAsync(
             int doctorId,
             CancellationToken ct = default);

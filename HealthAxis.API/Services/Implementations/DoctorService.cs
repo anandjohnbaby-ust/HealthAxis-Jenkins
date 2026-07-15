@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using HealthAxis.API.Data;
+using HealthAxis.API.Events;
 using HealthAxis.API.Exceptions;
 using HealthAxis.API.Models;
 using HealthAxis.API.Repositories.Interfaces;
@@ -10,9 +11,8 @@ using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.DTOs.DoctorDtos;
 using HealthAxis.Shared.DTOs.HealthRecordDtos;
 using HealthAxis.Shared.Enums;
+using MassTransit;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Caching.Distributed;
-using System.Text.Json;
 
 namespace HealthAxis.API.Services.Implementations
 {
@@ -21,14 +21,14 @@ namespace HealthAxis.API.Services.Implementations
 
         private const string DoctorNotFoundMessage = "Doctor not found.";
         private const string DoctorProfileNotFoundMessage = "Doctor profile not found.";
+        private const string AppointmentNotFound = "Appointment not found.";
 
-        private readonly IDistributedCache _cache;
-        private readonly ILogger<DoctorService> _logger;
         private readonly IDoctorRepository _doctorRepository;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
         private readonly IAppointmentRepository _appointmentRepository;
         private readonly IHealthRecordRepository _healthRecordRepository;
+        private readonly IPublishEndpoint _publishEndPoint;
 
         public DoctorService(
             IDoctorRepository repository,
@@ -36,16 +36,14 @@ namespace HealthAxis.API.Services.Implementations
             IMapper mapper,
             IAppointmentRepository appointmentRepository,
             IHealthRecordRepository healthRecordRepository,
-            IDistributedCache cache,
-            ILogger<DoctorService> logger)
+            IPublishEndpoint publishEndPoint)
         {
             _doctorRepository = repository;
             _userManager = userManager;
             _mapper = mapper;
+            _publishEndPoint = publishEndPoint;
             _appointmentRepository = appointmentRepository;
             _healthRecordRepository = healthRecordRepository;
-            _cache = cache;
-            _logger = logger;
         }
 
         // Get the Doctor By ID
@@ -227,12 +225,12 @@ namespace HealthAxis.API.Services.Implementations
             };
         }
         public async Task<PagedResult<AppointmentDto>> GetWeeklyAppointmentsAsync(
-             string userId,
-             PaginationRequest request,
-             string? search = null,
-             AppointmentStatus? status = null,
-             DateTime? date = null,
-             CancellationToken ct = default)
+            string userId,
+            PaginationRequest request,
+            string? search = null,
+            AppointmentStatus? status = null,
+            DateTime? date = null,
+            CancellationToken ct = default)
         {
             var doctor = await _doctorRepository.GetByUserIdAsync(userId, ct);
 
@@ -241,19 +239,8 @@ namespace HealthAxis.API.Services.Implementations
                 throw new NotFoundException(DoctorNotFoundMessage);
             }
 
-            DateTime today = DateTime.Today;
-
-            int diff = today.DayOfWeek == DayOfWeek.Sunday
-                ? 6
-                : (int)today.DayOfWeek - 1;
-
-            DateTime startOfWeek = today.AddDays(-diff);
-            DateTime endOfWeek = startOfWeek.AddDays(6);
-
             var pagedAppointments = await _doctorRepository.GetWeeklyAppointmentsAsync(
                 doctor.DoctorId,
-                startOfWeek,
-                endOfWeek,
                 request,
                 search,
                 status,
@@ -268,7 +255,6 @@ namespace HealthAxis.API.Services.Implementations
                 PageSize = pagedAppointments.PageSize
             };
         }
-
         public async Task<DoctorDto> GetDoctorByUserIdAsync(
             string userId,
             CancellationToken ct = default)
@@ -353,6 +339,156 @@ namespace HealthAxis.API.Services.Implementations
                     ct);
 
             return _mapper.Map<IEnumerable<HealthRecordDto>>(records);
+        }
+
+        // Update Appointment Status
+        public async Task<AppointmentDto> UpdateStatusAsync(
+            int id,
+            UpdateAppointmentStatusDto dto,
+            CancellationToken ct = default)
+        {
+            var appointment =
+                await _appointmentRepository.GetByIdAsync(id, ct);
+
+            if (appointment is null)
+            {
+                throw new NotFoundException(
+                    AppointmentNotFound);
+            }
+
+            // Prevent changing status of cancelled appointments
+            if (appointment.Status == AppointmentStatus.Cancelled)
+            {
+                throw new ValidationException(
+                    "Cancelled appointments cannot be modified.");
+            }
+
+            // Prevent changing status of completed appointments
+            if (appointment.Status == AppointmentStatus.Completed)
+            {
+                throw new ValidationException(
+                    "Completed appointments cannot be modified.");
+            }
+
+            // Prevent updating to the same status
+            if (appointment.Status == dto.Status)
+            {
+                throw new ValidationException(
+                    $"Appointment is already {dto.Status}.");
+            }
+
+            // Prevent completing a pending appointment directly
+            if (appointment.Status == AppointmentStatus.Pending &&
+                dto.Status == AppointmentStatus.Completed)
+            {
+                throw new ValidationException(
+                    "Pending appointments must be confirmed before completion.");
+            }
+
+            switch (dto.Status)
+            {
+                case AppointmentStatus.Confirmed:
+
+                    appointment.Confirm();
+
+                    break;
+
+                case AppointmentStatus.Cancelled:
+
+                    appointment.Cancel(
+                        dto.CancellationReason ?? string.Empty);
+
+                    break;
+
+                case AppointmentStatus.Completed:
+
+                    appointment.Complete();
+
+                    break;
+
+                case AppointmentStatus.Pending:
+
+                    throw new ValidationException(
+                        "Appointments cannot be reverted to pending status.");
+            }
+
+            var updatedAppointment =
+                await _appointmentRepository.UpdateAsync(id, appointment, ct)
+                ?? throw new NotFoundException(AppointmentNotFound);
+
+            await _publishEndPoint.Publish(new AppointmentEvent
+            {
+                EventType = appointment.Status.ToString(),
+                AppointmentId = updatedAppointment.AppointmentId,
+                PatientId = updatedAppointment.PatientId,
+                DoctorId = updatedAppointment.DoctorId,
+                OccurredAt = DateTime.UtcNow
+            }, ct);
+
+            return _mapper.Map<AppointmentDto>(
+                updatedAppointment);
+        }
+
+        public async Task<HealthRecordDto> AddAsync(
+            CreateHealthRecordDto dto,
+            CancellationToken ct = default)
+        {
+            var appointment =
+                await _appointmentRepository.GetByIdAsync(
+                    dto.AppointmentId,
+                    ct);
+
+            if (appointment is null)
+            {
+                throw new NotFoundException(
+                    "Appointment not found.");
+            }
+
+            if (appointment.Status !=
+                AppointmentStatus.Completed)
+            {
+                throw new ValidationException(
+                    "Health records can only be created for completed appointments.");
+            }
+
+            var records =
+                await _healthRecordRepository.GetAllAsync(ct);
+
+            bool exists =
+                records.Any(hr =>
+                    hr.AppointmentId ==
+                    dto.AppointmentId);
+
+            if (exists)
+            {
+                throw new ValidationException(
+                    "Health record already exists for this appointment.");
+            }
+
+            var healthRecord = new HealthRecord
+            {
+                AppointmentId = dto.AppointmentId,
+
+                DoctorId = appointment.DoctorId,
+
+                PatientId = appointment.PatientId,
+
+                VisitDate = appointment.ScheduledDate,
+
+                Diagnosis = dto.Diagnosis,
+
+                Prescription = dto.Prescription,
+
+                Notes = dto.Notes
+            };
+
+            var savedRecord =
+                await _healthRecordRepository.AddAsync(
+                    healthRecord,
+                    ct);
+
+            return _mapper.Map<HealthRecordDto>(
+                savedRecord);
         }
     }
 }
