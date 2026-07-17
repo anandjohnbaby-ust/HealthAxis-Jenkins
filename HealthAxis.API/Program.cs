@@ -149,9 +149,6 @@ builder.Services
         {
             OnMessageReceived = context =>
             {
-                Log.Information(
-                    "Authorization Header: {Authorization}",
-                    context.Request.Headers.Authorization.ToString());
 
                 return Task.CompletedTask;
             },
@@ -230,7 +227,6 @@ builder.Services.AddHostedService<HeartbeatService>();
 builder.Services.AddHostedService<HeartbeatConsumer>();
 
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
-
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
 var rabbitmqConfig = builder.Configuration.GetSection("RabbitMQ");
@@ -314,6 +310,8 @@ var app = builder.Build();
 //----------------------------------------------------------
 
 app.UseExceptionHandler();
+
+app.UseSerilogRequestLogging(); 
 
 using (var scope = app.Services.CreateScope())
 {

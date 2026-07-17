@@ -131,7 +131,7 @@ namespace HealthAxis.API.Services
                         heartbeat.Timestamp);
 
                     await Task.Delay(
-                        TimeSpan.FromSeconds(10),
+                        TimeSpan.FromMinutes(10),
                         stoppingToken);
                 }
                 catch (Exception ex)
@@ -139,7 +139,7 @@ namespace HealthAxis.API.Services
                     LogHeartbeatError(_logger, ex);
 
                     await Task.Delay(
-                        TimeSpan.FromSeconds(10),
+                        TimeSpan.FromMinutes(10),
                         stoppingToken);
                 }
             }
