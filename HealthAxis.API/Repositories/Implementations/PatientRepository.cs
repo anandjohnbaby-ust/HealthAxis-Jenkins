@@ -145,8 +145,8 @@ namespace HealthAxis.API.Repositories.Implementations
         }
 
         public async Task<PatientDashboardDto?> GetDashboardAsync(
-            int patientId,
-            CancellationToken ct = default)
+           int patientId,
+           CancellationToken ct = default)
         {
             return await _context.Patients
                 .Where(p => p.PatientId == patientId)
@@ -157,13 +157,13 @@ namespace HealthAxis.API.Repositories.Implementations
                     TotalAppointments = p.Appointments.Count,
 
                     TotalHealthRecords = p.HealthRecords.Count,
-
-                    NextAppointment = p.Appointments
+                    UpcomingAppointments = p.Appointments
                         .Where(a =>
                             a.Status != AppointmentStatus.Cancelled &&
                             a.ScheduledDate >= DateTime.Today)
                         .OrderBy(a => a.ScheduledDate)
                         .ThenBy(a => a.TimeSlot)
+                        .Take(3)
                         .Select(a => new DashboardAppointmentDto
                         {
                             AppointmentId = a.AppointmentId,
@@ -172,7 +172,7 @@ namespace HealthAxis.API.Repositories.Implementations
                             TimeSlot = a.TimeSlot,
                             Status = a.Status
                         })
-                        .FirstOrDefault()
+                        .ToList()
                 })
                 .FirstOrDefaultAsync(ct);
         }

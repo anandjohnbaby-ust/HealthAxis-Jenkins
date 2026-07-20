@@ -1,9 +1,5 @@
 ﻿using Microsoft.JSInterop;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components.WebAssembly.Http;
 
 namespace HealthAxis.Admin.Authentication
 {
@@ -14,24 +10,31 @@ namespace HealthAxis.Admin.Authentication
         public AuthMessageHandler(IJSRuntime js)
         {
             _js = js;
-            // InnerHandler will be set by the caller (Program.cs) for WASM
+            // InnerHandler will be set by Program.cs
         }
 
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
         {
             try
             {
-                var token = await _js.InvokeAsync<string>("localStorage.getItem", "token");
+                // Read the same key used by Angular
+                var token = await _js.InvokeAsync<string>(
+                    "localStorage.getItem",
+                    "accessToken");
 
                 if (!string.IsNullOrWhiteSpace(token))
                 {
                     token = token.Trim('"');
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                    request.Headers.Authorization =
+                        new AuthenticationHeaderValue("Bearer", token);
                 }
             }
             catch
             {
-                // ignore errors reading token
+                // Ignore errors reading token
             }
 
             return await base.SendAsync(request, cancellationToken);

@@ -1,3 +1,4 @@
+using HealthAxis.API.BackgroundServices;
 using HealthAxis.API.Data;
 using HealthAxis.API.Messaging;
 using HealthAxis.API.Middlewares;
@@ -5,7 +6,6 @@ using HealthAxis.API.Models;
 using HealthAxis.API.Options;
 using HealthAxis.API.Repositories.Implementations;
 using HealthAxis.API.Repositories.Interfaces;
-using HealthAxis.API.Services;
 using HealthAxis.API.Services.Implementation;
 using HealthAxis.API.Services.Implementations;
 using HealthAxis.API.Services.Interfaces;
@@ -224,8 +224,6 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddHostedService<HeartbeatService>();
 
-builder.Services.AddHostedService<HeartbeatConsumer>();
-
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
@@ -234,6 +232,7 @@ var rabbitmqConfig = builder.Configuration.GetSection("RabbitMQ");
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<AppointmentEventConsumer>();
+
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(rabbitmqConfig["HostName"], rabbitmqConfig["VirtualHost"], h =>
@@ -241,13 +240,33 @@ builder.Services.AddMassTransit(x =>
             h.Username(rabbitmqConfig["UserName"]!);
             h.Password(rabbitmqConfig["Password"]!);
         });
+
         cfg.ReceiveEndpoint(rabbitmqConfig["AppointmentQueue"]!, e =>
         {
+            e.UseMessageRetry(r => r.Exponential(
+                retryLimit: 3,
+                minInterval: TimeSpan.FromSeconds(2),
+                maxInterval: TimeSpan.FromSeconds(30),
+                intervalDelta: TimeSpan.FromSeconds(5)));
+
+            e.UseCircuitBreaker(cb =>
+            {
+                cb.TrackingPeriod = TimeSpan.FromMinutes(1);
+                cb.TripThreshold = 15;
+                cb.ActiveThreshold = 10;
+                cb.ResetInterval = TimeSpan.FromMinutes(5);
+            });
+
+            e.UseScheduledRedelivery(r => r.Intervals(
+                TimeSpan.FromMinutes(1),
+                TimeSpan.FromMinutes(5),
+                TimeSpan.FromMinutes(15)));
+
+
             e.ConfigureConsumer<AppointmentEventConsumer>(context);
         });
     });
 });
-
 //----------------------------------------------------------
 // Redis Configurations
 //----------------------------------------------------------

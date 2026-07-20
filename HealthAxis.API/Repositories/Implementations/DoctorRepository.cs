@@ -322,7 +322,6 @@ namespace HealthAxis.API.Repositories.Implementations
                 PageSize = request.PageSize
             };
         }
-
         public async Task<DoctorDashboardDto?> GetDashboardAsync(
             int doctorId,
             CancellationToken ct = default)
@@ -345,9 +344,14 @@ namespace HealthAxis.API.Repositories.Implementations
 
                     TotalAppointments = d.Appointments.Count,
 
-                    TodaySchedule = d.Appointments
-                        .Where(a => a.ScheduledDate.Date == today)
-                        .OrderBy(a => a.TimeSlot)
+                    UpcomingAppointments = d.Appointments
+                        .Where(a =>
+                            a.ScheduledDate >= today &&
+                            (a.Status == AppointmentStatus.Pending ||
+                             a.Status == AppointmentStatus.Confirmed))
+                        .OrderBy(a => a.ScheduledDate)
+                        .ThenBy(a => a.TimeSlot)
+                        .Take(2)
                         .Select(a => new TodayAppointmentDto
                         {
                             AppointmentId = a.AppointmentId,

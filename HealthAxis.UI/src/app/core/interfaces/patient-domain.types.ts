@@ -130,7 +130,7 @@ export interface PatientDashboard {
   fullName: string;
   totalAppointments: number;
   totalHealthRecords: number;
-  nextAppointment: DashboardAppointment | null;
+  upcomingAppointments: DashboardAppointment[];
 }
 
 export interface TimeSlot {

@@ -1,7 +1,4 @@
 ﻿using HealthAxis.Shared.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace HealthAxis.Shared.DTOs.PatientDtos
 {
@@ -13,7 +10,7 @@ namespace HealthAxis.Shared.DTOs.PatientDtos
 
         public DateTime ScheduledDate { get; set; }
 
-        public TimeOnly TimeSlot { get; set; } 
+        public TimeOnly TimeSlot { get; set; }
 
         public AppointmentStatus Status { get; set; }
     }

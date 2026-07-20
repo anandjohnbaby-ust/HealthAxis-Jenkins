@@ -2,6 +2,8 @@
 {
     public class AppointmentEvent
     {
+        public Guid EventId { get; set; } = Guid.NewGuid(); 
+
         public string EventType { get; set; } = string.Empty;
 
         public int AppointmentId { get; set; }

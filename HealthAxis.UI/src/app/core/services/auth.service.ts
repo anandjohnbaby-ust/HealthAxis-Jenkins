@@ -86,11 +86,11 @@ export class AuthService {
 
     switch (role) {
       case Role.Admin: {
-        const token = this.tokenService.getAccessToken();
+        const accessToken = this.tokenService.getAccessToken();
+        const refreshToken = this.tokenService.getRefreshToken();
 
         window.location.href =
-          `${environment.blazorAdminUrl}/auth?token=${encodeURIComponent(token ?? '')}`;
-
+        `${environment.blazorAdminUrl}/auth?token=${encodeURIComponent(accessToken ?? '')}&refreshToken=${encodeURIComponent(refreshToken ?? '')}`;
         break;
       }
 

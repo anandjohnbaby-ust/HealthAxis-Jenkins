@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace HealthAxis.Shared.DTOs.PatientDtos
+﻿namespace HealthAxis.Shared.DTOs.PatientDtos
 {
     public class PatientDashboardDto
     {
@@ -12,6 +8,6 @@ namespace HealthAxis.Shared.DTOs.PatientDtos
 
         public int TotalHealthRecords { get; set; }
 
-        public DashboardAppointmentDto? NextAppointment { get; set; }
+        public List<DashboardAppointmentDto> UpcomingAppointments { get; set; } = [];
     }
 }

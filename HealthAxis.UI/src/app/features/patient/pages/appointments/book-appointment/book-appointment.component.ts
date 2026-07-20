@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { combineLatest, debounceTime, distinctUntilChanged, filter, startWith } from 'rxjs';
 
 import { TokenService } from '../../../../../core/services/token.service';
 import { PatientService } from '../../../../../core/services/patient.service';
@@ -79,13 +80,21 @@ export class BookAppointmentComponent implements OnInit {
         this.bookingForm.patchValue({ specialisation: specialisation });
       }
     });
-    this.bookingForm.get('doctorId')!.valueChanges.subscribe(() => {
-      this.loadAvailableTimeSlots();
-    });
+const doctorControl = this.bookingForm.get('doctorId')!;
+const dateControl = this.bookingForm.get('scheduledDate')!;
 
-    this.bookingForm.get('scheduledDate')!.valueChanges.subscribe(() => {
-      this.loadAvailableTimeSlots();
-    });
+combineLatest([
+  doctorControl.valueChanges.pipe(startWith(doctorControl.value)),
+  dateControl.valueChanges.pipe(startWith(dateControl.value))
+])
+.pipe(
+  debounceTime(400),
+  distinctUntilChanged(),
+  filter(([doctorId, date]) => !!doctorId && !!date)
+)
+.subscribe(() => {
+  this.loadAvailableTimeSlots();
+});
     
   }
 

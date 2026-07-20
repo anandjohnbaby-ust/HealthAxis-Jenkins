@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using HealthAxis.Shared.DTOs.AppointmentDtos;
 
 namespace HealthAxis.Shared.DTOs.DoctorDtos
 {
@@ -14,6 +12,6 @@ namespace HealthAxis.Shared.DTOs.DoctorDtos
 
         public int TotalAppointments { get; set; }
 
-        public List<TodayAppointmentDto> TodaySchedule { get; set; } = [];
+        public List<TodayAppointmentDto> UpcomingAppointments { get; set; } = [];
     }
 }

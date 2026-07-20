@@ -4,18 +4,22 @@
       <div class="spinner-border text-primary"></div>
     </div>
   } @else {
+
     <!-- Welcome -->
 
     <div class="mb-4">
       <h2 class="fw-bold">Welcome, {{ dashboard()?.fullName }}</h2>
 
-      <p class="text-muted mb-0">Here's a quick overview of your healthcare activities.</p>
+      <p class="text-muted mb-0">
+        Here's a quick overview of your healthcare activities.
+      </p>
     </div>
 
     <!-- Summary Cards -->
 
     <div class="row g-4 mb-4">
-      <div class="col-md-6 col-lg-4">
+
+      <div class="col-md-6 col-lg-6">
         <div class="card shadow-sm border-0 h-100">
           <div class="card-body text-center">
             <h6 class="text-muted">Total Appointments</h6>
@@ -27,7 +31,7 @@
         </div>
       </div>
 
-      <div class="col-md-6 col-lg-4">
+      <div class="col-md-6 col-lg-6">
         <div class="card shadow-sm border-0 h-100">
           <div class="card-body text-center">
             <h6 class="text-muted">Health Records</h6>
@@ -39,86 +43,82 @@
         </div>
       </div>
 
-      <div class="col-md-6 col-lg-4">
-        <div class="card shadow-sm border-0 h-100">
-          <div class="card-body text-center">
-            <h6 class="text-muted">Next Appointment</h6>
-
-            @if (dashboard()?.nextAppointment) {
-              <div class="fw-semibold">
-                {{ dashboard()?.nextAppointment?.scheduledDate | date: 'dd MMM yyyy' }}
-              </div>
-
-              <small class="text-muted">
-                {{ dashboard()?.nextAppointment?.timeSlot }}
-              </small>
-            } @else {
-              <span class="text-muted"> None </span>
-            }
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- Next Appointment Details -->
+<!-- Upcoming Appointments -->
 
-    <div class="card shadow-sm border-0">
-      <div class="card-header bg-white">
-        <h5 class="mb-0">Upcoming Appointment</h5>
-      </div>
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-white">
+    <h5 class="mb-0">Upcoming Appointments</h5>
+  </div>
 
-      <div class="card-body">
-        @if (dashboard()?.nextAppointment) {
-          <div class="row">
-            <div class="col-md-3">
-              <strong>Doctor</strong>
-              <p class="mb-3">Dr. {{ dashboard()?.nextAppointment?.doctorName }}</p>
-            </div>
+  <div class="card-body">
 
-            <div class="col-md-3">
-              <strong>Date</strong>
-              <p class="mb-3">
-                {{ dashboard()?.nextAppointment?.scheduledDate | date: 'dd MMM yyyy' }}
-              </p>
-            </div>
+    @if (dashboard()?.upcomingAppointments?.length) {
 
-            <div class="col-md-3">
-              <strong>Time</strong>
-              <p class="mb-3">
-                {{ dashboard()?.nextAppointment?.timeSlot }}
-              </p>
-            </div>
+      <div class="row g-3">
 
-            <div class="col-md-3">
-              <strong>Status</strong>
+        @for (appointment of dashboard()!.upcomingAppointments; track appointment.appointmentId) {
 
-              <p class="mb-3">
+          <div class="col-lg-4 col-md-6">
+
+            <div class="border rounded-3 p-3 h-100 appointment-card">
+
+              <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <h6 class="fw-semibold mb-0">
+                  Dr. {{ appointment.doctorName }}
+                </h6>
+
                 <span
                   class="badge"
-                  [class.bg-warning]="
-                    dashboard()?.nextAppointment?.status === AppointmentStatus.Pending
-                  "
-                  [class.bg-success]="
-                    dashboard()?.nextAppointment?.status === AppointmentStatus.Confirmed
-                  "
-                  [class.bg-danger]="
-                    dashboard()?.nextAppointment?.status === AppointmentStatus.Cancelled
-                  "
-                  [class.bg-primary]="
-                    dashboard()?.nextAppointment?.status === AppointmentStatus.Completed
-                  "
-                >
-                  {{ AppointmentStatus[dashboard()?.nextAppointment?.status!] }}
+                  [class.bg-warning]="appointment.status === AppointmentStatus.Pending"
+                  [class.bg-success]="appointment.status === AppointmentStatus.Confirmed"
+                  [class.bg-danger]="appointment.status === AppointmentStatus.Cancelled"
+                  [class.bg-primary]="appointment.status === AppointmentStatus.Completed">
+
+                  {{ AppointmentStatus[appointment.status] }}
+
                 </span>
-              </p>
+
+              </div>
+
+              <div class="mb-2">
+                <small class="text-muted">Date</small>
+
+                <div class="fw-medium">
+                  {{ appointment.scheduledDate | date:'dd MMM yyyy' }}
+                </div>
+              </div>
+
+              <div>
+                <small class="text-muted">Time</small>
+
+                <div class="fw-medium">
+                  {{ appointment.timeSlot }}
+                </div>
+              </div>
+
             </div>
+
           </div>
-        } @else {
-          <div class="text-center py-4">
-            <h6 class="text-muted">No upcoming appointments.</h6>
-          </div>
+
         }
+
       </div>
-    </div>
+
+    } @else {
+
+      <div class="text-center py-4">
+        <h6 class="text-muted mb-0">
+          No upcoming appointments.
+        </h6>
+      </div>
+
+    }
+
+  </div>
+</div>
+
   }
 </div>

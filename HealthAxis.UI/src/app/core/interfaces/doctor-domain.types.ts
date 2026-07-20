@@ -108,5 +108,5 @@
     todayAppointments: number;
     weeklyAppointments: number;
     totalAppointments: number;
-    todaySchedule: TodayAppointment[];
+    upcomingAppointments: TodayAppointment[];
   }

@@ -232,8 +232,11 @@ namespace HealthAxis.API.Services.Implementation
 
             var newRefreshToken = GenerateRefreshToken();
 
+            int refreshTokenExpiryDays =
+                int.Parse(config["Jwt:RefreshTokenExpirationDays"]!);
+
             user.RefreshToken = newRefreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(refreshTokenExpiryDays);
 
             var result = await userManager.UpdateAsync(user);
 

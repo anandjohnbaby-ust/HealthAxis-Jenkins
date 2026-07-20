@@ -18,7 +18,10 @@ namespace HealthAxis.Admin.Authentication
         {
             Console.WriteLine("GetAuthenticationStateAsync CALLED");
 
-            var token = await _js.InvokeAsync<string>("localStorage.getItem", "token");
+            // Read the same key used by Angular
+            var token = await _js.InvokeAsync<string>(
+                "localStorage.getItem",
+                "accessToken");
 
             Console.WriteLine("TOKEN = " + token);
 

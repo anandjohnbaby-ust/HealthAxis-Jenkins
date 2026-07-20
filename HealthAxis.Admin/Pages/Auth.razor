@@ -16,7 +16,8 @@
     {
         var uri = new Uri(Navigation.Uri);
 
-        string? token = null;
+        string? accessToken = null;
+        string? refreshToken = null;
 
         if (!string.IsNullOrWhiteSpace(uri.Query))
         {
@@ -24,17 +25,29 @@
 
             foreach (var item in query)
             {
-                var pair = item.Split('=');
+                var pair = item.Split('=', 2);
 
-                if (pair.Length == 2 && pair[0] == "token")
+                if (pair.Length != 2)
+                    continue;
+
+                var key = pair[0];
+                var value = Uri.UnescapeDataString(pair[1]);
+
+                switch (key)
                 {
-                    token = Uri.UnescapeDataString(pair[1]);
-                    break;
+                    case "token":
+                        accessToken = value;
+                        break;
+
+                    case "refreshToken":
+                        refreshToken = value;
+                        break;
                 }
             }
         }
 
-        if (string.IsNullOrWhiteSpace(token))
+        if (string.IsNullOrWhiteSpace(accessToken) ||
+            string.IsNullOrWhiteSpace(refreshToken))
         {
             var angularBaseUrl = Configuration["AngularApp:BaseUrl"]
                 ?? throw new InvalidOperationException(
@@ -44,14 +57,20 @@
             return;
         }
 
+        // Store tokens using the same keys as Angular
         await JS.InvokeVoidAsync(
             "localStorage.setItem",
-            "token",
-            token);
+            "accessToken",
+            accessToken);
+
+        await JS.InvokeVoidAsync(
+            "localStorage.setItem",
+            "refreshToken",
+            refreshToken);
 
         if (AuthStateProvider is CustomAuthenticationStateProvider provider)
         {
-            provider.NotifyUserLoggedIn(token);
+            provider.NotifyUserLoggedIn(accessToken);
         }
 
         Navigation.NavigateTo("/dashboard", true);

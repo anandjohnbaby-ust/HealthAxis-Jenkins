@@ -60,8 +60,31 @@ namespace HealthAxis.API.Services.Implementations
         [LoggerMessage(
             EventId = 1,
             Level = LogLevel.Information,
-            Message = "Appointment created. AppointmentId: {AppointmentId}, PatientId: {PatientId}, DoctorId: {DoctorId}")]
-        private partial void LogAppointmentCreated(int appointmentId, int patientId, int doctorId);
+            Message =
+                """
+
+        ┌──────────────────────────────────────────────────────────┐
+        │                  HEALTHAXIS APPOINTMENT EVENT            │
+        ├──────────────────────────────────────────────────────────┤
+        │ Event Type      : Appointment Created
+        │ Patient Name    : {PatientName}
+        │ Doctor Name     : {DoctorName}
+        │ Doctor ID       : {DoctorId}
+        │ Appointment ID  : {AppointmentId}
+        │ Scheduled Date  : {ScheduledDate:yyyy-MM-dd}
+        │ Time Slot       : {TimeSlot}
+        │ Status          : {Status}
+        └──────────────────────────────────────────────────────────┘
+
+        """)]
+        private partial void LogAppointmentCreated(
+            int appointmentId,
+            int doctorId,
+            string patientName,
+            string doctorName,
+            DateTime scheduledDate,
+            TimeOnly timeSlot,
+            string status);
 
         [LoggerMessage(
             EventId = 2,
@@ -239,8 +262,12 @@ namespace HealthAxis.API.Services.Implementations
 
             LogAppointmentCreated(
                 savedAppointment.AppointmentId,
-                savedAppointment.PatientId,
-                savedAppointment.DoctorId);
+                savedAppointment.DoctorId,
+                patient.FullName,
+                doctor.FullName,
+                savedAppointment.ScheduledDate,
+                savedAppointment.TimeSlot,
+                savedAppointment.Status.ToString());
 
             return _mapper.Map<AppointmentDto>(
                 savedAppointment);
