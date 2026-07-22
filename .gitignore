@@ -82,4 +82,5 @@ tmp/
 temp/
 *.tmp
 
-HealthAxis.Admin/wwwroot/lib/
+HealthAxis.Admin/artifacts/
+HealthAxis.API/wwwroot/
