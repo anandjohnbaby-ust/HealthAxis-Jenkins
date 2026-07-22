@@ -13,21 +13,16 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 // Register the message handler
 builder.Services.AddScoped<AuthMessageHandler>();
 
-// Configure HttpClient to automatically attach the JWT
 builder.Services.AddScoped(sp =>
 {
     var configuration = sp.GetRequiredService<IConfiguration>();
 
     var handler = sp.GetRequiredService<AuthMessageHandler>();
-
     handler.InnerHandler = new HttpClientHandler();
 
     return new HttpClient(handler)
     {
-        BaseAddress = new Uri(
-            configuration["ApiSettings:BaseUrl"]
-            ?? throw new InvalidOperationException(
-                "ApiSettings:BaseUrl is not configured."))
+        BaseAddress = new Uri(configuration["ApiBaseUrl"]!)
     };
 });
 
