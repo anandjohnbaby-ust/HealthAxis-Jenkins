@@ -12,6 +12,7 @@ using HealthAxis.API.Services.Interfaces;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -271,17 +272,17 @@ builder.Services.AddMassTransit(x =>
 // Redis Configurations
 //----------------------------------------------------------
 
-builder.Services.Configure<GarnetOptions>(
-    builder.Configuration.GetSection("Garnet"));
+//builder.Services.Configure<GarnetOptions>(
+//    builder.Configuration.GetSection("Garnet"));
 
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration =
-        builder.Configuration["Garnet:ConnectionString"];
+//builder.Services.AddStackExchangeRedisCache(options =>
+//{
+//    options.Configuration =
+//        builder.Configuration["Garnet:ConnectionString"];
 
-    options.InstanceName =
-        builder.Configuration["Garnet:InstanceName"];
-});
+//    options.InstanceName =
+//        builder.Configuration["Garnet:InstanceName"];
+//});
 
 //----------------------------------------------------------
 // AutoMapper
@@ -342,8 +343,6 @@ using (var scope = app.Services.CreateScope())
     await RoleSeeder.SeedRolesAsync(roleManager);
 
 }
-
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -361,11 +360,59 @@ else
     app.UseCors("AllowAdmin");
 }
 
-app.UseAuthentication();
+var contentTypeProvider = new FileExtensionContentTypeProvider();
+contentTypeProvider.Mappings[".dat"] = "application/octet-stream";
+contentTypeProvider.Mappings[".wasm"] = "application/wasm";
 
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = contentTypeProvider
+});
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+//
+// Redirect the root URL to Angular
+//
+app.MapGet("/", context =>
+{
+    context.Response.Redirect("/angular");
+    return Task.CompletedTask;
+});
+
+//
+// Angular
+//
+app.MapGet("/angular", async context =>
+{
+    await context.Response.SendFileAsync(
+        Path.Combine(app.Environment.WebRootPath, "angular", "index.html"));
+});
+
+app.MapGet("/angular/{*path:nonfile}", async context =>
+{
+    await context.Response.SendFileAsync(
+        Path.Combine(app.Environment.WebRootPath, "angular", "index.html"));
+});
+
+//
+// Blazor
+//
+
+app.MapGet("/blazor", async context =>
+{
+    await context.Response.SendFileAsync(
+        Path.Combine(app.Environment.WebRootPath, "blazor", "index.html"));
+});
+
+app.MapGet("/blazor/{*path:nonfile}", async context =>
+{
+    await context.Response.SendFileAsync(
+        Path.Combine(app.Environment.WebRootPath, "blazor", "index.html"));
+});
 
 try
 {
@@ -379,5 +426,5 @@ catch (Exception ex)
 }
 finally
 {
-     await Log.CloseAndFlushAsync();
+    await Log.CloseAndFlushAsync();
 }

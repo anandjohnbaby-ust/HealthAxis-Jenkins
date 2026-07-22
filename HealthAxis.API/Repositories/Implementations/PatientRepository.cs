@@ -173,9 +173,8 @@ namespace HealthAxis.API.Repositories.Implementations
                             Status = a.Status
                         })
                         .ToList()
-                })
+                }) 
                 .FirstOrDefaultAsync(ct);
         }
-
     }
 }

@@ -9,21 +9,21 @@ namespace HealthAxis.API.Messaging
     {
         private readonly ILogger<AppointmentEventConsumer> _logger;
         private readonly INotificationService _notificationService;
-        private readonly IDistributedCache _cache;
+        //private readonly IDistributedCache _cache;
 
-        private static readonly DistributedCacheEntryOptions CacheOptions = new()
-        {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24)
-        };
+        //private static readonly DistributedCacheEntryOptions CacheOptions = new()
+        //{
+        //    AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24)
+        //};
 
         public AppointmentEventConsumer(
             ILogger<AppointmentEventConsumer> logger,
-            INotificationService notificationService,
-            IDistributedCache cache)
+            INotificationService notificationService)
+        //IDistributedCache cache)
         {
             _logger = logger;
             _notificationService = notificationService;
-            _cache = cache;
+            //_cache = cache;
         }
 
         [LoggerMessage(EventId = 1, Level = LogLevel.Information,
@@ -49,15 +49,15 @@ namespace HealthAxis.API.Messaging
             if (message.EventType != "AppointmentCreated")
                 return;
 
-            var idempotencyKey = $"processed-event:{message.EventId}";
+            //var idempotencyKey = $"processed-event:{message.EventId}";
 
             // --- Idempotency check ---
-            var alreadyProcessed = await _cache.GetStringAsync(idempotencyKey, context.CancellationToken);
-            if (alreadyProcessed != null)
-            {
-                LogDuplicateSkipped(_logger, message.EventId);
-                return; // silently skip — this event was already handled
-            }
+            //var alreadyProcessed = await _cache.GetStringAsync(idempotencyKey, context.CancellationToken);
+            //if (alreadyProcessed != null)
+            //{
+            //    LogDuplicateSkipped(_logger, message.EventId);
+            //    return; // silently skip — this event was already handled
+            //}
 
             LogAppointmentCreated(_logger, message.AppointmentId, message.EventId);
 
@@ -69,7 +69,7 @@ namespace HealthAxis.API.Messaging
                     $"A new appointment (ID: {message.AppointmentId}) has been booked.");
 
                 // --- Mark as processed only after success ---
-                await _cache.SetStringAsync(idempotencyKey, "1", CacheOptions, context.CancellationToken);
+                //await _cache.SetStringAsync(idempotencyKey, "1", CacheOptions, context.CancellationToken);
 
                 LogNotificationCreated(_logger, message.DoctorId);
             }

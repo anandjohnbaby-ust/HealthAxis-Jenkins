@@ -23,7 +23,7 @@ namespace HealthAxis.API.Services.Implementations
         private readonly IPatientRepository _patientRepository;
         private readonly IMapper _mapper;
         private readonly IPublishEndpoint _publishEndPoint;
-        private readonly IDistributedCache _cache;
+        //private readonly IDistributedCache _cache;
         private readonly ILogger<AppointmentService> _logger;
 
         private static readonly List<TimeSlotDto> AllTimeSlots =
@@ -45,7 +45,7 @@ namespace HealthAxis.API.Services.Implementations
             IPatientRepository patientRepository,
             IMapper mapper,
             IPublishEndpoint publishEndPoint,
-            IDistributedCache cache,
+            //IDistributedCache cache,
             ILogger<AppointmentService> logger)
         {
             _appointmentRepository = appointmentRepository;
@@ -53,7 +53,7 @@ namespace HealthAxis.API.Services.Implementations
             _patientRepository = patientRepository;
             _publishEndPoint = publishEndPoint;
             _mapper = mapper;
-            _cache = cache;
+            //_cache = cache;
             _logger = logger;
         }
 
@@ -86,29 +86,29 @@ namespace HealthAxis.API.Services.Implementations
             TimeOnly timeSlot,
             string status);
 
-        [LoggerMessage(
-            EventId = 2,
-            Level = LogLevel.Debug,
-            Message = "Checking cache for available slots. Key: {CacheKey}")]
-        private partial void LogCheckingCacheForSlots(string cacheKey);
+        //[LoggerMessage(
+        //    EventId = 2,
+        //    Level = LogLevel.Debug,
+        //    Message = "Checking cache for available slots. Key: {CacheKey}")]
+        //private partial void LogCheckingCacheForSlots(string cacheKey);
 
-        [LoggerMessage(
-            EventId = 3,
-            Level = LogLevel.Information,
-            Message = "Cache HIT for available slots. Key: {CacheKey}")]
-        private partial void LogCacheHit(string cacheKey);
+        //[LoggerMessage(
+        //    EventId = 3,
+        //    Level = LogLevel.Information,
+        //    Message = "Cache HIT for available slots. Key: {CacheKey}")]
+        //private partial void LogCacheHit(string cacheKey);
 
-        [LoggerMessage(
-            EventId = 4,
-            Level = LogLevel.Information,
-            Message = "Cache MISS for available slots. Key: {CacheKey}")]
-        private partial void LogCacheMiss(string cacheKey);
+        //[LoggerMessage(
+        //    EventId = 4,
+        //    Level = LogLevel.Information,
+        //    Message = "Cache MISS for available slots. Key: {CacheKey}")]
+        //private partial void LogCacheMiss(string cacheKey);
 
-        [LoggerMessage(
-            EventId = 5,
-            Level = LogLevel.Debug,
-            Message = "Cached {SlotCount} available slots for DoctorId: {DoctorId}, Date: {Date}")]
-        private partial void LogCachedSlots(int slotCount, int doctorId, DateTime date);
+        //[LoggerMessage(
+        //    EventId = 5,
+        //    Level = LogLevel.Debug,
+        //    Message = "Cached {SlotCount} available slots for DoctorId: {DoctorId}, Date: {Date}")]
+        //private partial void LogCachedSlots(int slotCount, int doctorId, DateTime date);
 
         public async Task<IEnumerable<AppointmentDto>> GetAllAsync(
             CancellationToken ct = default)
@@ -125,20 +125,20 @@ namespace HealthAxis.API.Services.Implementations
            DateTime date,
            CancellationToken ct = default)
         {
-            var cacheKey = $"available-slots:{doctorId}:{date:yyyy-MM-dd}";
+            //var cacheKey = $"available-slots:{doctorId}:{date:yyyy-MM-dd}";
 
-            LogCheckingCacheForSlots(cacheKey);
+            //LogCheckingCacheForSlots(cacheKey);
 
-            var cachedData = await _cache.GetStringAsync(cacheKey, ct);
+            //var cachedData = await _cache.GetStringAsync(cacheKey, ct);
 
-            if (!string.IsNullOrWhiteSpace(cachedData))
-            {
-                LogCacheHit(cacheKey);
+            //if (!string.IsNullOrWhiteSpace(cachedData))
+            //{
+            //    LogCacheHit(cacheKey);
 
-                return JsonSerializer.Deserialize<List<TimeSlotDto>>(cachedData) ?? [];
-            }
+            //    return JsonSerializer.Deserialize<List<TimeSlotDto>>(cachedData) ?? [];
+            //}
 
-            LogCacheMiss(cacheKey);
+            //LogCacheMiss(cacheKey);
 
             var bookedSlots = await _appointmentRepository.GetBookedTimeSlotsAsync(
                 doctorId,
@@ -153,18 +153,18 @@ namespace HealthAxis.API.Services.Implementations
                             CultureInfo.InvariantCulture)))
                 .ToList();
 
-            var options = new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
-            };
+            //var options = new DistributedCacheEntryOptions
+            //{
+            //    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            //};
 
-            await _cache.SetStringAsync(
-                cacheKey,
-                JsonSerializer.Serialize(availableSlots),
-                options,
-                ct);
+            //await _cache.SetStringAsync(
+            //    cacheKey,
+            //    JsonSerializer.Serialize(availableSlots),
+            //    options,
+            //    ct);
 
-            LogCachedSlots(availableSlots.Count, doctorId, date);
+            //LogCachedSlots(availableSlots.Count, doctorId, date);
 
             return availableSlots;
         }
@@ -247,9 +247,9 @@ namespace HealthAxis.API.Services.Implementations
                     appointment,
                     ct);
 
-            await _cache.RemoveAsync(
-                $"available-slots:{savedAppointment!.DoctorId}:{savedAppointment.ScheduledDate.ToString(DateFormat)}",
-                ct);
+            //await _cache.RemoveAsync(
+            //    $"available-slots:{savedAppointment!.DoctorId}:{savedAppointment.ScheduledDate.ToString(DateFormat)}",
+            //    ct);
 
             await _publishEndPoint.Publish(new AppointmentEvent
             {
@@ -356,9 +356,9 @@ namespace HealthAxis.API.Services.Implementations
                 ct)
                 ?? throw new NotFoundException(AppointmentNotFound);
 
-            await _cache.RemoveAsync(
-                $"available-slots:{updatedAppointment.DoctorId}:{updatedAppointment.ScheduledDate.ToString(DateFormat)}",
-                ct);
+            //await _cache.RemoveAsync(
+            //    $"available-slots:{updatedAppointment.DoctorId}:{updatedAppointment.ScheduledDate.ToString(DateFormat)}",
+            //    ct);
 
             await _publishEndPoint.Publish(new AppointmentEvent
             {
