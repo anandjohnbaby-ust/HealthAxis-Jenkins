@@ -5,7 +5,7 @@ pipeline {
         AWS_REGION = 'ap-south-1'
         EB_APPLICATION_NAME = 'HealthAxisAPI4'
         EB_ENVIRONMENT_NAME = 'HealthAxisAPI4-dev'
-        S3_BUCKET = 'healthaxis-deploy'
+        S3_BUCKET = 'healthaxis-deploy-162504351735-ap-south-1-an'
     }
 
     stages {
