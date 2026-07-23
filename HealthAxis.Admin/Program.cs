@@ -13,16 +13,31 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 // Register the message handler
 builder.Services.AddScoped<AuthMessageHandler>();
 
+//builder.Services.AddScoped(sp =>
+//{
+//    var configuration = sp.GetRequiredService<IConfiguration>();
+
+//    var handler = sp.GetRequiredService<AuthMessageHandler>();
+//    handler.InnerHandler = new HttpClientHandler();
+
+//    return new HttpClient(handler)
+//    {
+//        //BaseAddress = new Uri(configuration["ApiBaseUrl"]!)
+//        BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
+//    };
+//});
+
 builder.Services.AddScoped(sp =>
 {
-    var configuration = sp.GetRequiredService<IConfiguration>();
-
     var handler = sp.GetRequiredService<AuthMessageHandler>();
     handler.InnerHandler = new HttpClientHandler();
 
+    var uri = new Uri(builder.HostEnvironment.BaseAddress);
+    var siteRoot = $"{uri.Scheme}://{uri.Authority}/"; // strips off /admin/, /angular/, etc.
+
     return new HttpClient(handler)
     {
-        BaseAddress = new Uri(configuration["ApiBaseUrl"]!)
+        BaseAddress = new Uri(siteRoot)
     };
 });
 
