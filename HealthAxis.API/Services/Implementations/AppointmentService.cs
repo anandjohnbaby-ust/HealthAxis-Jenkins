@@ -86,30 +86,6 @@ namespace HealthAxis.API.Services.Implementations
             TimeOnly timeSlot,
             string status);
 
-        //[LoggerMessage(
-        //    EventId = 2,
-        //    Level = LogLevel.Debug,
-        //    Message = "Checking cache for available slots. Key: {CacheKey}")]
-        //private partial void LogCheckingCacheForSlots(string cacheKey);
-
-        //[LoggerMessage(
-        //    EventId = 3,
-        //    Level = LogLevel.Information,
-        //    Message = "Cache HIT for available slots. Key: {CacheKey}")]
-        //private partial void LogCacheHit(string cacheKey);
-
-        //[LoggerMessage(
-        //    EventId = 4,
-        //    Level = LogLevel.Information,
-        //    Message = "Cache MISS for available slots. Key: {CacheKey}")]
-        //private partial void LogCacheMiss(string cacheKey);
-
-        //[LoggerMessage(
-        //    EventId = 5,
-        //    Level = LogLevel.Debug,
-        //    Message = "Cached {SlotCount} available slots for DoctorId: {DoctorId}, Date: {Date}")]
-        //private partial void LogCachedSlots(int slotCount, int doctorId, DateTime date);
-
         public async Task<IEnumerable<AppointmentDto>> GetAllAsync(
             CancellationToken ct = default)
         {
@@ -125,20 +101,6 @@ namespace HealthAxis.API.Services.Implementations
            DateTime date,
            CancellationToken ct = default)
         {
-            //var cacheKey = $"available-slots:{doctorId}:{date:yyyy-MM-dd}";
-
-            //LogCheckingCacheForSlots(cacheKey);
-
-            //var cachedData = await _cache.GetStringAsync(cacheKey, ct);
-
-            //if (!string.IsNullOrWhiteSpace(cachedData))
-            //{
-            //    LogCacheHit(cacheKey);
-
-            //    return JsonSerializer.Deserialize<List<TimeSlotDto>>(cachedData) ?? [];
-            //}
-
-            //LogCacheMiss(cacheKey);
 
             var bookedSlots = await _appointmentRepository.GetBookedTimeSlotsAsync(
                 doctorId,
@@ -153,26 +115,13 @@ namespace HealthAxis.API.Services.Implementations
                             CultureInfo.InvariantCulture)))
                 .ToList();
 
-            //var options = new DistributedCacheEntryOptions
-            //{
-            //    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
-            //};
-
-            //await _cache.SetStringAsync(
-            //    cacheKey,
-            //    JsonSerializer.Serialize(availableSlots),
-            //    options,
-            //    ct);
-
-            //LogCachedSlots(availableSlots.Count, doctorId, date);
-
             return availableSlots;
         }
 
         // Add Appointment
         public async Task<AppointmentDto> BookAppointmentAsync(
-            CreateAppointmentDto dto,
-            CancellationToken ct = default)
+       CreateAppointmentDto dto,
+       CancellationToken ct = default)
         {
             if (dto.ScheduledDate.Date < DateTime.Today)
             {
@@ -214,6 +163,21 @@ namespace HealthAxis.API.Services.Implementations
                     "Appointments cannot be booked with inactive doctors.");
             }
 
+            // Check whether the patient has already booked
+            // two appointments with the same doctor on the same day
+            var appointmentCount =
+                await _appointmentRepository.GetPatientDoctorAppointmentCountAsync(
+                    dto.PatientId,
+                    dto.DoctorId,
+                    dto.ScheduledDate,
+                    ct);
+
+            if (appointmentCount >= 2)
+            {
+                throw new ValidationException(
+                    "You cannot book more than two appointments with the same doctor on the same day.");
+            }
+
             // Check whether the doctor already has an appointment
             if (await _appointmentRepository.IsTimeSlotBookedAsync(
                     dto.DoctorId,
@@ -246,10 +210,6 @@ namespace HealthAxis.API.Services.Implementations
                 await _appointmentRepository.AddAsync(
                     appointment,
                     ct);
-
-            //await _cache.RemoveAsync(
-            //    $"available-slots:{savedAppointment!.DoctorId}:{savedAppointment.ScheduledDate.ToString(DateFormat)}",
-            //    ct);
 
             await _publishEndPoint.Publish(new AppointmentEvent
             {
@@ -355,10 +315,6 @@ namespace HealthAxis.API.Services.Implementations
                 appointment,
                 ct)
                 ?? throw new NotFoundException(AppointmentNotFound);
-
-            //await _cache.RemoveAsync(
-            //    $"available-slots:{updatedAppointment.DoctorId}:{updatedAppointment.ScheduledDate.ToString(DateFormat)}",
-            //    ct);
 
             await _publishEndPoint.Publish(new AppointmentEvent
             {

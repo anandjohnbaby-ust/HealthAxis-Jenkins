@@ -19,5 +19,11 @@ namespace HealthAxis.API.Repositories.Interfaces
             int doctorId,
             DateTime date,
             CancellationToken ct = default);
+
+        Task<int> GetPatientDoctorAppointmentCountAsync(
+            int patientId,
+            int doctorId,
+            DateTime scheduledDate,
+            CancellationToken ct = default);
     }
 }

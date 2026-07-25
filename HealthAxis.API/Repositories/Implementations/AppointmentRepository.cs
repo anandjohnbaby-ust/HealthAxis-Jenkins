@@ -6,11 +6,11 @@ using HealthAxis.Shared.DTOs.AdminDtos;
 using HealthAxis.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+
 namespace HealthAxis.API.Repositories.Implementations
 {
     public class AppointmentRepository : Repository<Appointment>, IAppointmentRepository
     {
-
         public AppointmentRepository(
             ApplicationDbContext context)
             : base(context)
@@ -87,5 +87,20 @@ namespace HealthAxis.API.Repositories.Implementations
                 .ToListAsync(ct);
         }
 
+        public async Task<int> GetPatientDoctorAppointmentCountAsync(
+            int patientId,
+            int doctorId,
+            DateTime scheduledDate,
+            CancellationToken ct = default)
+        {
+            return await _context.Appointments
+                .AsNoTracking()
+                .CountAsync(a =>
+                    a.PatientId == patientId &&
+                    a.DoctorId == doctorId &&
+                    a.ScheduledDate.Date == scheduledDate.Date &&
+                    a.Status != AppointmentStatus.Cancelled,
+                    ct);
+        }
     }
 }
