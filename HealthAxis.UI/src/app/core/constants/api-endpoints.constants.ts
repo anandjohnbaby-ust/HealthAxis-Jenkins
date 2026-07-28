@@ -3,8 +3,7 @@ export const API_ENDPOINTS = {
     REGISTER: '/Auth/register',
     LOGIN: '/Auth/login',
     REFRESH_TOKEN: '/Auth/refresh-token',
-    CHANGE_PASSWORD: '/Auth/change-password'
-    UPDATE_CREDENTIALS: '/Auth/change-password'
+    CHANGE_PASSWORD: '/Auth/change-password',
   },
 
   DOCTORS: {

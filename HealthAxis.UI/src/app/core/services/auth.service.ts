@@ -65,7 +65,7 @@ export class AuthService {
   }
 
   changePassword(payload: ChangePasswordRequest): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}${API_ENDPOINTS.AUTH.PASSWORD_UPDATE}`, payload);
+    return this.http.put<void>(`${this.baseUrl}${API_ENDPOINTS.AUTH.CHANGE_PASSWORD}`, payload);
   }
 
   // ---------------------------------------------------------------------------
