@@ -204,6 +204,186 @@ namespace HealthAxis.Tests.Services
 
         #region BookAppointmentAsync
 
+        [Fact]
+        public async Task BookAppointmentAsync_ShouldThrowValidationException_WhenPatientAlreadyHasTwoAppointmentsWithSameDoctorOnSameDay()
+        {
+            var dto = ValidBookingDto();
+
+            _patientRepository
+                .Setup(x => x.GetByIdAsync(dto.PatientId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Patient { PatientId = dto.PatientId });
+
+            _doctorRepository
+                .Setup(x => x.GetByIdAsync(dto.DoctorId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Doctor { DoctorId = dto.DoctorId, IsActive = true });
+
+            _appointmentRepository
+                .Setup(x => x.GetPatientDoctorAppointmentCountAsync(
+                    dto.PatientId, dto.DoctorId, dto.ScheduledDate, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
+
+            Func<Task> act = async () => await _service.BookAppointmentAsync(dto);
+
+            await act.Should().ThrowAsync<ValidationException>()
+                .WithMessage("You cannot book more than two appointments with the same doctor on the same day.");
+
+            _appointmentRepository.Verify(
+                x => x.IsTimeSlotBookedAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<TimeOnly>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+        }
+
+        [Fact]
+        public async Task BookAppointmentAsync_ShouldThrowValidationException_WhenPatientAlreadyHasAnotherAppointmentAtSelectedTime()
+        {
+            var dto = ValidBookingDto();
+
+            _patientRepository
+                .Setup(x => x.GetByIdAsync(dto.PatientId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Patient { PatientId = dto.PatientId });
+
+            _doctorRepository
+                .Setup(x => x.GetByIdAsync(dto.DoctorId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Doctor { DoctorId = dto.DoctorId, IsActive = true });
+
+            _appointmentRepository
+                .Setup(x => x.GetPatientDoctorAppointmentCountAsync(
+                    dto.PatientId, dto.DoctorId, dto.ScheduledDate, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(0);
+
+            _appointmentRepository
+                .Setup(x => x.IsTimeSlotBookedAsync(dto.DoctorId, dto.ScheduledDate, dto.TimeSlot, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+
+            _appointmentRepository
+                .Setup(x => x.IsTimeSlotBookedAsync(dto.PatientId, dto.ScheduledDate, dto.TimeSlot, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
+
+            Func<Task> act = async () => await _service.BookAppointmentAsync(dto);
+
+            await act.Should().ThrowAsync<ValidationException>()
+                .WithMessage("You already have another appointment at the selected time.");
+        }
+
+        [Fact]
+        public async Task BookAppointmentAsync_ShouldThrowInvalidOperationException_WhenRepositoryFailsToSaveAppointment()
+        {
+            var dto = ValidBookingDto();
+            var patient = new Patient { PatientId = dto.PatientId, FullName = "John Doe" };
+            var doctor = new Doctor { DoctorId = dto.DoctorId, IsActive = true, FullName = "Dr. Smith" };
+            var mappedAppointment = new Appointment { PatientId = dto.PatientId, DoctorId = dto.DoctorId };
+
+            _patientRepository
+                .Setup(x => x.GetByIdAsync(dto.PatientId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(patient);
+
+            _doctorRepository
+                .Setup(x => x.GetByIdAsync(dto.DoctorId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(doctor);
+
+            _appointmentRepository
+                .Setup(x => x.GetPatientDoctorAppointmentCountAsync(
+                    dto.PatientId, dto.DoctorId, dto.ScheduledDate, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(0);
+
+            _appointmentRepository
+                .Setup(x => x.IsTimeSlotBookedAsync(dto.DoctorId, dto.ScheduledDate, dto.TimeSlot, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+
+            _appointmentRepository
+                .Setup(x => x.IsTimeSlotBookedAsync(dto.PatientId, dto.ScheduledDate, dto.TimeSlot, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+
+            _mapper
+                .Setup(x => x.Map<Appointment>(dto))
+                .Returns(mappedAppointment);
+
+            _appointmentRepository
+                .Setup(x => x.AddAsync(mappedAppointment, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Appointment?)null);
+
+            Func<Task> act = async () => await _service.BookAppointmentAsync(dto);
+
+            await act.Should().ThrowAsync<InvalidOperationException>()
+                .WithMessage("Failed to save the appointment.");
+
+            _publishEndpoint.Verify(
+                x => x.Publish(It.IsAny<AppointmentEvent>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+        }
+
+        [Fact]
+        public async Task BookAppointmentAsync_ShouldBookSuccessfully_WhenAllValidationsPass()
+        {
+            var dto = ValidBookingDto();
+            var patient = new Patient { PatientId = dto.PatientId, FullName = "John Doe" };
+            var doctor = new Doctor { DoctorId = dto.DoctorId, IsActive = true, FullName = "Dr. Smith" };
+            var mappedAppointment = new Appointment { PatientId = dto.PatientId, DoctorId = dto.DoctorId };
+            var savedAppointment = new Appointment
+            {
+                AppointmentId = 100,
+                PatientId = dto.PatientId,
+                DoctorId = dto.DoctorId,
+                ScheduledDate = dto.ScheduledDate,
+                TimeSlot = dto.TimeSlot,
+                Status = AppointmentStatus.Pending
+            };
+            var appointmentDto = new AppointmentDto { AppointmentId = 100 };
+
+            _patientRepository
+                .Setup(x => x.GetByIdAsync(dto.PatientId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(patient);
+
+            _doctorRepository
+                .Setup(x => x.GetByIdAsync(dto.DoctorId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(doctor);
+
+            _appointmentRepository
+                .Setup(x => x.GetPatientDoctorAppointmentCountAsync(
+                    dto.PatientId, dto.DoctorId, dto.ScheduledDate, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(0);
+
+            _appointmentRepository
+                .Setup(x => x.IsTimeSlotBookedAsync(dto.DoctorId, dto.ScheduledDate, dto.TimeSlot, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+
+            _appointmentRepository
+                .Setup(x => x.IsTimeSlotBookedAsync(dto.PatientId, dto.ScheduledDate, dto.TimeSlot, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+
+            _mapper
+                .Setup(x => x.Map<Appointment>(dto))
+                .Returns(mappedAppointment);
+
+            _appointmentRepository
+                .Setup(x => x.AddAsync(mappedAppointment, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(savedAppointment);
+
+            _publishEndpoint
+                .Setup(x => x.Publish(It.IsAny<AppointmentEvent>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _mapper
+                .Setup(x => x.Map<AppointmentDto>(savedAppointment))
+                .Returns(appointmentDto);
+
+            var result = await _service.BookAppointmentAsync(dto);
+
+            result.Should().BeEquivalentTo(appointmentDto);
+
+            _mapper.Verify(x => x.Map<Appointment>(dto), Times.Once);
+            _appointmentRepository.Verify(x => x.AddAsync(mappedAppointment, It.IsAny<CancellationToken>()), Times.Once);
+            _mapper.Verify(x => x.Map<AppointmentDto>(savedAppointment), Times.Once);
+
+            _publishEndpoint.Verify(
+                x => x.Publish(
+                    It.Is<AppointmentEvent>(e =>
+                        e.EventType == "AppointmentCreated" &&
+                        e.AppointmentId == savedAppointment.AppointmentId &&
+                        e.PatientId == savedAppointment.PatientId &&
+                        e.DoctorId == savedAppointment.DoctorId),
+                    It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
         private static CreateAppointmentDto ValidBookingDto() => new()
         {
             PatientId = 1,
