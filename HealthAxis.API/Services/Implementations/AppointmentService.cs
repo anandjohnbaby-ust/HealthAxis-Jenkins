@@ -7,15 +7,12 @@ using HealthAxis.API.Services.Interfaces;
 using HealthAxis.Shared.DTOs.AppointmentDtos;
 using HealthAxis.Shared.Enums;
 using MassTransit;
-using Microsoft.Extensions.Caching.Distributed;
 using System.Globalization;
-using System.Text.Json;
 
 namespace HealthAxis.API.Services.Implementations
 {
     public partial class AppointmentService : IAppointmentService
     {
-        private const string DateFormat = "yyyy-MM-dd";
         private const string AppointmentNotFound = "Appointment not found.";
 
         private readonly IAppointmentRepository _appointmentRepository;
@@ -23,7 +20,6 @@ namespace HealthAxis.API.Services.Implementations
         private readonly IPatientRepository _patientRepository;
         private readonly IMapper _mapper;
         private readonly IPublishEndpoint _publishEndPoint;
-        //private readonly IDistributedCache _cache;
         private readonly ILogger<AppointmentService> _logger;
 
         private static readonly List<TimeSlotDto> AllTimeSlots =
@@ -45,7 +41,6 @@ namespace HealthAxis.API.Services.Implementations
             IPatientRepository patientRepository,
             IMapper mapper,
             IPublishEndpoint publishEndPoint,
-            //IDistributedCache cache,
             ILogger<AppointmentService> logger)
         {
             _appointmentRepository = appointmentRepository;
@@ -53,7 +48,6 @@ namespace HealthAxis.API.Services.Implementations
             _patientRepository = patientRepository;
             _publishEndPoint = publishEndPoint;
             _mapper = mapper;
-            //_cache = cache;
             _logger = logger;
         }
 
@@ -84,7 +78,7 @@ namespace HealthAxis.API.Services.Implementations
             string doctorName,
             DateTime scheduledDate,
             TimeOnly timeSlot,
-            string status);
+            AppointmentStatus status);
 
         public async Task<IEnumerable<AppointmentDto>> GetAllAsync(
             CancellationToken ct = default)
@@ -172,7 +166,7 @@ namespace HealthAxis.API.Services.Implementations
                     dto.ScheduledDate,
                     ct);
 
-            if (appointmentCount >= 2)
+            if (appointmentCount >= 1)
             {
                 throw new ValidationException(
                     "You cannot book more than two appointments with the same doctor on the same day.");
@@ -209,7 +203,9 @@ namespace HealthAxis.API.Services.Implementations
             var savedAppointment =
                 await _appointmentRepository.AddAsync(
                     appointment,
-                    ct);
+                    ct)
+                ?? throw new InvalidOperationException(
+                    "Failed to save the appointment.");
 
             await _publishEndPoint.Publish(new AppointmentEvent
             {
@@ -227,7 +223,7 @@ namespace HealthAxis.API.Services.Implementations
                 doctor.FullName,
                 savedAppointment.ScheduledDate,
                 savedAppointment.TimeSlot,
-                savedAppointment.Status.ToString());
+                savedAppointment.Status);
 
             return _mapper.Map<AppointmentDto>(
                 savedAppointment);

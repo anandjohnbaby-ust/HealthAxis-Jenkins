@@ -2,7 +2,8 @@
 
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';import { FormsModule } from '@angular/forms';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { TokenService } from '../../../../../core/services/token.service';
@@ -298,9 +299,7 @@ closeHealthRecordDialog(): void {
 
   statusLabel(status: AppointmentStatus): string {
 
-    return AppointmentStatusLabel[
-      status as keyof typeof AppointmentStatusLabel
-    ] ?? 'Unknown';
+    return AppointmentStatusLabel[status] ?? 'Unknown';
 
   }
 
@@ -333,18 +332,25 @@ closeHealthRecordDialog(): void {
   this.searchSubject.next(this.search);
 
 }
+
+  // Shared by onStatusChange/onDateChange: reset to page 1 and reload
+  // with the current filters.
+  private applyFilters(): void {
+
+    this.pageNumber.set(1);
+
+    this.loadAppointments();
+
+  }
+
 onStatusChange(): void {
 
-  this.pageNumber.set(1);
-
-  this.loadAppointments();
+  this.applyFilters();
 
 }
 onDateChange(): void {
 
-  this.pageNumber.set(1);
-
-  this.loadAppointments();
+  this.applyFilters();
 
 }
 clearFilters(): void {

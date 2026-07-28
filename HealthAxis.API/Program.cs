@@ -3,7 +3,6 @@ using HealthAxis.API.Data;
 using HealthAxis.API.Messaging;
 using HealthAxis.API.Middlewares;
 using HealthAxis.API.Models;
-using HealthAxis.API.Options;
 using HealthAxis.API.Repositories.Implementations;
 using HealthAxis.API.Repositories.Interfaces;
 using HealthAxis.API.Services.Implementation;
@@ -20,13 +19,11 @@ using Serilog;
 using System.Security.Claims;
 using System.Text;
 
+const string IndexHtmlFileName = "index.html";
 
 var builder = WebApplication.CreateBuilder(args);
 
-//----------------------------------------------------------
 // Serilog
-//----------------------------------------------------------
-
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -36,10 +33,7 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-//----------------------------------------------------------
 // Controllers
-//----------------------------------------------------------
-
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -76,25 +70,17 @@ builder.Services.AddSwaggerGen(options =>
         });
 });
 
-//----------------------------------------------------------
 // Global Exception Handler
-//----------------------------------------------------------
-
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddProblemDetails();
 
-//----------------------------------------------------------
 // Database
-//----------------------------------------------------------
-
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
-//----------------------------------------------------------
 // Identity
-//----------------------------------------------------------
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -109,9 +95,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-//----------------------------------------------------------
 // JWT Authentication
-//----------------------------------------------------------
 var jwt = builder.Configuration.GetSection("Jwt");
 
 builder.Services
@@ -198,10 +182,8 @@ builder.Services.ConfigureApplicationCookie(options =>
         return Task.CompletedTask;
     };
 });
-//----------------------------------------------------------
-// Dependency Injection
-//----------------------------------------------------------
 
+// Dependency Injection
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 builder.Services.AddScoped<IPatientRepository, PatientRepository>();
@@ -268,33 +250,14 @@ builder.Services.AddMassTransit(x =>
         });
     });
 });
-//----------------------------------------------------------
-// Redis Configurations
-//----------------------------------------------------------
 
-//builder.Services.Configure<GarnetOptions>(
-//    builder.Configuration.GetSection("Garnet"));
-
-//builder.Services.AddStackExchangeRedisCache(options =>
-//{
-//    options.Configuration =
-//        builder.Configuration["Garnet:ConnectionString"];
-
-//    options.InstanceName =
-//        builder.Configuration["Garnet:InstanceName"];
-//});
-
-//----------------------------------------------------------
 // AutoMapper
-//----------------------------------------------------------
 
 builder.Services.AddAutoMapper(
     cfg => { },
     AppDomain.CurrentDomain.GetAssemblies());
 
-//----------------------------------------------------------
 // CORS
-//----------------------------------------------------------
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAdmin", policy =>
@@ -325,13 +288,11 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-//----------------------------------------------------------
-// Middleware
-//----------------------------------------------------------
 
+// Middleware
 app.UseExceptionHandler();
 
-app.UseSerilogRequestLogging(); 
+app.UseSerilogRequestLogging();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -374,44 +335,44 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-//
 // Redirect the root URL to Angular
-//
+
 app.MapGet("/", context =>
 {
     context.Response.Redirect("/angular");
     return Task.CompletedTask;
 });
 
-//
+
 // Angular
-//
 app.MapGet("/angular", async context =>
 {
     await context.Response.SendFileAsync(
-        Path.Combine(app.Environment.WebRootPath, "angular", "index.html"));
+        Path.Combine(app.Environment.WebRootPath, "angular", IndexHtmlFileName));
 });
 
-app.MapGet("/angular/{*path:nonfile}", async context =>
+app.MapGet("/angular/{*path:nonfile}", async (HttpContext context, string path) =>
 {
+    Log.Debug("Serving Angular SPA fallback for sub-path {Path}", path);
+
     await context.Response.SendFileAsync(
-        Path.Combine(app.Environment.WebRootPath, "angular", "index.html"));
+        Path.Combine(app.Environment.WebRootPath, "angular", IndexHtmlFileName));
 });
 
-//
-// Blazor
-//
 
+// Blazor
 app.MapGet("/blazor", async context =>
 {
     await context.Response.SendFileAsync(
-        Path.Combine(app.Environment.WebRootPath, "blazor", "index.html"));
+        Path.Combine(app.Environment.WebRootPath, "blazor", IndexHtmlFileName));
 });
 
-app.MapGet("/blazor/{*path:nonfile}", async context =>
+app.MapGet("/blazor/{*path:nonfile}", async (HttpContext context, string path) =>
 {
+    Log.Debug("Serving Blazor SPA fallback for sub-path {Path}", path);
+
     await context.Response.SendFileAsync(
-        Path.Combine(app.Environment.WebRootPath, "blazor", "index.html"));
+        Path.Combine(app.Environment.WebRootPath, "blazor", IndexHtmlFileName));
 });
 
 try

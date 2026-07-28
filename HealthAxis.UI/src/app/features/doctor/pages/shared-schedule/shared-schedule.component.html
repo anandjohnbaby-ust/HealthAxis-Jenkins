@@ -1,4 +1,4 @@
-  <div class="page container py-4">
+<div class="page container py-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="m-0">{{ pageTitle }}</h2>
   </div>
@@ -17,13 +17,14 @@
 
         <div class="col-lg-4 col-md-6">
 
-          <label class="form-label fw-semibold">
+          <label class="form-label fw-semibold" for="searchPatient">
 
             Search Patient
 
           </label>
 
   <input
+    id="searchPatient"
     type="text"
     class="form-control"
     placeholder="Patient Name or ID"
@@ -36,13 +37,14 @@
 
         <div class="col-lg-3 col-md-6">
 
-          <label class="form-label fw-semibold">
+          <label class="form-label fw-semibold" for="statusFilter">
 
             Status
 
           </label>
 
   <select
+    id="statusFilter"
     class="form-select"
     [ngModel]="selectedStatus()"
     (ngModelChange)="onStatusChange($event)">
@@ -73,11 +75,12 @@
 
 <div class="col-lg-3 col-md-6">
 
-  <label class="form-label fw-semibold">
+  <label class="form-label fw-semibold" for="appointmentDate">
     Appointment Date
   </label>
 
   <input
+    id="appointmentDate"
     type="date"
     class="form-control"
     [ngModel]="selectedDate()"
@@ -310,9 +313,10 @@
 
           @if (dialogAction() === 'cancel') {
             <div class="mt-3">
-              <label class="form-label"> Cancellation Reason </label>
+              <label class="form-label" for="cancellationReason"> Cancellation Reason </label>
 
               <textarea
+                id="cancellationReason"
                 class="form-control"
                 rows="4"
                 [ngModel]="cancellationReason()"
@@ -324,9 +328,10 @@
 
           @if (dialogAction() === 'healthRecord') {
             <div class="mt-3">
-              <label class="form-label"> Diagnosis </label>
+              <label class="form-label" for="diagnosisInput"> Diagnosis </label>
 
               <textarea
+                id="diagnosisInput"
                 class="form-control mb-3"
                 rows="3"
                 [ngModel]="diagnosis()"
@@ -334,9 +339,10 @@
                 placeholder="Enter diagnosis"
               ></textarea>
 
-              <label class="form-label"> Prescription </label>
+              <label class="form-label" for="prescriptionInput"> Prescription </label>
 
               <textarea
+                id="prescriptionInput"
                 class="form-control mb-3"
                 rows="3"
                 [ngModel]="prescription()"
@@ -344,9 +350,10 @@
                 placeholder="Enter prescription"
               ></textarea>
 
-              <label class="form-label"> Notes </label>
+              <label class="form-label" for="notesInput"> Notes </label>
 
               <textarea
+                id="notesInput"
                 class="form-control"
                 rows="4"
                 [ngModel]="notes()"
@@ -359,26 +366,26 @@
           @if (dialogAction() === 'viewHealthRecord' && selectedHealthRecord()) {
             <div class="mt-3">
               <div class="mb-3">
-                <label class="form-label fw-semibold">Visit Date</label>
+                <div class="form-label fw-semibold">Visit Date</div>
                 <div>{{ selectedHealthRecord()!.visitDate | date: 'dd MMM yyyy' }}</div>
               </div>
 
               <div class="mb-3">
-                <label class="form-label fw-semibold">Diagnosis</label>
+                <div class="form-label fw-semibold">Diagnosis</div>
                 <div class="border rounded p-2 bg-light">
                   {{ selectedHealthRecord()!.diagnosis }}
                 </div>
               </div>
 
               <div class="mb-3">
-                <label class="form-label fw-semibold">Prescription</label>
+                <div class="form-label fw-semibold">Prescription</div>
                 <div class="border rounded p-2 bg-light">
                   {{ selectedHealthRecord()!.prescription }}
                 </div>
               </div>
 
               <div class="mb-3">
-                <label class="form-label fw-semibold">Notes</label>
+                <div class="form-label fw-semibold">Notes</div>
                 <div class="border rounded p-2 bg-light">
                   {{ selectedHealthRecord()!.notes || '-' }}
                 </div>

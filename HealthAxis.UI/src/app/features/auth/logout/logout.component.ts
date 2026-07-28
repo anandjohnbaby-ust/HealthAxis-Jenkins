@@ -8,7 +8,7 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class LogoutComponent {
 
-  private authService = inject(AuthService);
+  private readonly authService = inject(AuthService);
 
   constructor() {
     this.authService.logout();

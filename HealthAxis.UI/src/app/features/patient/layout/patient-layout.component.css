@@ -72,11 +72,37 @@
 }
 
 .profile {
+  position: relative; /* Essential for the dropdown menu positioning */
+}
+
+/*
+  .profile-trigger is a native <button> (swapped in for the old
+  role="button" div for accessibility). Reset default button chrome and
+  re-apply the flex layout that used to live on .profile so it renders
+  identically to before, while staying natively keyboard accessible.
+*/
+
+.profile-trigger {
   display: flex;
   align-items: center;
   gap: 12px;
+
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+
+  font: inherit;
+  text-align: left;
+  color: inherit;
+
   cursor: pointer;
-  position: relative; /* Essential for the dropdown menu positioning */
+}
+
+.profile-trigger:focus-visible {
+  outline: 2px solid #0B3B36;
+  outline-offset: 4px;
+  border-radius: 8px;
 }
 
 .avatar {
@@ -90,6 +116,7 @@
   align-items: center;
   font-size: 1rem;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .user-info {

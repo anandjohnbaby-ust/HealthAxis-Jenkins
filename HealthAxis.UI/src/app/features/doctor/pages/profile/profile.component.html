@@ -93,11 +93,16 @@
           <div class="field">
             <label for="isActive"> Availability </label>
 
-            <label class="switch">
-              <input type="checkbox" formControlName="isActive" (change)="saveProfile()" />
+            <span class="switch">
+              <input
+                id="isActive"
+                type="checkbox"
+                formControlName="isActive"
+                (change)="saveProfile()"
+              />
 
               <span class="slider round"></span>
-            </label>
+            </span>
 
             <small class="status-text">
               {{ profileForm.get('isActive')?.value ? 'Available' : 'Unavailable' }}

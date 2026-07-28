@@ -65,7 +65,7 @@ export class AuthService {
   }
 
   changePassword(payload: ChangePasswordRequest): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}${API_ENDPOINTS.AUTH.CHANGE_PASSWORD}`, payload);
+    return this.http.put<void>(`${this.baseUrl}${API_ENDPOINTS.AUTH.PASSWORD_UPDATE}`, payload);
   }
 
   // ---------------------------------------------------------------------------
@@ -89,7 +89,7 @@ export class AuthService {
         const accessToken = this.tokenService.getAccessToken();
         const refreshToken = this.tokenService.getRefreshToken();
 
-        window.location.href =
+        globalThis.location.href =
         `${environment.blazorAdminUrl}/auth?token=${encodeURIComponent(accessToken ?? '')}&refreshToken=${encodeURIComponent(refreshToken ?? '')}`;
         break;
       }

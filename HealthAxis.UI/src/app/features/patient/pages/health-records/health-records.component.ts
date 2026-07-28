@@ -1,7 +1,15 @@
 // src/app/features/patient/pages/health-records/health-records.component.ts
 
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  inject,
+  OnInit,
+  signal,
+  effect,
+  ViewChild
+} from '@angular/core';
 
 import { TokenService } from '../../../../core/services/token.service';
 import { PatientService } from '../../../../core/services/patient.service';
@@ -22,6 +30,36 @@ export class HealthRecordsComponent implements OnInit {
   readonly loading = signal(true);
   readonly records = signal<HealthRecord[]>([]);
   readonly selectedRecord = signal<HealthRecord | null>(null);
+
+  // ===============================
+  // Modal (native <dialog>)
+  // ===============================
+
+  @ViewChild('haModal') haModal?: ElementRef<HTMLDialogElement>;
+
+  constructor() {
+
+    // Keeps the native <dialog> element's open state in sync with the
+    // selectedRecord signal. showModal() gives us focus trapping,
+    // Escape-to-close, and a ::backdrop for free.
+    effect(() => {
+
+      const record = this.selectedRecord();
+      const dialogEl = this.haModal?.nativeElement;
+
+      if (!dialogEl) {
+        return;
+      }
+
+      if (record && !dialogEl.open) {
+        dialogEl.showModal();
+      } else if (!record && dialogEl.open) {
+        dialogEl.close();
+      }
+
+    });
+
+  }
 
   // ===============================
   // Pagination
@@ -108,6 +146,18 @@ export class HealthRecordsComponent implements OnInit {
   viewRecord(record: HealthRecord): void {
 
     this.selectedRecord.set(record);
+
+  }
+
+  onDialogClick(event: MouseEvent): void {
+
+    // <dialog> fills the viewport when open, so a click that lands directly
+    // on the dialog element itself (not on any child content) means the
+    // user clicked the backdrop area — close it, mimicking the old
+    // click-outside-to-close behavior.
+    if (event.target === event.currentTarget) {
+      this.closeModal();
+    }
 
   }
 

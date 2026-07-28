@@ -111,19 +111,35 @@
 
 /* ---------- Modal ---------- */
 
-.ha-modal-backdrop {
-  position: fixed;
-  inset: 0;
+/*
+  .ha-modal-dialog is now a native <dialog> element (rendered via
+  showModal()), so it no longer needs a separate backdrop wrapper for
+  centering. The browser centers <dialog> in the viewport by default;
+  these rules just constrain its size and add the same look as before.
+  The dimmed overlay behind it is now styled via ::backdrop.
+*/
 
+.ha-modal-dialog {
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+
+  margin: auto;
+  padding: 0;
+  border: none;
+
+  overflow-y: auto;
+
+  background: #fff;
+  border-radius: 12px;
+
+  box-shadow: 0 12px 32px rgba(11, 59, 54, .18);
+
+  animation: ha-pop-in .18s ease-out;
+}
+
+.ha-modal-dialog::backdrop {
   background: rgba(11, 59, 54, .45);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 20px;
-  z-index: 1050;
-
   animation: ha-fade-in .15s ease-out;
 }
 
@@ -134,21 +150,6 @@
   to {
     opacity: 1;
   }
-}
-
-.ha-modal-dialog {
-  width: 100%;
-  max-width: 700px;
-  max-height: 90vh;
-
-  overflow-y: auto;
-
-  background: #fff;
-  border-radius: 12px;
-
-  box-shadow: 0 12px 32px rgba(11, 59, 54, .18);
-
-  animation: ha-pop-in .18s ease-out;
 }
 
 @keyframes ha-pop-in {
@@ -345,11 +346,4 @@
     flex: 1;
   }
 
-}
-
-/* ---------- Responsive ---------- */
-@media (max-width: 576px) {
-  .ha-modal-grid {
-    grid-template-columns: 1fr;
-  }
 }

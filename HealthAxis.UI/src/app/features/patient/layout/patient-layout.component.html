@@ -1,5 +1,5 @@
 <div class="layout">
-  
+
   <aside class="sidebar">
     <h2>HealthAxis</h2>
     <nav>
@@ -22,31 +22,46 @@
   </aside>
 
   <div class="main-content">
-    
+
     <header class="topbar">
       <div class="topbar-title">
         Patient Portal
       </div>
 
-      <div class="profile" (click)="toggleMenu($event)">
-        <div class="avatar">
-          {{ initial() }}
-        </div>
-        
-        <div class="user-info">
-          <span class="user-name">
-            {{ fullName() }}
-          </span>
-        </div>
-        
-        <span class="arrow">▼</span>
+      <div class="profile">
+
+        <button
+          type="button"
+          class="profile-trigger"
+          (click)="toggleMenu($event)"
+          aria-haspopup="true"
+          [attr.aria-expanded]="menuOpen()">
+
+          <div class="avatar">
+            {{ initial() }}
+          </div>
+
+          <div class="user-info">
+            <span class="user-name">
+              {{ fullName() }}
+            </span>
+          </div>
+
+          <span class="arrow">▼</span>
+
+        </button>
 
         @if (menuOpen()) {
-          <div class="profile-menu" (click)="$event.stopPropagation()">
-            <button type="button" (click)="goToProfile()">
+          <div
+            class="profile-menu"
+            role="menu"
+            (click)="$event.stopPropagation()"
+            (keydown)="$event.stopPropagation()">
+
+            <button type="button" role="menuitem" (click)="goToProfile()">
               My Profile
             </button>
-            <button type="button" (click)="logout()">
+            <button type="button" role="menuitem" (click)="logout()">
                Logout
             </button>
           </div>
@@ -57,6 +72,6 @@
     <main class="content">
       <router-outlet></router-outlet>
     </main>
-    
+
   </div>
 </div>

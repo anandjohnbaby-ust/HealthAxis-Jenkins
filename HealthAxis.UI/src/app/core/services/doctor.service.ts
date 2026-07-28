@@ -18,7 +18,6 @@ import {
   PagedResult,
   PaginationRequest
 } from '../interfaces/doctor-domain.types';
-import { HealthRecord } from '../interfaces/patient-domain.types';
 
 @Injectable({
   providedIn: 'root'

@@ -289,12 +289,13 @@
       Are you sure you want to cancel this appointment?
     </p>
 <div class="field">
-  <label>
+  <label for="cancellationReason">
     Cancellation Reason
     <span class="optional">(Optional)</span>
   </label>
 
   <textarea
+    id="cancellationReason"
     rows="4"
     [(ngModel)]="cancellationReason"
     placeholder="Enter cancellation reason...">
@@ -376,7 +377,7 @@
     <h3>Health Record</h3>
 
     <div class="field">
-      <label>Doctor</label>
+      <div class="field-label">Doctor</div>
 
       <div class="reason-box">
         {{ selectedHealthRecord()?.doctorName }}
@@ -384,7 +385,7 @@
     </div>
 
     <div class="field">
-      <label>Visit Date</label>
+      <div class="field-label">Visit Date</div>
 
       <div class="reason-box">
         {{ formatDate(selectedHealthRecord()?.visitDate ?? '') }}
@@ -392,7 +393,7 @@
     </div>
 
     <div class="field">
-      <label>Diagnosis</label>
+      <div class="field-label">Diagnosis</div>
 
       <div class="reason-box">
         {{ selectedHealthRecord()?.diagnosis }}
@@ -400,7 +401,7 @@
     </div>
 
     <div class="field">
-      <label>Prescription</label>
+      <div class="field-label">Prescription</div>
 
       <div class="reason-box">
         {{ selectedHealthRecord()?.prescription }}
@@ -408,7 +409,7 @@
     </div>
 
     <div class="field">
-      <label>Notes</label>
+      <div class="field-label">Notes</div>
 
       <div class="reason-box">
         {{ selectedHealthRecord()?.notes || 'No notes available.' }}

@@ -4,6 +4,7 @@ export const API_ENDPOINTS = {
     LOGIN: '/Auth/login',
     REFRESH_TOKEN: '/Auth/refresh-token',
     CHANGE_PASSWORD: '/Auth/change-password'
+    UPDATE_CREDENTIALS: '/Auth/change-password'
   },
 
   DOCTORS: {

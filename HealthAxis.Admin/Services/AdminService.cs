@@ -7,6 +7,11 @@ namespace HealthAxis.Admin.Services
 {
     public class AdminService
     {
+        private static readonly JsonSerializerOptions DashboardJsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         private readonly HttpClient _http;
 
         public AdminService(HttpClient http)
@@ -29,11 +34,10 @@ namespace HealthAxis.Admin.Services
 
             var content = await response.Content.ReadAsStringAsync();
 
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var dashboard = JsonSerializer.Deserialize<DashboardDto>(content, options);
+            var dashboard = JsonSerializer.Deserialize<DashboardDto>(content, DashboardJsonOptions);
 
             if (dashboard == null)
-                throw new Exception("DashboardDto deserialized to null.");
+                throw new InvalidOperationException("DashboardDto deserialized to null.");
 
             return dashboard;
         }

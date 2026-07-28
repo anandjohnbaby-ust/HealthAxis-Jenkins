@@ -146,117 +146,115 @@
 
 @if (selectedRecord()) {
 
-  <div
-    class="ha-modal-backdrop"
-    (click)="closeModal()">
+  <dialog
+    #haModal
+    class="ha-modal-dialog"
+    aria-labelledby="haModalTitle"
+    (click)="onDialogClick($event)"
+    (keydown)="$event.stopPropagation()"
+    (close)="closeModal()">
 
-    <div
-      class="ha-modal-dialog"
-      (click)="$event.stopPropagation()">
+    <div class="ha-modal-header">
 
-      <div class="ha-modal-header">
+      <h5 class="ha-modal-title" id="haModalTitle">
 
-        <h5 class="ha-modal-title">
+        Health Record Details
 
-          Health Record Details
+      </h5>
 
-        </h5>
+      <button
+        type="button"
+        class="ha-modal-close"
+        (click)="closeModal()"
+        aria-label="Close">
 
-        <button
-          type="button"
-          class="ha-modal-close"
-          (click)="closeModal()"
-          aria-label="Close">
+        &times;
 
-          &times;
+      </button>
 
-        </button>
+    </div>
 
-      </div>
+    <div class="ha-modal-body">
 
-      <div class="ha-modal-body">
+      <div class="ha-modal-grid">
 
-        <div class="ha-modal-grid">
+        <div class="ha-modal-field">
 
-          <div class="ha-modal-field">
+          <strong>Record ID</strong>
 
-            <strong>Record ID</strong>
-
-            <p>#{{ selectedRecord()!.recordId }}</p>
-
-          </div>
-
-          <div class="ha-modal-field">
-
-            <strong>Appointment ID</strong>
-
-            <p>#{{ selectedRecord()!.appointmentId }}</p>
-
-          </div>
-
-          <div class="ha-modal-field">
-
-            <strong>Doctor</strong>
-
-            <p>{{ selectedRecord()!.doctorName }}</p>
-
-          </div>
-
-          <div class="ha-modal-field">
-
-            <strong>Visit Date</strong>
-
-            <p>{{ selectedRecord()!.visitDate | date:'dd MMM yyyy' }}</p>
-
-          </div>
-
-          <div class="ha-modal-field ha-modal-field--full">
-
-            <strong>Diagnosis</strong>
-
-            <p>{{ selectedRecord()!.diagnosis }}</p>
-
-          </div>
-
-          <div class="ha-modal-field ha-modal-field--full">
-
-            <strong>Prescription</strong>
-
-            <p>{{ selectedRecord()!.prescription }}</p>
-
-          </div>
-
-          @if (selectedRecord()!.notes) {
-
-            <div class="ha-modal-field ha-modal-field--full">
-
-              <strong>Notes</strong>
-
-              <p>{{ selectedRecord()!.notes }}</p>
-
-            </div>
-
-          }
+          <p>#{{ selectedRecord()!.recordId }}</p>
 
         </div>
 
-      </div>
+        <div class="ha-modal-field">
 
-      <div class="ha-modal-footer">
+          <strong>Appointment ID</strong>
 
-        <button
-          type="button"
-          class="btn btn-secondary"
-          (click)="closeModal()">
+          <p>#{{ selectedRecord()!.appointmentId }}</p>
 
-          Close
+        </div>
 
-        </button>
+        <div class="ha-modal-field">
+
+          <strong>Doctor</strong>
+
+          <p>{{ selectedRecord()!.doctorName }}</p>
+
+        </div>
+
+        <div class="ha-modal-field">
+
+          <strong>Visit Date</strong>
+
+          <p>{{ selectedRecord()!.visitDate | date:'dd MMM yyyy' }}</p>
+
+        </div>
+
+        <div class="ha-modal-field ha-modal-field--full">
+
+          <strong>Diagnosis</strong>
+
+          <p>{{ selectedRecord()!.diagnosis }}</p>
+
+        </div>
+
+        <div class="ha-modal-field ha-modal-field--full">
+
+          <strong>Prescription</strong>
+
+          <p>{{ selectedRecord()!.prescription }}</p>
+
+        </div>
+
+        @if (selectedRecord()!.notes) {
+
+          <div class="ha-modal-field ha-modal-field--full">
+
+            <strong>Notes</strong>
+
+            <p>{{ selectedRecord()!.notes }}</p>
+
+          </div>
+
+        }
 
       </div>
 
     </div>
 
-  </div>
+    <div class="ha-modal-footer">
+
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="closeModal()">
+
+        Close
+
+      </button>
+
+    </div>
+
+  </dialog>
 
 }

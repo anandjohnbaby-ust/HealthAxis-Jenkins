@@ -87,11 +87,37 @@
 }
 
 .profile {
+  position: relative;
+}
+
+/*
+  .profile-trigger is a native <button>. Reset default button chrome
+  (border, background, padding, font) and re-apply the flex layout that
+  used to live on the outer .profile div, so it renders identically to
+  the old clickable-div version while staying keyboard accessible.
+*/
+
+.profile-trigger {
   display: flex;
   align-items: center;
   gap: 12px;
+
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+
+  font: inherit;
+  text-align: left;
+  color: inherit;
+
   cursor: pointer;
-  position: relative;
+}
+
+.profile-trigger:focus-visible {
+  outline: 2px solid #0B3B36;
+  outline-offset: 4px;
+  border-radius: 8px;
 }
 
 .avatar {
@@ -105,6 +131,7 @@
   align-items: center;
   font-weight: 700;
   font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .user-info {

@@ -1,7 +1,6 @@
 // src/app/app.component.ts
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { NgIf } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
 
 @Component({

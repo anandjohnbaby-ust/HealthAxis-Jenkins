@@ -2,11 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { Observable } from 'rxjs';
 
 import {
   CreateHealthRecordRequest,
   DoctorAppointmentDto,
   HealthRecordDto,
+  PagedResult,
   PaginationRequest,
   UpdateAppointmentStatus
 } from '../../../../core/interfaces/doctor-domain.types';
@@ -154,12 +156,7 @@ loadAppointments(showLoader = false): void {
     request.date = this.selectedDate() || undefined;
   }
 
-  const request$ =
-    this.mode === 'today'
-      ? this.doctorService.getTodaySchedule(request)
-      : this.mode === 'week'
-        ? this.doctorService.getWeeklySchedule(request)
-        : this.doctorService.getAllAppointments(request);
+  const request$ = this.getScheduleRequest(request);
 
   request$.subscribe({
 
@@ -183,13 +180,7 @@ loadAppointments(showLoader = false): void {
 
     error: () => {
 
-      this.errorMessage.set(
-        this.mode === 'today'
-          ? "Unable to load today's schedule."
-          : this.mode === 'week'
-            ? 'Unable to load weekly schedule.'
-            : 'Unable to load appointments.'
-      );
+      this.errorMessage.set(this.getLoadErrorMessage());
 
       if (showLoader) {
         this.loading.set(false);
@@ -200,6 +191,38 @@ loadAppointments(showLoader = false): void {
   });
 
 }
+
+  // Picks the correct backend call for the current schedule mode.
+  private getScheduleRequest(
+    request: PaginationRequest
+  ): Observable<PagedResult<DoctorAppointmentDto>> {
+
+    if (this.mode === 'today') {
+      return this.doctorService.getTodaySchedule(request);
+    }
+
+    if (this.mode === 'week') {
+      return this.doctorService.getWeeklySchedule(request);
+    }
+
+    return this.doctorService.getAllAppointments(request);
+
+  }
+
+  // Picks the correct error message for the current schedule mode.
+  private getLoadErrorMessage(): string {
+
+    if (this.mode === 'today') {
+      return "Unable to load today's schedule.";
+    }
+
+    if (this.mode === 'week') {
+      return 'Unable to load weekly schedule.';
+    }
+
+    return 'Unable to load appointments.';
+
+  }
 
   private sortAppointments(
     appointments: DoctorAppointmentDto[]
@@ -233,11 +256,12 @@ loadAppointments(showLoader = false): void {
 
   }
 
+  // Kept as a separate method name for callers/templates that already
+  // depend on `refresh()`; delegates to applyFilters() so there is a
+  // single source of truth for the "reset to page 1 and reload" behavior.
   refresh(): void {
 
-    this.pageNumber.set(1);
-
-    this.loadAppointments();
+    this.applyFilters();
 
   }
   applyFilters(): void {

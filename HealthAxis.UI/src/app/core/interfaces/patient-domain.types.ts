@@ -5,7 +5,9 @@ import { Gender } from '../enums/gender.enum';
 import { Specialisation } from '../enums/specialisation.enum';
 
 // Re-exporting them so your components only need to import from THIS file
-export { AppointmentStatus, Gender, Specialisation };
+export { AppointmentStatus } from '../enums/appointment-status.enum';
+export { Gender } from '../enums/gender.enum';
+export { Specialisation } from '../enums/specialisation.enum';
 
 // =========================================================================
 // 1. PATIENT PROFILE

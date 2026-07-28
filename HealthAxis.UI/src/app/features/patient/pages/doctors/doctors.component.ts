@@ -78,18 +78,17 @@ export class DoctorsComponent implements OnInit {
       });
   }
 
-  onSearchChange(): void {
-
+  private refreshDoctors(): void {
     this.pageNumber.set(1);
-
     this.loadDoctors();
   }
 
+  onSearchChange(): void {
+    this.refreshDoctors();
+  }
+
   onSpecialisationChange(): void {
-
-    this.pageNumber.set(1);
-
-    this.loadDoctors();
+    this.refreshDoctors();
   }
 
   previousPage(): void {
