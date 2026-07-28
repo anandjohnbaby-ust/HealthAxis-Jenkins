@@ -334,7 +334,7 @@ Before running the project, install:
 ## Clone Repository
 
 ```bash
-git clone https://github.com/<your-username>/HealthAxis.git
+git clone https://github.com/<anandjohnbaby-ust>/HealthAxis.git
 
 cd HealthAxis
 ```
@@ -374,21 +374,6 @@ cd HealthAxis.Admin
 
 dotnet run
 ```
-
----
-
-# 💡 Future Enhancements
-
-- Email Notifications
-- SMS Notifications
-- Telemedicine
-- AI-based Appointment Suggestions
-- Medical File Uploads
-- Payment Gateway
-- Mobile Application
-- Multi-Hospital Support
-
----
 
 # 🛠️ Skills Demonstrated
 
