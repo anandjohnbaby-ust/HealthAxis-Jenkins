@@ -7,10 +7,15 @@ namespace HealthAxis.Shared.DTOs.PatientDtos
     public class UpdatePatientDto
     {
         [StringLength(ValidationLimits.FullNameLength)]
-        [RegularExpression(RegexPatterns.FullName,
+        [RegularExpression(
+            RegexPatterns.FullName,
             ErrorMessage = ValidationMessages.InvalidFullNameFormat)]
         public string? FullName { get; set; }
+
         [DataType(DataType.Date)]
+        [CustomValidation(
+            typeof(PatientValidation),
+            nameof(PatientValidation.ValidateDateOfBirth))]
         public DateTime? DateOfBirth { get; set; }
 
         public Gender? Gender { get; set; }
@@ -27,4 +32,6 @@ namespace HealthAxis.Shared.DTOs.PatientDtos
         public string? Email { get; set; }
     }
 
-}
+
+}   
+

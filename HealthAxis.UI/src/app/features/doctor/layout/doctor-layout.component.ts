@@ -1,8 +1,10 @@
-import { Component, computed, HostListener, inject, signal } from '@angular/core';
+import { Component, computed, HostListener, inject, signal, OnInit } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { TokenService } from '../../../core/services/token.service';
+
+const SIDEBAR_COLLAPSE_KEY = 'doctor-sidebar-collapsed';
 
 @Component({
   selector: 'app-doctor-layout',
@@ -11,7 +13,7 @@ import { TokenService } from '../../../core/services/token.service';
   templateUrl: './doctor-layout.component.html',
   styleUrl: './doctor-layout.component.css'
 })
-export class DoctorLayoutComponent {
+export class DoctorLayoutComponent implements OnInit {
 
   private readonly authService = inject(AuthService);
   private readonly tokenService = inject(TokenService);
@@ -26,6 +28,19 @@ export class DoctorLayoutComponent {
   );
 
   readonly menuOpen = signal(false);
+
+  /** Desktop: collapsed (icon-only) vs full-width sidebar */
+  readonly sidebarCollapsed = signal(false);
+
+  /** Mobile: off-canvas drawer open/closed */
+  readonly mobileSidebarOpen = signal(false);
+
+  ngOnInit(): void {
+    const saved = localStorage.getItem(SIDEBAR_COLLAPSE_KEY);
+    if (saved === 'true') {
+      this.sidebarCollapsed.set(true);
+    }
+  }
 
   toggleMenu(event: Event): void {
     event.stopPropagation();
@@ -46,4 +61,20 @@ export class DoctorLayoutComponent {
     this.authService.logout();
   }
 
+  toggleSidebarCollapse(): void {
+    this.sidebarCollapsed.update(collapsed => {
+      const next = !collapsed;
+      localStorage.setItem(SIDEBAR_COLLAPSE_KEY, String(next));
+      return next;
+    });
+  }
+
+  toggleMobileSidebar(event: MouseEvent): void {
+    event.stopPropagation();
+    this.mobileSidebarOpen.update(open => !open);
+  }
+
+  closeMobileSidebar(): void {
+    this.mobileSidebarOpen.set(false);
+  }
 }

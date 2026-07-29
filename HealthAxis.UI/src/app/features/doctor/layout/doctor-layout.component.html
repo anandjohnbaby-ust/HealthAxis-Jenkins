@@ -1,41 +1,92 @@
 <div class="layout-wrapper">
+
+  <!-- Mobile backdrop -->
+  @if (mobileSidebarOpen()) {
+    <div class="sidebar-backdrop" (click)="closeMobileSidebar()"></div>
+  }
+
   <!-- Sidebar -->
-  <aside class="sidebar">
+  <aside
+    class="sidebar"
+    [class.collapsed]="sidebarCollapsed()"
+    [class.mobile-open]="mobileSidebarOpen()">
+
     <div class="sidebar-brand">
-      <h2>HealthAxis</h2>
-      <small>Doctor Portal</small>
+      <div class="sidebar-brand-row">
+        <h2>
+          <span class="brand-full">HealthAxis</span>
+          <span class="brand-short">HA</span>
+        </h2>
+
+        <button
+          type="button"
+          class="sidebar-toggle"
+          (click)="toggleSidebarCollapse()"
+          [attr.aria-expanded]="!sidebarCollapsed()"
+          aria-label="Toggle sidebar">
+          @if (sidebarCollapsed()) {
+            &raquo;
+          } @else {
+            &laquo;
+          }
+        </button>
+      </div>
+
+      <small class="brand-sub">Doctor Portal</small>
     </div>
+
     <nav class="sidebar-nav">
       <a
         routerLink="/doctor/dashboard"
         routerLinkActive="active-link"
-        [routerLinkActiveOptions]="{ exact: true }">
-         Dashboard
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeMobileSidebar()">
+        <span class="link-text">Dashboard</span>
       </a>
       <a
         routerLink="/doctor/appointments"
         routerLinkActive="active-link"
-        [routerLinkActiveOptions]="{ exact: true }">
-         All Appointments
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeMobileSidebar()">
+        <span class="link-text">All Appointments</span>
       </a>
       <a
         routerLink="/doctor/today"
-        routerLinkActive="active-link">
-         Today's Schedule
+        routerLinkActive="active-link"
+        (click)="closeMobileSidebar()">
+        <span class="link-text">Today's Schedule</span>
       </a>
       <a
         routerLink="/doctor/week"
-        routerLinkActive="active-link">
-         Weekly Schedule
+        routerLinkActive="active-link"
+        (click)="closeMobileSidebar()">
+        <span class="link-text">Weekly Schedule</span>
       </a>
     </nav>
   </aside>
+
   <!-- Main -->
   <div class="main-content">
     <header class="topbar">
-      <div class="topbar-title">
-        Doctor Portal
+
+      <div class="topbar-left">
+
+        <button
+          type="button"
+          class="hamburger"
+          (click)="toggleMobileSidebar($event)"
+          aria-label="Toggle menu"
+          [attr.aria-expanded]="mobileSidebarOpen()">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div class="topbar-title">
+          Doctor Portal
+        </div>
       </div>
+
       <div class="profile">
 
         <button
@@ -53,22 +104,28 @@
               {{ doctorName() }}
             </span>
           </div>
-          <span class="arrow">▼</span>
+          <span class="arrow">&#9660;</span>
 
         </button>
 
-        @if(menuOpen()){
-        <div class="profile-menu" role="menu" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-          <button type="button" role="menuitem" (click)="goToProfile()">
-            👤 My Profile
-          </button>
-          <button type="button" role="menuitem" (click)="logout()">
-            🚪 Logout
-          </button>
-        </div>
+        @if (menuOpen()) {
+          <div
+            class="profile-menu"
+            role="menu"
+            (click)="$event.stopPropagation()"
+            (keydown)="$event.stopPropagation()">
+
+            <button type="button" role="menuitem" (click)="goToProfile()">
+              My Profile
+            </button>
+            <button type="button" role="menuitem" (click)="logout()">
+              Logout
+            </button>
+          </div>
         }
       </div>
     </header>
+
     <main class="content">
       <router-outlet></router-outlet>
     </main>

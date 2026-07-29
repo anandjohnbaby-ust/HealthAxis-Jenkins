@@ -1,7 +1,6 @@
 <Solution>
   <Folder Name="/Solution Items/">
     <File Path=".gitignore" />
-    <File Path="sonar-project.properties" />
   </Folder>
   <Project Path="HealthAxis.Admin/HealthAxis.Admin.csproj" Id="b987f194-b311-4c86-8c71-68dbb8c0a269" />
   <Project Path="HealthAxis.API/HealthAxis.API.csproj" />

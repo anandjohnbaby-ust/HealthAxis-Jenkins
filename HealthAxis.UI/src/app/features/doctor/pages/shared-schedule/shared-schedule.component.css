@@ -20,22 +20,23 @@
 /* ===========================
    Table
 =========================== */
-/* ===========================
-   Table
-=========================== */
 
 .table-responsive {
   background: #fff;
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid #E5E7EB;
   box-shadow: 0 4px 16px rgba(11, 59, 54, 0.05);
+
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .table {
   width: 100%;
   margin: 0;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .table thead th {
@@ -49,6 +50,8 @@
   padding: 16px;
 
   border-bottom: 1px solid #E5E7EB;
+
+  white-space: nowrap;
 }
 
 .table tbody td {
@@ -88,8 +91,8 @@
 
 .table th:nth-child(5),
 .table td:nth-child(5) {
-  width: 34%;
-  text-align: right;
+  min-width: 260px;
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -102,6 +105,7 @@
   color: #6B7280;
   font-size: .95rem;
 }
+
 /* ===========================
    Status Badge
 =========================== */
@@ -111,6 +115,7 @@
   border-radius: 30px;
   font-size: .75rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .bg-warning {
@@ -155,6 +160,7 @@
   align-items: center;
   justify-content: center;
 }
+
 /* ===========================
    Dialog
 =========================== */
@@ -170,6 +176,8 @@
   align-items: center;
 
   z-index: 9999;
+
+  padding: 12px;
 }
 
 .dialog-card {
@@ -291,4 +299,179 @@
 .spinner-border {
   width: 3rem;
   height: 3rem;
+}
+
+/* ==================================
+   RESPONSIVE DESIGN
+================================== */
+
+/* Tablets */
+@media (max-width: 991.98px) {
+
+  .page h2 {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+
+  .table {
+    width: 100%;
+    margin: 0;
+    table-layout: auto;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+
+  .btn-success,
+  .btn-primary,
+  .btn-danger,
+  .btn-outline-primary,
+  .btn-outline-secondary {
+    min-width: 100px;
+  }
+
+  .dialog-card {
+    width: 95vw;
+    max-height: 90vh;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767.98px) {
+
+  .page {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  /* Header */
+  .page h2 {
+    font-size: 1.3rem;
+    text-align: center;
+  }
+
+  /* Filters */
+  .card-body .row > div {
+    width: 100%;
+  }
+
+  .form-label {
+    font-size: 0.9rem;
+  }
+
+  .form-control,
+  .form-select {
+    font-size: 0.9rem;
+  }
+
+  /* Table — single row per appointment, swipe sideways to see it all */
+  .table-responsive {
+    border-radius: 10px;
+  }
+
+  .table {
+    min-width: 750px;
+  }
+
+  .table td:last-child {
+    white-space: nowrap;
+  }
+
+  .table td .btn {
+    margin-bottom: 0;
+  }
+
+  .btn-success,
+  .btn-primary,
+  .btn-danger,
+  .btn-outline-primary,
+  .btn-outline-secondary {
+    min-width: 100px;
+  }
+
+  /* Pagination */
+  .d-flex.justify-content-between.align-items-center.mt-3 {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .btn-group {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .btn-group .btn {
+    flex: 1;
+  }
+
+  /* Dialog */
+  .dialog-card {
+    width: 95vw;
+    max-height: 90vh;
+    margin: 10px;
+  }
+
+  .dialog-header,
+  .dialog-body,
+  .dialog-footer {
+    padding: 16px;
+  }
+
+  .dialog-footer {
+    flex-direction: column;
+  }
+
+  .dialog-footer .btn {
+    width: 100%;
+  }
+
+  .dialog-header h4 {
+    font-size: 1rem;
+  }
+
+  .dialog-body {
+    font-size: 0.9rem;
+  }
+
+  .badge {
+    display: inline-block;
+    text-align: center;
+  }
+}
+
+/* Extra Small Devices */
+@media (max-width: 575.98px) {
+
+  .container {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .alert {
+    font-size: 0.9rem;
+  }
+
+  .table th,
+  .table td {
+    font-size: 0.85rem;
+    padding: 10px;
+  }
+
+  .dialog-card {
+    border-radius: 10px;
+  }
+
+  .dialog-body textarea {
+    font-size: 0.9rem;
+  }
+
+  .spinner-border {
+    width: 2rem;
+    height: 2rem;
+  }
 }

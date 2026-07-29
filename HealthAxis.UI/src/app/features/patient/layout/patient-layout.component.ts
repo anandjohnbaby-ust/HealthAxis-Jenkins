@@ -5,6 +5,8 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { AuthService } from '../../../core/services/auth.service';
 import { PatientService } from '../../../core/services/patient.service';
 
+const SIDEBAR_COLLAPSE_KEY = 'patient-sidebar-collapsed';
+
 @Component({
   selector: 'app-patient-layout',
   standalone: true,
@@ -18,6 +20,12 @@ export class PatientLayoutComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly menuOpen = signal(false);
+
+  /** Desktop: collapsed (icon-only) vs full-width sidebar */
+  readonly sidebarCollapsed = signal(false);
+
+  /** Mobile: off-canvas drawer open/closed */
+  readonly mobileSidebarOpen = signal(false);
 
   /** Reactive patient signal */
   readonly patient = this.patientService.currentPatient;
@@ -36,6 +44,12 @@ export class PatientLayoutComponent implements OnInit {
     if (!this.patient()) {
       this.patientService.getMyProfile().subscribe();
     }
+
+    // Restore the user's last collapse preference on desktop.
+    const saved = localStorage.getItem(SIDEBAR_COLLAPSE_KEY);
+    if (saved === 'true') {
+      this.sidebarCollapsed.set(true);
+    }
   }
 
   toggleMenu(event: MouseEvent): void {
@@ -51,6 +65,25 @@ export class PatientLayoutComponent implements OnInit {
   logout(): void {
     this.menuOpen.set(false);
     this.authService.logout();
+  }
+
+  /** Desktop minimize/maximize toggle */
+  toggleSidebarCollapse(): void {
+    this.sidebarCollapsed.update((collapsed) => {
+      const next = !collapsed;
+      localStorage.setItem(SIDEBAR_COLLAPSE_KEY, String(next));
+      return next;
+    });
+  }
+
+  /** Mobile hamburger toggle */
+  toggleMobileSidebar(event: MouseEvent): void {
+    event.stopPropagation();
+    this.mobileSidebarOpen.update((open) => !open);
+  }
+
+  closeMobileSidebar(): void {
+    this.mobileSidebarOpen.set(false);
   }
 
   @HostListener('document:click')

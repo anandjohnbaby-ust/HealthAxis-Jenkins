@@ -1,22 +1,46 @@
 <div class="layout">
 
-  <aside class="sidebar">
-    <h2>HealthAxis</h2>
+  <!-- Mobile backdrop, closes the drawer when tapped -->
+  @if (mobileSidebarOpen()) {
+    <div class="sidebar-backdrop" (click)="closeMobileSidebar()"></div>
+  }
+
+  <aside class="sidebar"
+         [class.collapsed]="sidebarCollapsed()"
+         [class.mobile-open]="mobileSidebarOpen()">
+
+    <div class="sidebar-header">
+      <h2 class="brand">
+        <span class="brand-full">HealthAxis</span>
+        <span class="brand-short">HA</span>
+      </h2>
+
+      <!-- Desktop-only minimize/maximize toggle -->
+      <button
+        type="button"
+        class="sidebar-toggle"
+        (click)="toggleSidebarCollapse()"
+        [attr.aria-expanded]="!sidebarCollapsed()"
+        aria-label="Toggle sidebar">
+        {{ sidebarCollapsed() ? '»' : '«' }}
+      </button>
+    </div>
+
     <nav>
-      <a routerLink="/patient/dashboard" routerLinkActive="active">
-        Dashboard
+      <a routerLink="/patient/dashboard" routerLinkActive="active" (click)="closeMobileSidebar()">
+        <span class="link-text">Dashboard</span>
       </a>
-      <a routerLink="/patient/doctors" routerLinkActive="active">
-        Doctors
+      <a routerLink="/patient/doctors" routerLinkActive="active" (click)="closeMobileSidebar()">
+        <span class="link-text">Doctors</span>
       </a>
-      <a routerLink="/patient/health-records" routerLinkActive="active">
-        Health Records
+      <a routerLink="/patient/health-records" routerLinkActive="active" (click)="closeMobileSidebar()">
+        <span class="link-text">Health Records</span>
       </a>
-      <a routerLink="/patient/appointments" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-        Appointments
+      <a routerLink="/patient/appointments" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMobileSidebar()">
+        <span class="link-text">Appointments</span>
       </a>
-      <a routerLink="/patient/appointments/book" routerLinkActive="active">
-        Book Appointment
+      <a routerLink="/patient/appointments/book" routerLinkActive="active" (click)="closeMobileSidebar()">
+        <span class="link-text">Book Appointment</span>
       </a>
     </nav>
   </aside>
@@ -24,8 +48,23 @@
   <div class="main-content">
 
     <header class="topbar">
-      <div class="topbar-title">
-        Patient Portal
+      <div class="topbar-left">
+
+        <!-- Mobile-only hamburger -->
+        <button
+          type="button"
+          class="hamburger"
+          (click)="toggleMobileSidebar($event)"
+          aria-label="Toggle menu"
+          [attr.aria-expanded]="mobileSidebarOpen()">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div class="topbar-title">
+          Patient Portal
+        </div>
       </div>
 
       <div class="profile">

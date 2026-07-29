@@ -1,24 +1,28 @@
 ﻿using HealthAxis.Shared.Enums;
+using HealthAxis.Shared.Utilities;
 using System.ComponentModel.DataAnnotations;
 
 namespace HealthAxis.Shared.DTOs.DoctorDtos
 {
     public class DoctorDto
     {
+
         public int DoctorId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = ValidationMessages.FullNameRequired)]
+        [StringLength(ValidationLimits.FullNameLength)]
+        [RegularExpression(RegexPatterns.FullName, ErrorMessage = ValidationMessages.InvalidFullNameFormat)]
         public string FullName { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = ValidationMessages.SpecialisationRequired)]
         public Specialisation Specialisation { get; set; }
 
         public string Email { get; set; } = string.Empty;
 
-        [Range(0, 50)]
+        [Range(ValidationLimits.MinExperience, ValidationLimits.MaxExperience, ErrorMessage = ValidationMessages.InvalidExperienceRange)]
         public int YearsOfExperience { get; set; }
 
-        [Range(typeof(decimal), "0", "999999")]
+        [Range(typeof(decimal), ValidationLimits.MinConsultationFee, ValidationLimits.MaxConsultationFee, ErrorMessage = ValidationMessages.InvalidConsultationFee)]
         public decimal ConsultationFee { get; set; }
 
         public bool IsActive { get; set; }
