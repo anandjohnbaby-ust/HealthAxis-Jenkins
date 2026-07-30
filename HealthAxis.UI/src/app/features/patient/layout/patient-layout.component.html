@@ -1,98 +1,126 @@
-<div class="layout">
-
-  <!-- Mobile backdrop, closes the drawer when tapped -->
+<div class="layout-wrapper">
+  <!-- Mobile backdrop -->
   @if (mobileSidebarOpen()) {
     <button
       type="button"
       class="sidebar-backdrop"
       (click)="closeMobileSidebar()"
-      aria-label="Close menu">
-    </button>
+      aria-label="Close menu"
+    ></button>
   }
 
-  <aside class="sidebar"
-         [class.collapsed]="sidebarCollapsed()"
-         [class.mobile-open]="mobileSidebarOpen()">
+  <!-- Sidebar -->
+  <aside
+    class="sidebar"
+    [class.collapsed]="sidebarCollapsed()"
+    [class.mobile-open]="mobileSidebarOpen()"
+  >
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-row">
+        <h2>
+          <span class="brand-full">HealthAxis</span>
+          <span class="brand-short">HA</span>
+        </h2>
 
-    <div class="sidebar-header">
-      <h2 class="brand">
-        <span class="brand-full">HealthAxis</span>
-        <span class="brand-short">HA</span>
-      </h2>
+        <button
+          type="button"
+          class="sidebar-toggle"
+          (click)="toggleSidebarCollapse()"
+          [attr.aria-expanded]="!sidebarCollapsed()"
+        >
+          @if (sidebarCollapsed()) {
+            <span aria-hidden="true">&raquo;</span>
+          } @else {
+            <span aria-hidden="true">&laquo;</span>
+          }
+          <span class="sr-only">Toggle sidebar</span>
+        </button>
+      </div>
 
-      <!-- Desktop-only minimize/maximize toggle -->
-      <button
-        type="button"
-        class="sidebar-toggle"
-        (click)="toggleSidebarCollapse()"
-        [attr.aria-expanded]="!sidebarCollapsed()"
-        aria-label="Toggle sidebar">
-        <span aria-hidden="true">{{ sidebarCollapsed() ? '»' : '«' }}</span>
-      </button>
+      <small class="brand-sub">Patient Portal</small>
     </div>
 
-    <nav>
-      <a routerLink="/patient/dashboard" routerLinkActive="active" (click)="closeMobileSidebar()">
+    <nav class="sidebar-nav">
+      
+        routerLink="/patient/dashboard"
+        routerLinkActive="active-link"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeMobileSidebar()"
+      >
         <span class="link-text">Dashboard</span>
       </a>
-      <a routerLink="/patient/doctors" routerLinkActive="active" (click)="closeMobileSidebar()">
+
+      
+        routerLink="/patient/doctors"
+        routerLinkActive="active-link"
+        (click)="closeMobileSidebar()"
+      >
         <span class="link-text">Doctors</span>
       </a>
-      <a routerLink="/patient/health-records" routerLinkActive="active" (click)="closeMobileSidebar()">
+
+      
+        routerLink="/patient/health-records"
+        routerLinkActive="active-link"
+        (click)="closeMobileSidebar()"
+      >
         <span class="link-text">Health Records</span>
       </a>
-      <a routerLink="/patient/appointments" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMobileSidebar()">
+
+      
+        routerLink="/patient/appointments"
+        routerLinkActive="active-link"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeMobileSidebar()"
+      >
         <span class="link-text">Appointments</span>
       </a>
-      <a routerLink="/patient/appointments/book" routerLinkActive="active" (click)="closeMobileSidebar()">
+
+      
+        routerLink="/patient/appointments/book"
+        routerLinkActive="active-link"
+        (click)="closeMobileSidebar()"
+      >
         <span class="link-text">Book Appointment</span>
       </a>
     </nav>
   </aside>
 
+  <!-- Main -->
   <div class="main-content">
-
     <header class="topbar">
       <div class="topbar-left">
-
-        <!-- Mobile-only hamburger -->
         <button
           type="button"
           class="hamburger"
           (click)="toggleMobileSidebar($event)"
           aria-label="Toggle menu"
-          [attr.aria-expanded]="mobileSidebarOpen()">
+          [attr.aria-expanded]="mobileSidebarOpen()"
+        >
           <span></span>
           <span></span>
           <span></span>
         </button>
 
-        <div class="topbar-title">
-          Patient Portal
-        </div>
+        <div class="topbar-title">Patient Portal</div>
       </div>
 
       <div class="profile">
-
         <button
           type="button"
           class="profile-trigger"
           (click)="toggleMenu($event)"
           aria-haspopup="true"
-          [attr.aria-expanded]="menuOpen()">
-
+          [attr.aria-expanded]="menuOpen()"
+        >
           <div class="avatar">
             {{ initial() }}
           </div>
-
           <div class="user-info">
             <span class="user-name">
               {{ fullName() }}
             </span>
           </div>
-
-          <span class="arrow">▼</span>
-
+          <span class="arrow">&#9660;</span>
         </button>
 
         @if (menuOpen()) {
@@ -100,13 +128,13 @@
             class="profile-menu"
             role="menu"
             (click)="$event.stopPropagation()"
-            (keydown)="$event.stopPropagation()">
-
+            (keydown)="$event.stopPropagation()"
+          >
             <button type="button" role="menuitem" (click)="goToProfile()">
               My Profile
             </button>
             <button type="button" role="menuitem" (click)="logout()">
-               Logout
+              Logout
             </button>
           </div>
         }
@@ -116,6 +144,5 @@
     <main class="content">
       <router-outlet></router-outlet>
     </main>
-
   </div>
 </div>
