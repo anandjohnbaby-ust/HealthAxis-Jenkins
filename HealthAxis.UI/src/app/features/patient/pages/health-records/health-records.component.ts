@@ -8,7 +8,7 @@ import {
   OnInit,
   signal,
   effect,
-  ViewChild
+  viewChild
 } from '@angular/core';
 
 import { TokenService } from '../../../../core/services/token.service';
@@ -35,7 +35,11 @@ export class HealthRecordsComponent implements OnInit {
   // Modal (native <dialog>)
   // ===============================
 
-  @ViewChild('haModal') haModal?: ElementRef<HTMLDialogElement>;
+  // Signal-based query instead of @ViewChild. This is reactive — reading
+  // it inside effect() registers it as a dependency, so the effect
+  // re-runs once the <dialog> is actually created in the DOM (it's
+  // behind an @if in the template, so it doesn't exist right away).
+  readonly haModal = viewChild<ElementRef<HTMLDialogElement>>('haModal');
 
   constructor() {
 
@@ -45,7 +49,7 @@ export class HealthRecordsComponent implements OnInit {
     effect(() => {
 
       const record = this.selectedRecord();
-      const dialogEl = this.haModal?.nativeElement;
+      const dialogEl = this.haModal()?.nativeElement;
 
       if (!dialogEl) {
         return;
