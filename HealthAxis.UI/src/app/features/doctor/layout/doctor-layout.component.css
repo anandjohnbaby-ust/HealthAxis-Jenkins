@@ -44,13 +44,22 @@
   display: none;
 }
 
+/*
+  .sidebar-toggle: background changed from a light rgba(255,255,255,*)
+  overlay to a dark rgba(0,0,0,*) overlay. The old light-on-light value
+  failed automated contrast checks against the white icon text, even
+  though it visually sits on the dark green sidebar. A dark overlay
+  keeps the same visual "frosted button" look while giving the white
+  text real, measurable contrast.
+*/
+
 .sidebar-toggle {
   flex-shrink: 0;
   width: 28px;
   height: 28px;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, .3);
-  background: rgba(255, 255, 255, .08);
+  background: rgba(0, 0, 0, .18);
   color: #fff;
   cursor: pointer;
   font-size: .9rem;
@@ -59,7 +68,7 @@
 }
 
 .sidebar-toggle:hover {
-  background: rgba(255, 255, 255, .2);
+  background: rgba(0, 0, 0, .32);
 }
 
 .brand-sub {
@@ -127,8 +136,22 @@
 
 /* ---------- Mobile backdrop ---------- */
 
+/*
+  .sidebar-backdrop is a native <button> (swapped in for the old div
+  with only a (click) handler, for keyboard accessibility). Reset
+  default button chrome so it renders as a plain full-screen overlay,
+  identical to before, while staying natively focusable and operable
+  via Enter/Space.
+*/
+
 .sidebar-backdrop {
   display: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
 }
 
 /* ================= Right Side ================= */
@@ -295,6 +318,17 @@
   overflow: auto;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 /* ================= Responsive ================= */
 
 @media (max-width: 992px) {
@@ -359,6 +393,8 @@
 
   .sidebar-backdrop {
     display: block;
+    width: 100%;
+    height: 100%;
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, .45);

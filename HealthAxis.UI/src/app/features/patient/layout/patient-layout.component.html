@@ -2,7 +2,12 @@
 
   <!-- Mobile backdrop, closes the drawer when tapped -->
   @if (mobileSidebarOpen()) {
-    <div class="sidebar-backdrop" (click)="closeMobileSidebar()"></div>
+    <button
+      type="button"
+      class="sidebar-backdrop"
+      (click)="closeMobileSidebar()"
+      aria-label="Close menu">
+    </button>
   }
 
   <aside class="sidebar"
@@ -22,7 +27,7 @@
         (click)="toggleSidebarCollapse()"
         [attr.aria-expanded]="!sidebarCollapsed()"
         aria-label="Toggle sidebar">
-        {{ sidebarCollapsed() ? '»' : '«' }}
+        <span aria-hidden="true">{{ sidebarCollapsed() ? '»' : '«' }}</span>
       </button>
     </div>
 

@@ -2,7 +2,12 @@
 
   <!-- Mobile backdrop -->
   @if (mobileSidebarOpen()) {
-    <div class="sidebar-backdrop" (click)="closeMobileSidebar()"></div>
+    <button
+      type="button"
+      class="sidebar-backdrop"
+      (click)="closeMobileSidebar()"
+      aria-label="Close menu">
+    </button>
   }
 
   <!-- Sidebar -->
@@ -22,13 +27,13 @@
           type="button"
           class="sidebar-toggle"
           (click)="toggleSidebarCollapse()"
-          [attr.aria-expanded]="!sidebarCollapsed()"
-          aria-label="Toggle sidebar">
+          [attr.aria-expanded]="!sidebarCollapsed()">
           @if (sidebarCollapsed()) {
-            &raquo;
+            <span aria-hidden="true">&raquo;</span>
           } @else {
-            &laquo;
+            <span aria-hidden="true">&laquo;</span>
           }
+          <span class="sr-only">Toggle sidebar</span>
         </button>
       </div>
 
@@ -36,27 +41,27 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a
+      
         routerLink="/doctor/dashboard"
         routerLinkActive="active-link"
         [routerLinkActiveOptions]="{ exact: true }"
         (click)="closeMobileSidebar()">
         <span class="link-text">Dashboard</span>
       </a>
-      <a
+      
         routerLink="/doctor/appointments"
         routerLinkActive="active-link"
         [routerLinkActiveOptions]="{ exact: true }"
         (click)="closeMobileSidebar()">
         <span class="link-text">All Appointments</span>
       </a>
-      <a
+      
         routerLink="/doctor/today"
         routerLinkActive="active-link"
         (click)="closeMobileSidebar()">
         <span class="link-text">Today's Schedule</span>
       </a>
-      <a
+      
         routerLink="/doctor/week"
         routerLinkActive="active-link"
         (click)="closeMobileSidebar()">

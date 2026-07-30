@@ -85,8 +85,16 @@ h1 {
   margin-top: 16px;
 }
 
+/*
+  .table: merged with the second ".table" block that previously existed
+  further down (under "Table scroll wrapper"), which caused a duplicate
+  selector. min-width and box-shadow: none (shadow now lives on the
+  .table-wrapper) are folded in here.
+*/
+
 .table {
   width: 100%;
+  min-width: 700px; /* keeps columns readable; wrapper scrolls below this */
   border-collapse: collapse;
   table-layout: fixed;
 
@@ -94,7 +102,7 @@ h1 {
   border-radius: 12px;
   overflow: hidden;
 
-  box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+  box-shadow: none; /* shadow now lives on .table-wrapper */
 }
 
 th,
@@ -429,16 +437,6 @@ tbody tr:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
 }
 
-.table {
-  width: 100%;
-  min-width: 700px; /* keeps columns readable; wrapper scrolls below this */
-  border-collapse: collapse;
-  table-layout: fixed;
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: none; /* shadow now lives on .table-wrapper */
-} 
 /* ================= Actions Column Buttons ================= */
 /* All buttons/badges in the Actions cell must match exactly,
    regardless of which classes (.btn-sm, .btn-outline-danger,

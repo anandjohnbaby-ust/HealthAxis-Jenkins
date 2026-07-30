@@ -1,5 +1,6 @@
-/* src/app/features/patient/layout/patient-layout.component.css */
-.layout {
+/* src/app/features/doctor/layout/doctor-layout.component.css */
+
+.layout-wrapper {
   display: flex;
   min-height: 100vh;
   background: #f8f9fa;
@@ -21,14 +22,17 @@
   transition: width .25s ease, transform .25s ease;
 }
 
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.sidebar-brand {
   margin-bottom: 32px;
 }
 
-.sidebar h2.brand {
+.sidebar-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-brand h2 {
   margin: 0;
   font-size: 1.6rem;
   font-weight: 700;
@@ -40,13 +44,22 @@
   display: none;
 }
 
+/*
+  .sidebar-toggle: background changed from a light rgba(255,255,255,*)
+  overlay to a dark rgba(0,0,0,*) overlay. The old light-on-light value
+  failed automated contrast checks against the white icon text, even
+  though it visually sits on the dark green sidebar. A dark overlay
+  keeps the same visual "frosted button" look while giving the white
+  text real, measurable contrast.
+*/
+
 .sidebar-toggle {
   flex-shrink: 0;
   width: 28px;
   height: 28px;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, .3);
-  background: rgba(255, 255, 255, .08);
+  background: rgba(0, 0, 0, .18);
   color: #fff;
   cursor: pointer;
   font-size: .9rem;
@@ -55,32 +68,44 @@
 }
 
 .sidebar-toggle:hover {
-  background: rgba(255, 255, 255, .2);
+  background: rgba(0, 0, 0, .32);
 }
 
-.sidebar nav {
+.brand-sub {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255,255,255,.75);
+  font-size: .9rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.sidebar a {
+.sidebar-nav a {
   color: #fff;
   text-decoration: none;
   padding: 12px 16px;
   border-radius: 8px;
   transition: 0.2s;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   white-space: nowrap;
   overflow: hidden;
 }
 
-.sidebar a:hover,
-.sidebar a.active {
-  background: rgba(255, 255, 255, 0.15);
+.sidebar-nav a:hover,
+.sidebar-nav a.active-link {
+  background: rgba(255,255,255,.15);
 }
 
-/* ---------- Desktop collapsed (icon-only, minimized) ---------- */
+/* ---------- Desktop collapsed (icon-only) ---------- */
 
 .sidebar.collapsed {
   width: 72px;
@@ -95,25 +120,38 @@
   display: inline;
 }
 
+.sidebar.collapsed .brand-sub,
 .sidebar.collapsed .link-text {
   display: none;
 }
 
-.sidebar.collapsed a {
-  text-align: center;
-  padding: 12px 6px;
+.sidebar.collapsed .sidebar-brand-row {
+  justify-content: center;
 }
 
-.sidebar.collapsed .sidebar-header {
+.sidebar.collapsed .sidebar-nav a {
   justify-content: center;
-  flex-direction: column;
-  gap: 12px;
+  padding: 12px 6px;
 }
 
 /* ---------- Mobile backdrop ---------- */
 
+/*
+  .sidebar-backdrop is a native <button> (swapped in for the old div
+  with only a (click) handler, for keyboard accessibility). Reset
+  default button chrome so it renders as a plain full-screen overlay,
+  identical to before, while staying natively focusable and operable
+  via Enter/Space.
+*/
+
 .sidebar-backdrop {
   display: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
 }
 
 /* ================= Right Side ================= */
@@ -179,15 +217,15 @@
 }
 
 .profile {
-  position: relative; /* Essential for the dropdown menu positioning */
+  position: relative;
   flex-shrink: 0;
 }
 
 /*
-  .profile-trigger is a native <button> (swapped in for the old
-  role="button" div for accessibility). Reset default button chrome and
-  re-apply the flex layout that used to live on .profile so it renders
-  identically to before, while staying natively keyboard accessible.
+  .profile-trigger is a native <button>. Reset default button chrome
+  (border, background, padding, font) and re-apply the flex layout that
+  used to live on the outer .profile div, so it renders identically to
+  the old clickable-div version while staying keyboard accessible.
 */
 
 .profile-trigger {
@@ -218,12 +256,12 @@
   height: 42px;
   border-radius: 50%;
   background: #0B3B36;
-  color: white;
+  color: #fff;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 1rem;
   font-weight: 700;
+  font-size: 1rem;
   flex-shrink: 0;
 }
 
@@ -233,46 +271,46 @@
 }
 
 .user-name {
-  color: #1F2937;
+  font-size: .95rem;
   font-weight: 600;
-  font-size: 0.95rem;
+  color: #1F2937;
 }
 
 .arrow {
-  font-size: 0.7rem;
+  font-size: .7rem;
   color: #6B7280;
 }
 
-/* ================= Dropdown Menu ================= */
+/* ================= Dropdown ================= */
 
 .profile-menu {
   position: absolute;
   top: 60px;
   right: 0;
   width: 190px;
-  background: white;
+  background: #fff;
   border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
   z-index: 1000;
 }
 
 .profile-menu button {
   width: 100%;
   border: none;
-  background: none;
-  text-align: left;
+  background: transparent;
   padding: 14px 18px;
+  text-align: left;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: 0.2s;
+  transition: .2s;
+  font-size: .9rem;
 }
 
 .profile-menu button:hover {
   background: #F3F4F6;
 }
 
-/* ================= Main Viewport ================= */
+/* ================= Main Content ================= */
 
 .content {
   flex: 1;
@@ -280,9 +318,7 @@
   overflow: auto;
 }
 
-/* =================================================
-   Responsive: tablet & mobile
-   ================================================= */
+/* ================= Responsive ================= */
 
 @media (max-width: 992px) {
   .content {
@@ -326,27 +362,28 @@
     display: none;
   }
 
+  .sidebar.collapsed .brand-sub,
   .sidebar.collapsed .link-text {
-    display: inline;
+    display: block;
   }
 
-  .sidebar.collapsed a {
-    text-align: left;
+  .sidebar.collapsed .sidebar-brand-row {
+    justify-content: space-between;
+  }
+
+  .sidebar.collapsed .sidebar-nav a {
+    justify-content: flex-start;
     padding: 12px 16px;
   }
 
-  .sidebar.collapsed .sidebar-header {
-    justify-content: space-between;
-    flex-direction: row;
-  }
-
-  /* Desktop collapse toggle is meaningless on mobile */
   .sidebar-toggle {
     display: none;
   }
 
   .sidebar-backdrop {
     display: block;
+    width: 100%;
+    height: 100%;
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, .45);
@@ -362,10 +399,6 @@
   }
 
   .user-info {
-    display: none;
-  }
-
-  .arrow {
     display: none;
   }
 }
