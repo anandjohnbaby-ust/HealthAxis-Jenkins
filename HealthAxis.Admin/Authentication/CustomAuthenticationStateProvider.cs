@@ -16,36 +16,29 @@ namespace HealthAxis.Admin.Authentication
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            Console.WriteLine("GetAuthenticationStateAsync CALLED");
+            string? token = null;
 
-            // Read the same key used by Angular
-            var token = await _js.InvokeAsync<string>(
-                "localStorage.getItem",
-                "accessToken");
-
-            Console.WriteLine("TOKEN = " + token);
+            try
+            {
+                token = await _js.InvokeAsync<string>(
+                    "localStorage.getItem",
+                    "accessToken");
+            }
+            catch (Exception)
+            {
+   
+                return new AuthenticationState(
+                    new ClaimsPrincipal(new ClaimsIdentity()));
+            }
 
             if (string.IsNullOrWhiteSpace(token))
             {
-                Console.WriteLine("NO TOKEN");
-
                 return new AuthenticationState(
                     new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
             var claims = ParseClaimsFromJwt(token);
-
-            Console.WriteLine("CLAIMS = " + claims.Count);
-
-            foreach (var c in claims)
-            {
-                Console.WriteLine($"{c.Type} = {c.Value}");
-            }
-
             var identity = new ClaimsIdentity(claims, "jwt");
-
-            Console.WriteLine("Authenticated = " + identity.IsAuthenticated);
-
             return new AuthenticationState(new ClaimsPrincipal(identity));
         }
 
