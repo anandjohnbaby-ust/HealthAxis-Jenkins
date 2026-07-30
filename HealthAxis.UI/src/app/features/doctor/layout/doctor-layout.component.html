@@ -1,21 +1,20 @@
 <div class="layout-wrapper">
-
   <!-- Mobile backdrop -->
   @if (mobileSidebarOpen()) {
     <button
       type="button"
       class="sidebar-backdrop"
       (click)="closeMobileSidebar()"
-      aria-label="Close menu">
-    </button>
+      aria-label="Close menu"
+    ></button>
   }
 
   <!-- Sidebar -->
   <aside
     class="sidebar"
     [class.collapsed]="sidebarCollapsed()"
-    [class.mobile-open]="mobileSidebarOpen()">
-
+    [class.mobile-open]="mobileSidebarOpen()"
+  >
     <div class="sidebar-brand">
       <div class="sidebar-brand-row">
         <h2>
@@ -27,7 +26,8 @@
           type="button"
           class="sidebar-toggle"
           (click)="toggleSidebarCollapse()"
-          [attr.aria-expanded]="!sidebarCollapsed()">
+          [attr.aria-expanded]="!sidebarCollapsed()"
+        >
           @if (sidebarCollapsed()) {
             <span aria-hidden="true">&raquo;</span>
           } @else {
@@ -41,30 +41,37 @@
     </div>
 
     <nav class="sidebar-nav">
-      
+      <a
         routerLink="/doctor/dashboard"
         routerLinkActive="active-link"
         [routerLinkActiveOptions]="{ exact: true }"
-        (click)="closeMobileSidebar()">
+        (click)="closeMobileSidebar()"
+      >
         <span class="link-text">Dashboard</span>
       </a>
-      
+
+      <a
         routerLink="/doctor/appointments"
         routerLinkActive="active-link"
         [routerLinkActiveOptions]="{ exact: true }"
-        (click)="closeMobileSidebar()">
+        (click)="closeMobileSidebar()"
+      >
         <span class="link-text">All Appointments</span>
       </a>
-      
+
+      <a
         routerLink="/doctor/today"
         routerLinkActive="active-link"
-        (click)="closeMobileSidebar()">
+        (click)="closeMobileSidebar()"
+      >
         <span class="link-text">Today's Schedule</span>
       </a>
-      
+
+      <a
         routerLink="/doctor/week"
         routerLinkActive="active-link"
-        (click)="closeMobileSidebar()">
+        (click)="closeMobileSidebar()"
+      >
         <span class="link-text">Weekly Schedule</span>
       </a>
     </nav>
@@ -73,34 +80,30 @@
   <!-- Main -->
   <div class="main-content">
     <header class="topbar">
-
       <div class="topbar-left">
-
         <button
           type="button"
           class="hamburger"
           (click)="toggleMobileSidebar($event)"
           aria-label="Toggle menu"
-          [attr.aria-expanded]="mobileSidebarOpen()">
+          [attr.aria-expanded]="mobileSidebarOpen()"
+        >
           <span></span>
           <span></span>
           <span></span>
         </button>
 
-        <div class="topbar-title">
-          Doctor Portal
-        </div>
+        <div class="topbar-title">Doctor Portal</div>
       </div>
 
       <div class="profile">
-
         <button
           type="button"
           class="profile-trigger"
           (click)="toggleMenu($event)"
           aria-haspopup="true"
-          [attr.aria-expanded]="menuOpen()">
-
+          [attr.aria-expanded]="menuOpen()"
+        >
           <div class="avatar">
             {{ initial() }}
           </div>
@@ -110,7 +113,6 @@
             </span>
           </div>
           <span class="arrow">&#9660;</span>
-
         </button>
 
         @if (menuOpen()) {
@@ -118,8 +120,8 @@
             class="profile-menu"
             role="menu"
             (click)="$event.stopPropagation()"
-            (keydown)="$event.stopPropagation()">
-
+            (keydown)="$event.stopPropagation()"
+          >
             <button type="button" role="menuitem" (click)="goToProfile()">
               My Profile
             </button>
