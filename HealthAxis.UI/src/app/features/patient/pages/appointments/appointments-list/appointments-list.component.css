@@ -347,6 +347,54 @@ tbody tr:hover {
   color: #0B3B36;
 }
 
+.optional {
+  font-weight: 400;
+  color: #9CA3AF;
+  font-size: .8rem;
+  margin-left: 4px;
+}
+
+/*
+  Cancellation reason textarea. Previously unstyled, so it fell back to
+  the browser default (thin gray border, no padding, system font) — out
+  of place next to the rest of the dialog's styled controls. Matches the
+  visual language of .filter-input / .filter-select / .filter-date and
+  .reason-box below it.
+*/
+
+.reason-textarea {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 12px 14px;
+
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+
+  background: #F9FAFB;
+
+  color: #374151;
+  font-family: inherit;
+  font-size: .9rem;
+  line-height: 1.5;
+
+  resize: vertical;
+  min-height: 100px;
+
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.reason-textarea::placeholder {
+  color: #9CA3AF;
+}
+
+.reason-textarea:focus {
+  outline: none;
+  border-color: #0B3B36;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(11, 59, 54, .12);
+}
+
 .dialog .reason-box {
   margin: 0;
 

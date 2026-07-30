@@ -2,7 +2,7 @@
   <div class="page__header">
     <h1>My Appointments</h1>
 
-    <a
+    
       routerLink="/patient/appointments/book"
       class="btn btn--primary">
       Book Appointment
@@ -62,7 +62,7 @@
     <div class="empty">
       <p>You don't have any appointments.</p>
 
-      <a
+      
         routerLink="/patient/appointments/book"
         class="btn btn--primary">
         Book your appointment
@@ -226,6 +226,7 @@
 
       <textarea
         id="cancellationReason"
+        class="reason-textarea"
         rows="4"
         [(ngModel)]="cancellationReason"
         placeholder="Enter cancellation reason...">
